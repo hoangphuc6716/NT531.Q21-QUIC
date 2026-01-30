@@ -29,10 +29,10 @@
 | Giai đoạn | Nội dung | Thời gian | Số tuần | Giờ/tuần/người |
 |-----------|----------|-----------|---------|----------------|
 | 1 | Nghiên cứu lý thuyết về QUIC | Tuần 1-2 | 2 tuần | 15 giờ |
-| 2 | Triển khai và thử nghiệm | Tuần 3-5 | 3 tuần | 20 giờ |
-| 3 | Phân tích kết quả và so sánh | Tuần 6-7 | 2 tuần | 15 giờ |
-| 4 | Viết báo cáo và hoàn thiện | Tuần 8 | 1 tuần | 20 giờ |
-| **TỔNG** | | **8 tuần** | | **~140 giờ/người** |
+| 2 | Triển khai và thử nghiệm | Tuần 3-4 | 2 tuần | 20 giờ |
+| 3 | Phân tích kết quả và so sánh | Tuần 5-6 | 2 tuần | 15 giờ |
+| 4 | Viết báo cáo và hoàn thiện | Tuần 7 | 1 tuần | 20 giờ |
+| **TỔNG** | | **7 tuần** | | **~120 giờ/người** |
 
 ---
 
@@ -895,243 +895,35 @@ done
 
 ---
 
-## 🗓️ TUẦN 5: THỬ NGHIỆM NÂNG CAO (20 giờ/người)
-
-### Thành viên 1 (20 giờ)
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 5.1 | Thử nghiệm Packet Loss | - QUIC vs HTTP/2 với packet loss 1%, 5%, 10%<br>- Đo throughput và latency<br>- File 1MB, 100 lần mỗi điều kiện | 8 | Data CSV |
-| 5.2 | Thử nghiệm High Latency | - RTT 50ms, 100ms, 200ms, 500ms<br>- Đo handshake, throughput<br>- So sánh QUIC vs HTTP/2 | 6 | Data CSV |
-| 5.3 | Thử nghiệm Connection Migration | - Simulate IP change<br>- Kiểm tra QUIC có maintain connection<br>- Ghi nhận behavior | 4 | Notes + evidence |
-| 5.4 | Review và validate data | - Kiểm tra data integrity<br>- Chạy lại test nếu cần<br>- Document anomalies | 2 | Validation report |
-
-### Thành viên 2 (20 giờ)
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 5.1 | Thử nghiệm Multiplexing | - 5, 10, 20 concurrent streams<br>- Đo total completion time<br>- So sánh QUIC (no HOL) vs HTTP/2 | 8 | Data CSV |
-| 5.2 | Thử nghiệm với Jitter | - Network jitter 20ms, 50ms<br>- Đo throughput stability<br>- QUIC vs HTTP/2 | 5 | Data CSV |
-| 5.3 | Thử nghiệm Real-world simulation | - Simulate mobile network (4G profile)<br>- Mixed conditions: latency + loss + jitter<br>- Đo overall performance | 5 | Data CSV |
-| 5.4 | Tổng hợp tất cả dữ liệu | - Merge tất cả data từ Tuần 4-5<br>- Organize theo categories<br>- Chuẩn bị cho phân tích | 2 | Complete dataset |
-
-### 📋 Deliverables cuối Tuần 5:
-- [ ] Data Packet Loss experiments (TV1)
-- [ ] Data High Latency experiments (TV1)
-- [ ] Data Multiplexing experiments (TV2)
-- [ ] Complete dataset cho phân tích (TV2)
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 5
-
-#### Task 5.1 (TV1): Thử nghiệm Packet Loss
-
-**Bước 1: Setup test matrix (30 phút)**
-```
-Packet Loss Rates: 1%, 5%, 10%
-File Size: 1MB (đủ lớn để thấy impact)
-Iterations: 100 mỗi condition
-Metrics: Download time, Success rate
-```
-
-**Bước 2: Tạo script test (2 giờ)**
-```bash
-#!/bin/bash
-# File: test_packet_loss.sh
-
-LOSS_RATES=("1" "5" "10")
-ITERATIONS=100
-FILE="1MB.bin"
-
-echo "protocol,loss_rate,iteration,time_ms,success" > packet_loss_results.csv
-
-for loss in "${LOSS_RATES[@]}"; do
-  echo "Testing with ${loss}% packet loss..."
-  ~/quic-test/network_emulation.sh loss$loss
-  sleep 2
-  
-  for i in $(seq 1 $ITERATIONS); do
-    # QUIC test
-    START=$(date +%s%N)
-    ~/quiche/target/release/examples/quiche-client \
-      --no-verify \
-      https://localhost:4433/$FILE \
-      > /tmp/quic_download 2>/dev/null
-    END=$(date +%s%N)
-    
-    if [ -f /tmp/quic_download ]; then
-      TIME_MS=$(( ($END - $START) / 1000000 ))
-      echo "quic,$loss,$i,$TIME_MS,1" >> packet_loss_results.csv
-    else
-      echo "quic,$loss,$i,0,0" >> packet_loss_results.csv
-    fi
-    
-    # HTTP/2 test
-    START=$(date +%s%N)
-    curl -s -o /tmp/http2_download --max-time 30 --http2 -k https://localhost/$FILE
-    CURL_EXIT=$?
-    END=$(date +%s%N)
-    
-    if [ $CURL_EXIT -eq 0 ]; then
-      TIME_MS=$(( ($END - $START) / 1000000 ))
-      echo "http2,$loss,$i,$TIME_MS,1" >> packet_loss_results.csv
-    else
-      echo "http2,$loss,$i,0,0" >> packet_loss_results.csv
-    fi
-    
-    echo -ne "\rProgress: $i/$ITERATIONS"
-  done
-  
-  echo ""
-  ~/quic-test/network_emulation.sh clear
-done
-```
-
-**Bước 3: Chạy tests (4 giờ)**
-- Với 10% loss, có thể cần timeout handling
-- Monitor CPU và memory usage
-
-**Bước 4: Phân tích sơ bộ (1.5 giờ)**
-- Tính success rate cho mỗi protocol
-- So sánh average download time
-- Identify patterns
-
-#### Task 5.2 (TV1): Thử nghiệm High Latency
-
-**Bước 1: Setup (30 phút)**
-```
-Latency values: 50ms, 100ms, 200ms, 500ms
-File sizes: 100KB, 1MB
-Metrics: Handshake time, Total download time, TTFB
-```
-
-**Bước 2: Tạo script (1.5 giờ)**
-```bash
-#!/bin/bash
-# test_high_latency.sh
-
-DELAYS=("50" "100" "200" "500")
-FILES=("100KB.bin" "1MB.bin")
-ITERATIONS=50
-
-echo "protocol,delay_ms,file,iteration,handshake_ms,ttfb_ms,total_ms" > high_latency_results.csv
-
-for delay in "${DELAYS[@]}"; do
-  sudo tc qdisc del dev lo root 2>/dev/null
-  sudo tc qdisc add dev lo root netem delay ${delay}ms
-  sleep 2
-  
-  for file in "${FILES[@]}"; do
-    for i in $(seq 1 $ITERATIONS); do
-      # Measure with detailed timing
-      # ... (similar to previous scripts)
-    done
-  done
-  
-  sudo tc qdisc del dev lo root
-done
-```
-
-**Bước 3: Chạy và validate (3 giờ)**
-
-#### Task 5.1 (TV2): Thử nghiệm Multiplexing
-
-**Bước 1: Hiểu test scenario (1 giờ)**
-```
-Goal: So sánh performance khi download nhiều files đồng thời
-- QUIC: Multiple streams trong 1 connection
-- HTTP/2: Multiple streams nhưng share TCP
-- Simulate: 1 stream bị chậm (loss) → ảnh hưởng streams khác?
-```
-
-**Bước 2: Tạo test files (30 phút)**
-```bash
-# Create 20 small files
-for i in $(seq 1 20); do
-  dd if=/dev/urandom of=~/quic-test/www/file$i.bin bs=10K count=1
-  sudo cp ~/quic-test/www/file$i.bin /var/www/html/
-done
-```
-
-**Bước 3: Tạo concurrent download script (3 giờ)**
-```bash
-#!/bin/bash
-# test_multiplexing.sh
-
-CONCURRENT=(5 10 20)
-
-for num in "${CONCURRENT[@]}"; do
-  echo "Testing $num concurrent downloads..."
-  
-  # QUIC concurrent (cần implement trong code hoặc dùng parallel curl)
-  START=$(date +%s%N)
-  for i in $(seq 1 $num); do
-    ~/quiche/target/release/examples/quiche-client \
-      --no-verify \
-      https://localhost:4433/file$i.bin \
-      > /tmp/quic_$i 2>/dev/null &
-  done
-  wait
-  END=$(date +%s%N)
-  QUIC_TIME=$(( ($END - $START) / 1000000 ))
-  
-  # HTTP/2 concurrent
-  START=$(date +%s%N)
-  for i in $(seq 1 $num); do
-    curl -s -o /tmp/http2_$i --http2 -k https://localhost/file$i.bin &
-  done
-  wait
-  END=$(date +%s%N)
-  HTTP2_TIME=$(( ($END - $START) / 1000000 ))
-  
-  echo "quic,$num,$QUIC_TIME" >> multiplexing_results.csv
-  echo "http2,$num,$HTTP2_TIME" >> multiplexing_results.csv
-done
-```
-
-**Bước 4: Test với packet loss (2 giờ)**
-```bash
-# Test multiplexing với 1% loss để thấy HOL blocking
-~/quic-test/network_emulation.sh loss1
-# Run multiplexing test
-# So sánh: QUIC streams independent, HTTP/2 bị ảnh hưởng bởi TCP HOL
-```
-
-**Bước 5: Tổng hợp dataset (2 giờ)**
-- Merge tất cả CSV files
-- Create master spreadsheet
-- Organize theo categories
-
----
-
-## 🗓️ TUẦN 6: PHÂN TÍCH DỮ LIỆU (15 giờ/người)
+## 🗓️ TUẦN 5: PHÂN TÍCH DỮ LIỆU (15 giờ/người)
 
 ### Thành viên 1 (15 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 6.1 | Phân tích Handshake Time | - Tính mean, median, std deviation<br>- So sánh QUIC 1-RTT vs TCP+TLS<br>- Phân tích improvement % | 4 | Báo cáo phân tích |
-| 6.2 | Phân tích 0-RTT | - So sánh 0-RTT vs 1-RTT<br>- Tính improvement %<br>- Phân tích use cases | 3 | Báo cáo phân tích |
-| 6.3 | Phân tích Latency | - So sánh TTFB theo điều kiện mạng<br>- Phân tích tác động của RTT<br>- QUIC vs HTTP/2 comparison | 4 | Báo cáo phân tích |
-| 6.4 | Phân tích Packet Loss Recovery | - Phân tích hiệu năng với packet loss<br>- So sánh khả năng recovery<br>- QUIC stream independence | 4 | Báo cáo phân tích |
+| 5.1 | Phân tích Handshake Time | - Tính mean, median, std deviation<br>- So sánh QUIC 1-RTT vs TCP+TLS<br>- Phân tích improvement % | 4 | Báo cáo phân tích |
+| 5.2 | Phân tích 0-RTT | - So sánh 0-RTT vs 1-RTT<br>- Tính improvement %<br>- Phân tích use cases | 3 | Báo cáo phân tích |
+| 5.3 | Phân tích Latency | - So sánh TTFB theo điều kiện mạng<br>- Phân tích tác động của RTT<br>- QUIC vs HTTP/2 comparison | 4 | Báo cáo phân tích |
+| 5.4 | Phân tích Throughput | - Phân tích throughput patterns<br>- So sánh QUIC vs HTTP/2<br>- Impact of file sizes | 4 | Báo cáo phân tích |
 
 ### Thành viên 2 (15 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 6.1 | Xử lý và làm sạch dữ liệu | - Remove outliers (>3 std dev)<br>- Handle missing data<br>- Validate data ranges | 3 | Clean dataset |
-| 6.2 | Tạo biểu đồ Handshake & Latency | - Bar chart: Handshake time comparison<br>- Line chart: Latency vs RTT<br>- Annotate key findings | 4 | 3-4 biểu đồ |
-| 6.3 | Tạo biểu đồ Throughput | - Line chart: Throughput vs file size<br>- Bar chart: Throughput comparison<br>- Impact of network conditions | 4 | 3-4 biểu đồ |
-| 6.4 | Phân tích Throughput & Multiplexing | - Analyze throughput patterns<br>- Multiplexing efficiency<br>- HOL blocking impact | 4 | Báo cáo phân tích |
+| 5.1 | Xử lý và làm sạch dữ liệu | - Remove outliers (>3 std dev)<br>- Handle missing data<br>- Validate data ranges | 3 | Clean dataset |
+| 5.2 | Tạo biểu đồ Handshake & Latency | - Bar chart: Handshake time comparison<br>- Line chart: Latency vs RTT<br>- Annotate key findings | 4 | 3-4 biểu đồ |
+| 5.3 | Tạo biểu đồ Throughput | - Line chart: Throughput vs file size<br>- Bar chart: Throughput comparison<br>- Impact of network conditions | 4 | 3-4 biểu đồ |
+| 5.4 | Phân tích Throughput comparison | - Analyze throughput patterns<br>- Compare QUIC vs HTTP/2<br>- Document findings | 4 | Báo cáo phân tích |
 
-### 📋 Deliverables cuối Tuần 6:
+### 📋 Deliverables cuối Tuần 5:
 - [ ] Báo cáo phân tích Handshake & Latency (TV1)
-- [ ] Báo cáo phân tích Packet Loss (TV1)
+- [ ] Báo cáo phân tích Throughput (TV1)
 - [ ] Tất cả biểu đồ (TV2)
 - [ ] Báo cáo phân tích Throughput (TV2)
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 6
+### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 5
 
-#### Task 6.1 (TV1): Phân tích Handshake Time
+#### Task 5.1 (TV1): Phân tích Handshake Time
 
 **Bước 1: Import data vào Python/R (30 phút)**
 ```python
@@ -1183,7 +975,7 @@ for condition in df['condition'].unique():
 - At higher latency, RTT savings more significant
 ```
 
-#### Task 6.2 (TV2): Tạo biểu đồ
+#### Task 5.2 (TV2): Tạo biểu đồ
 
 **Bước 1: Setup Python environment (30 phút)**
 ```python
@@ -1274,7 +1066,7 @@ plt.savefig('packet_loss_impact.png', dpi=300)
 - Save as SVG (for editing)
 - Create chart index
 
-#### Task 6.3 (TV1): Phân tích Packet Loss Recovery
+#### Task 5.3 (TV1): Phân tích Throughput
 
 **Bước 1: Analyze success rates (1 giờ)**
 ```python
@@ -1323,36 +1115,36 @@ for loss in [1, 5, 10]:
 
 ---
 
-## 🗓️ TUẦN 7: SO SÁNH VÀ ĐÁNH GIÁ (15 giờ/người)
+## 🗓️ TUẦN 6: SO SÁNH VÀ ĐÁNH GIÁ (15 giờ/người)
 
 ### Thành viên 1 (15 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 7.1 | Lập bảng so sánh tổng hợp | - So sánh QUIC vs HTTP/2 theo metrics<br>- Handshake, Latency, Throughput, Loss Recovery<br>- Thêm data thực tế từ experiments | 5 | Bảng so sánh chi tiết |
-| 7.2 | Đánh giá ưu điểm của QUIC | - Liệt kê các ưu điểm với evidence<br>- Faster handshake, No HOL blocking, etc.<br>- Quantify improvements | 4 | Báo cáo ưu điểm |
-| 7.3 | Phân tích scenarios phù hợp | - Mobile applications<br>- High latency networks<br>- Lossy networks<br>- Streaming applications | 4 | Recommendations |
-| 7.4 | Review findings với TV2 | - Thảo luận kết quả<br>- Validate conclusions<br>- Resolve disagreements | 2 | Agreed conclusions |
+| 6.1 | Lập bảng so sánh tổng hợp | - So sánh QUIC vs HTTP/2 theo metrics<br>- Handshake, Latency, Throughput, Loss Recovery<br>- Thêm data thực tế từ experiments | 5 | Bảng so sánh chi tiết |
+| 6.2 | Đánh giá ưu điểm của QUIC | - Liệt kê các ưu điểm với evidence<br>- Faster handshake, No HOL blocking, etc.<br>- Quantify improvements | 4 | Báo cáo ưu điểm |
+| 6.3 | Phân tích scenarios phù hợp | - Mobile applications<br>- High latency networks<br>- Lossy networks<br>- Streaming applications | 4 | Recommendations |
+| 6.4 | Review findings với TV2 | - Thảo luận kết quả<br>- Validate conclusions<br>- Resolve disagreements | 2 | Agreed conclusions |
 
 ### Thành viên 2 (15 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 7.1 | Đánh giá hạn chế của QUIC | - UDP blocking by firewalls<br>- CPU overhead<br>- Deployment complexity<br>- Middleware issues | 5 | Báo cáo hạn chế |
-| 7.2 | So sánh với real-world data | - Tìm benchmarks từ Google, Cloudflare<br>- So sánh với kết quả của mình<br>- Validate findings | 4 | Comparison report |
-| 7.3 | Tổng hợp khuyến nghị | - Khi nào nên dùng QUIC<br>- Khi nào nên giữ HTTP/2<br>- Migration considerations | 4 | Recommendations |
-| 7.4 | Chuẩn bị outline báo cáo | - Outline 5 chương<br>- Phân chia nội dung<br>- Timeline viết báo cáo | 2 | Report outline |
+| 6.1 | Đánh giá hạn chế của QUIC | - UDP blocking by firewalls<br>- CPU overhead<br>- Deployment complexity<br>- Middleware issues | 5 | Báo cáo hạn chế |
+| 6.2 | So sánh với real-world data | - Tìm benchmarks từ Google, Cloudflare<br>- So sánh với kết quả của mình<br>- Validate findings | 4 | Comparison report |
+| 6.3 | Tổng hợp khuyến nghị | - Khi nào nên dùng QUIC<br>- Khi nào nên giữ HTTP/2<br>- Migration considerations | 4 | Recommendations |
+| 6.4 | Chuẩn bị outline báo cáo | - Outline 5 chương<br>- Phân chia nội dung<br>- Timeline viết báo cáo | 2 | Report outline |
 
-### 📋 Deliverables cuối Tuần 7:
+### 📋 Deliverables cuối Tuần 6:
 - [ ] Bảng so sánh QUIC vs HTTP/2 (TV1)
 - [ ] Báo cáo ưu điểm QUIC (TV1)
 - [ ] Báo cáo hạn chế QUIC (TV2)
 - [ ] Khuyến nghị sử dụng (Cả 2)
 - [ ] Outline báo cáo (TV2)
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 7
+### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 6
 
-#### Task 7.1 (TV1): Lập bảng so sánh tổng hợp
+#### Task 6.1 (TV1): Lập bảng so sánh tổng hợp
 
 **Bước 1: Tạo template bảng (1 giờ)**
 ```markdown
@@ -1391,7 +1183,7 @@ for loss in [1, 5, 10]:
 - Add footnotes cho context
 - Export as Markdown và PNG
 
-#### Task 7.2 (TV1): Đánh giá ưu điểm QUIC
+#### Task 6.2 (TV1): Đánh giá ưu điểm QUIC
 
 **Bước 1: List all advantages (1 giờ)**
 ```markdown
@@ -1431,7 +1223,7 @@ for loss in [1, 5, 10]:
 - Discuss real-world impact
 - Provide recommendations
 
-#### Task 7.1 (TV2): Đánh giá hạn chế QUIC
+#### Task 6.1 (TV2): Đánh giá hạn chế QUIC
 
 **Bước 1: Research known limitations (1.5 giờ)**
 ```markdown
@@ -1473,7 +1265,7 @@ for loss in [1, 5, 10]:
 - Deployment best practices
 - When HTTP/2 is better choice
 
-#### Task 7.3 (TV2): Tổng hợp khuyến nghị
+#### Task 6.3 (TV2): Tổng hợp khuyến nghị
 
 **Bước 1: Create recommendation matrix (1.5 giờ)**
 ```markdown
@@ -1513,7 +1305,7 @@ for loss in [1, 5, 10]:
 - Testing requirements
 - Rollout strategy
 
-#### Task 7.4 (TV2): Chuẩn bị outline báo cáo
+#### Task 6.4 (TV2): Chuẩn bị outline báo cáo
 
 **Bước 1: Draft outline (1 giờ)**
 ```markdown
@@ -1558,36 +1350,36 @@ for loss in [1, 5, 10]:
 
 ---
 
-## 🗓️ TUẦN 8: VIẾT BÁO CÁO VÀ HOÀN THIỆN (20 giờ/người)
+## 🗓️ TUẦN 7: VIẾT BÁO CÁO VÀ HOÀN THIỆN (20 giờ/người)
 
 ### Thành viên 1 (20 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 8.1 | Viết Chương 1: Giới thiệu | - Đặt vấn đề (500 từ)<br>- Mục tiêu nghiên cứu<br>- Phạm vi và giới hạn | 3 | Chương 1 (2-3 trang) |
-| 8.2 | Viết Chương 2: Kiến trúc QUIC | - Lịch sử phát triển<br>- Kiến trúc tổng quan<br>- Các cơ chế chính (từ Tuần 1-2) | 6 | Chương 2 (8-10 trang) |
-| 8.3 | Viết Chương 5: Kết luận | - Tóm tắt kết quả<br>- Đóng góp của nghiên cứu<br>- Hướng phát triển | 3 | Chương 5 (2-3 trang) |
-| 8.4 | Thiết kế Slide thuyết trình | - 15-20 slides<br>- Key findings<br>- Demo screenshots | 5 | Slide deck |
-| 8.5 | Review và chỉnh sửa | - Review Chương 3-4 của TV2<br>- Sửa lỗi, format<br>- Kiểm tra references | 3 | Final review |
+| 7.1 | Viết Chương 1: Giới thiệu | - Đặt vấn đề (500 từ)<br>- Mục tiêu nghiên cứu<br>- Phạm vi và giới hạn | 3 | Chương 1 (2-3 trang) |
+| 7.2 | Viết Chương 2: Kiến trúc QUIC | - Lịch sử phát triển<br>- Kiến trúc tổng quan<br>- Các cơ chế chính (từ Tuần 1-2) | 6 | Chương 2 (8-10 trang) |
+| 7.3 | Viết Chương 5: Kết luận | - Tóm tắt kết quả<br>- Đóng góp của nghiên cứu<br>- Hướng phát triển | 3 | Chương 5 (2-3 trang) |
+| 7.4 | Thiết kế Slide thuyết trình | - 15-20 slides<br>- Key findings<br>- Demo screenshots | 5 | Slide deck |
+| 7.5 | Review và chỉnh sửa | - Review Chương 3-4 của TV2<br>- Sửa lỗi, format<br>- Kiểm tra references | 3 | Final review |
 
 ### Thành viên 2 (20 giờ)
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 8.1 | Viết Chương 3: Phương pháp | - Mô tả môi trường thử nghiệm<br>- Các test cases<br>- Tools và setup | 5 | Chương 3 (5-6 trang) |
-| 8.2 | Viết Chương 4: Kết quả | - Trình bày tất cả kết quả<br>- Biểu đồ và bảng số liệu<br>- Phân tích và thảo luận | 8 | Chương 4 (10-12 trang) |
-| 8.3 | Format báo cáo | - Thống nhất format<br>- Mục lục, danh mục hình<br>- Tài liệu tham khảo | 3 | Formatted document |
-| 8.4 | Review và chỉnh sửa | - Review Chương 1, 2, 5 của TV1<br>- Cross-check data<br>- Final proofreading | 4 | Final review |
+| 7.1 | Viết Chương 3: Phương pháp | - Mô tả môi trường thử nghiệm<br>- Các test cases<br>- Tools và setup | 5 | Chương 3 (5-6 trang) |
+| 7.2 | Viết Chương 4: Kết quả | - Trình bày tất cả kết quả<br>- Biểu đồ và bảng số liệu<br>- Phân tích và thảo luận | 8 | Chương 4 (10-12 trang) |
+| 7.3 | Format báo cáo | - Thống nhất format<br>- Mục lục, danh mục hình<br>- Tài liệu tham khảo | 3 | Formatted document |
+| 7.4 | Review và chỉnh sửa | - Review Chương 1, 2, 5 của TV1<br>- Cross-check data<br>- Final proofreading | 4 | Final review |
 
-### 📋 Deliverables cuối Tuần 8:
+### 📋 Deliverables cuối Tuần 7:
 - [ ] Báo cáo hoàn chỉnh (30-35 trang)
 - [ ] Slide thuyết trình (15-20 slides)
 - [ ] Source code và scripts
 - [ ] Raw data và processed data
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 8
+### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 7
 
-#### Task 8.1 (TV1): Viết Chương 1 - Giới thiệu
+#### Task 7.1 (TV1): Viết Chương 1 - Giới thiệu
 
 **Bước 1: Viết phần Đặt vấn đề (1 giờ)**
 ```markdown
@@ -1629,7 +1421,7 @@ Nghiên cứu này hướng đến các mục tiêu sau:
 - Không đánh giá security aspects deeply
 ```
 
-#### Task 8.2 (TV1): Viết Chương 2 - Kiến trúc QUIC
+#### Task 7.2 (TV1): Viết Chương 2 - Kiến trúc QUIC
 
 **Bước 1: Viết Overview (2 giờ)**
 - Copy và edit từ tài liệu Tuần 1-2
@@ -1647,7 +1439,7 @@ Nghiên cứu này hướng đến các mục tiêu sau:
 - Verify diagrams are clear
 - Add cross-references
 
-#### Task 8.3 (TV1): Viết Chương 5 - Kết luận
+#### Task 7.3 (TV1): Viết Chương 5 - Kết luận
 
 **Bước 1: Tóm tắt findings (1 giờ)**
 ```markdown
@@ -1662,7 +1454,7 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 ```
 
 **Bước 2: Viết Khuyến nghị (1 giờ)**
-- Synthesize từ Tuần 7
+- Synthesize từ Tuần 6
 - Add actionable recommendations
 
 **Bước 3: Viết Hướng phát triển (1 giờ)**
@@ -1675,7 +1467,7 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 4. Nghiên cứu HTTP/3 performance
 ```
 
-#### Task 8.1 (TV2): Viết Chương 3 - Phương pháp
+#### Task 7.1 (TV2): Viết Chương 3 - Phương pháp
 
 **Bước 1: Mô tả môi trường (2 giờ)**
 ```markdown
@@ -1710,7 +1502,7 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 - Number of iterations
 - Statistical methods used
 
-#### Task 8.2 (TV2): Viết Chương 4 - Kết quả
+#### Task 7.2 (TV2): Viết Chương 4 - Kết quả
 
 **Bước 1: Structure kết quả (1 giờ)**
 ```markdown
@@ -1736,7 +1528,7 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 ```
 
 **Bước 2: Insert all charts và tables (3 giờ)**
-- Copy từ Tuần 6 analysis
+- Copy từ Tuần 5 analysis
 - Ensure high-quality images
 - Add proper captions
 
@@ -1756,7 +1548,7 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 | Loss Recovery (5%) | X | Y | Z% |
 ```
 
-#### Task 8.4 (TV1): Thiết kế Slide
+#### Task 7.4 (TV1): Thiết kế Slide
 
 **Bước 1: Create slide structure (1 giờ)**
 ```
@@ -1783,7 +1575,7 @@ Slide 20: Q&A
 - Ensure readability
 - Practice timing
 
-#### Task 8.3-8.4 (TV2): Format và Review
+#### Task 7.3-7.4 (TV2): Format và Review
 
 **Bước 1: Compile document (1 giờ)**
 - Merge all chapters
@@ -1820,11 +1612,10 @@ Slide 20: Q&A
 | 2 | Connection Establishment + 0-RTT + Stream Multiplexing + Migration | 15 |
 | 3 | Cài đặt QUIC server + Scripts đo Handshake/Latency | 20 |
 | 4 | Đo Handshake QUIC/HTTP/2 + Latency + 0-RTT test | 20 |
-| 5 | Packet Loss + High Latency + Connection Migration | 20 |
-| 6 | Phân tích Handshake + 0-RTT + Latency + Packet Loss | 15 |
-| 7 | Bảng so sánh + Ưu điểm QUIC + Scenarios | 15 |
-| 8 | Chương 1, 2, 5 + Slide + Review | 20 |
-| **TỔNG** | | **140 giờ** |
+| 5 | Phân tích Handshake + 0-RTT + Latency | 15 |
+| 6 | Bảng so sánh + Ưu điểm QUIC + Scenarios | 15 |
+| 7 | Chương 1, 2, 5 + Slide + Review | 20 |
+| **TỔNG** | | **120 giờ** |
 
 ### Thành viên 2 (Thử nghiệm hiệu năng, Phân tích dữ liệu)
 
@@ -1834,27 +1625,26 @@ Slide 20: Q&A
 | 2 | TLS 1.3 + Packet Protection + Loss Detection + Congestion Control | 15 |
 | 3 | Cài đặt HTTP/2 + Network Emulation + Benchmark tools | 20 |
 | 4 | Đo Throughput (all sizes) + Tổng hợp data | 20 |
-| 5 | Multiplexing + Jitter + Real-world simulation + Dataset | 20 |
-| 6 | Xử lý data + Biểu đồ + Phân tích Throughput | 15 |
-| 7 | Hạn chế QUIC + Real-world comparison + Khuyến nghị + Outline | 15 |
-| 8 | Chương 3, 4 + Format + Review | 20 |
-| **TỔNG** | | **140 giờ** |
+| 5 | Xử lý data + Biểu đồ + Phân tích Throughput | 15 |
+| 6 | Hạn chế QUIC + Real-world comparison + Khuyến nghị + Outline | 15 |
+| 7 | Chương 3, 4 + Format + Review | 20 |
+| **TỔNG** | | **120 giờ** |
 
 ---
 
 ## 📈 Biểu đồ Gantt chi tiết
 
 ```
-Tuần        1         2         3         4         5         6         7         8
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-TV1        [Lý thuyết][Thiết kế][Setup   ][Test    ][Test    ][Phân    ][So sánh ][Báo cáo ]
-           [QUIC    ][QUIC    ][QUIC    ][cơ bản  ][nâng cao][tích    ][đánh giá][Ch1,2,5 ]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-TV2        [TCP/UDP ][Security][Setup   ][Thrput  ][Multi-  ][Biểu đồ][Hạn chế ][Báo cáo ]
-           [Compare ][Loss Det][HTTP/2  ][test    ][plexing ][Thrput  ][Khuyến  ][Ch3,4   ]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-Chung      [Tài liệu]         [Tools   ]         [Dataset ][Review  ][Bảng SS ][Review  ]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
+Tuần        1         2         3         4         5         6         7
+           |---------|---------|---------|---------|---------|---------|---------|
+TV1        [Lý thuyết][Thiết kế][Setup   ][Test    ][Phân    ][So sánh ][Báo cáo ]
+           [QUIC    ][QUIC    ][QUIC    ][cơ bản  ][tích    ][đánh giá][Ch1,2,5 ]
+           |---------|---------|---------|---------|---------|---------|---------|
+TV2        [TCP/UDP ][Security][Setup   ][Thrput  ][Biểu đồ][Hạn chế ][Báo cáo ]
+           [Compare ][Loss Det][HTTP/2  ][test    ][Thrput  ][Khuyến  ][Ch3,4   ]
+           |---------|---------|---------|---------|---------|---------|---------|
+Chung      [Tài liệu]         [Tools   ]         [Review  ][Bảng SS ][Review  ]
+           |---------|---------|---------|---------|---------|---------|---------|
 ```
 
 ---
@@ -1889,30 +1679,21 @@ Chung      [Tài liệu]         [Tools   ]         [Dataset ][Review  ][Bảng 
 - [ ] Data Throughput small/medium/large files (TV2)
 - [ ] Master spreadsheet (TV2)
 
-### Tuần 5: Thử nghiệm nâng cao
-- [ ] Data Packet Loss 1%, 5%, 10% (TV1)
-- [ ] Data High Latency 50-500ms (TV1)
-- [ ] Data Connection Migration (TV1)
-- [ ] Data Multiplexing 5/10/20 streams (TV2)
-- [ ] Data Jitter test (TV2)
-- [ ] Complete dataset (TV2)
-
-### Tuần 6: Phân tích
+### Tuần 5: Phân tích
 - [ ] Báo cáo phân tích Handshake & 0-RTT (TV1)
 - [ ] Báo cáo phân tích Latency (TV1)
-- [ ] Báo cáo phân tích Packet Loss (TV1)
 - [ ] Clean dataset (TV2)
 - [ ] Tất cả biểu đồ (TV2)
-- [ ] Báo cáo phân tích Throughput & Multiplexing (TV2)
+- [ ] Báo cáo phân tích Throughput (TV2)
 
-### Tuần 7: So sánh và đánh giá
+### Tuần 6: So sánh và đánh giá
 - [ ] Bảng so sánh QUIC vs HTTP/2 (TV1)
 - [ ] Báo cáo ưu điểm QUIC (TV1)
 - [ ] Báo cáo hạn chế QUIC (TV2)
 - [ ] Khuyến nghị sử dụng (Cả 2)
 - [ ] Outline báo cáo (TV2)
 
-### Tuần 8: Báo cáo
+### Tuần 7: Báo cáo
 - [ ] Chương 1: Giới thiệu (TV1)
 - [ ] Chương 2: Kiến trúc QUIC (TV1)
 - [ ] Chương 3: Phương pháp (TV2)

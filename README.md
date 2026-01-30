@@ -1039,78 +1039,52 @@ ax.grid(True, alpha=0.3)
 plt.savefig('throughput_comparison.png', dpi=300)
 ```
 
-**Bước 4: Tạo Packet Loss Impact Chart (1 giờ)**
-```python
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-# Chart 1: Download time vs loss rate
-loss_rates = [0, 1, 5, 10]
-ax1 = axes[0]
-ax1.plot(loss_rates, quic_times, 'o-', label='QUIC')
-ax1.plot(loss_rates, http2_times, 's-', label='HTTP/2')
-ax1.set_xlabel('Packet Loss Rate (%)')
-ax1.set_ylabel('Download Time (ms)')
-ax1.set_title('Impact of Packet Loss on Download Time')
-ax1.legend()
-
-# Chart 2: Success rate vs loss rate
-ax2 = axes[1]
-ax2.bar(...)  # Success rate comparison
-
-plt.tight_layout()
-plt.savefig('packet_loss_impact.png', dpi=300)
-```
-
-**Bước 5: Export tất cả charts (1 giờ)**
+**Bước 4: Export tất cả charts (1 giờ)**
 - Save as PNG (300 dpi for print)
 - Save as SVG (for editing)
 - Create chart index
 
 #### Task 5.3 (TV1): Phân tích Throughput
 
-**Bước 1: Analyze success rates (1 giờ)**
+**Bước 1: Analyze throughput data (1 giờ)**
 ```python
-# Calculate success rate by protocol and loss rate
-success_stats = df.groupby(['protocol', 'loss_rate']).agg({
-    'success': 'mean'
+# Calculate throughput statistics by protocol and file size
+throughput_stats = df.groupby(['protocol', 'file_size']).agg({
+    'throughput': ['mean', 'std', 'median']
 }).round(3)
 
-print("Success Rate Analysis:")
-print(success_stats)
+print("Throughput Analysis:")
+print(throughput_stats)
 ```
 
-**Bước 2: Analyze download time degradation (1.5 giờ)**
+**Bước 2: Compare QUIC vs HTTP/2 throughput (1.5 giờ)**
 ```python
-# For successful downloads only
-successful = df[df['success'] == 1]
-
-# Calculate degradation from baseline
-baseline_quic = successful[(successful['protocol']=='quic') & (successful['loss_rate']==0)]['time_ms'].mean()
-baseline_http2 = successful[(successful['protocol']=='http2') & (successful['loss_rate']==0)]['time_ms'].mean()
-
-for loss in [1, 5, 10]:
-    quic_degradation = ...
-    http2_degradation = ...
-    print(f"At {loss}% loss: QUIC +{quic_degradation}%, HTTP/2 +{http2_degradation}%")
+# Calculate improvement percentage
+for size in ['1KB', '10KB', '100KB', '1MB', '10MB']:
+    quic_avg = df[(df['protocol']=='quic') & (df['file_size']==size)]['throughput'].mean()
+    http2_avg = df[(df['protocol']=='http2') & (df['file_size']==size)]['throughput'].mean()
+    
+    improvement = ((quic_avg - http2_avg) / http2_avg) * 100
+    print(f"File {size}: QUIC {'faster' if improvement > 0 else 'slower'} by {abs(improvement):.1f}%")
 ```
 
 **Bước 3: Viết analysis report (1.5 giờ)**
 ```markdown
-## Packet Loss Recovery Analysis
+## Throughput Analysis
 
 ### Key Findings:
-1. QUIC shows better resilience to packet loss
-2. At 5% loss:
-   - QUIC success rate: X%
-   - HTTP/2 success rate: Y%
-3. Download time degradation:
-   - QUIC: more gradual increase
-   - HTTP/2: steeper degradation due to TCP HOL blocking
+1. Performance comparison across file sizes
+2. For small files (1KB, 10KB):
+   - QUIC advantage: X%
+   - Reason: Lower handshake overhead
+3. For large files (1MB, 10MB):
+   - Performance comparison: X%
+   - Reason: TCP congestion control differences
 
 ### Explanation:
-- QUIC streams are independent
-- Loss in one stream doesn't affect others
-- QUIC's loss detection is per-packet-number-space
+- QUIC benefits more for small files due to faster handshake
+- For large files, throughput converges
+- Network conditions affect both protocols similarly
 ```
 
 ---
@@ -1121,8 +1095,8 @@ for loss in [1, 5, 10]:
 
 | STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
 |-----|-----------|------------------|-----|--------|
-| 6.1 | Lập bảng so sánh tổng hợp | - So sánh QUIC vs HTTP/2 theo metrics<br>- Handshake, Latency, Throughput, Loss Recovery<br>- Thêm data thực tế từ experiments | 5 | Bảng so sánh chi tiết |
-| 6.2 | Đánh giá ưu điểm của QUIC | - Liệt kê các ưu điểm với evidence<br>- Faster handshake, No HOL blocking, etc.<br>- Quantify improvements | 4 | Báo cáo ưu điểm |
+| 6.1 | Lập bảng so sánh tổng hợp | - So sánh QUIC vs HTTP/2 theo metrics<br>- Handshake, Latency, Throughput<br>- Thêm data thực tế từ experiments | 5 | Bảng so sánh chi tiết |
+| 6.2 | Đánh giá ưu điểm của QUIC | - Liệt kê các ưu điểm với evidence<br>- Faster handshake, 0-RTT, etc.<br>- Quantify improvements | 4 | Báo cáo ưu điểm |
 | 6.3 | Phân tích scenarios phù hợp | - Mobile applications<br>- High latency networks<br>- Lossy networks<br>- Streaming applications | 4 | Recommendations |
 | 6.4 | Review findings với TV2 | - Thảo luận kết quả<br>- Validate conclusions<br>- Resolve disagreements | 2 | Agreed conclusions |
 
@@ -1160,12 +1134,6 @@ for loss in [1, 5, 10]:
 | **Throughput** |
 | Small files (1KB) | X Mbps | Y Mbps | ? | ? |
 | Large files (10MB) | X Mbps | Y Mbps | ? | ? |
-| **Reliability** |
-| Success Rate (5% loss) | X% | Y% | QUIC | ? |
-| Degradation (5% loss) | X% | Y% | QUIC | ? |
-| **Multiplexing** |
-| 10 concurrent streams | Xms | Yms | QUIC | Z% |
-| HOL Blocking Impact | None | Significant | QUIC | - |
 ```
 
 **Bước 2: Điền data từ experiments (2 giờ)**
@@ -1199,18 +1167,13 @@ for loss in [1, 5, 10]:
 - **Evidence**: X% reduction in latency for returning users
 - **Use case**: Mobile apps, frequent reconnects
 
-### 3. No Head-of-Line Blocking
-- Streams are independent
-- **Evidence**: At 5% loss, QUIC shows Y% less degradation
-- **Impact**: Better for multiplexed connections
-
-### 4. Connection Migration
-- Can survive IP changes
-- **Use case**: Mobile networks, WiFi-cellular handoff
-
-### 5. Built-in Encryption
+### 3. Built-in Encryption
 - Always encrypted, no downgrade attacks
 - Simpler deployment (no separate TLS config)
+
+### 4. Connection Migration (Theoretical)
+- Can survive IP changes
+- **Use case**: Mobile networks, WiFi-cellular handoff
 ```
 
 **Bước 2: Add evidence từ experiments (1.5 giờ)**
@@ -1331,8 +1294,6 @@ for loss in [1, 5, 10]:
 4.1 Handshake time
 4.2 Latency
 4.3 Throughput
-4.4 Packet loss
-4.5 Multiplexing
 
 ## Chương 5: Kết luận (TV1)
 5.1 Tóm tắt kết quả
@@ -1413,7 +1374,7 @@ Nghiên cứu này hướng đến các mục tiêu sau:
 ### Phạm vi:
 - Đánh giá QUIC (IETF RFC 9000)
 - So sánh với HTTP/2 over TLS 1.3
-- Các metrics: handshake, latency, throughput, loss recovery
+- Các metrics: handshake, latency, throughput
 
 ### Giới hạn:
 - Môi trường thử nghiệm: localhost/LAN
@@ -1448,9 +1409,8 @@ Nghiên cứu này hướng đến các mục tiêu sau:
 Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 
 1. **Handshake nhanh hơn**: QUIC 1-RTT nhanh hơn X% so với TCP+TLS
-2. **Xử lý packet loss tốt hơn**: Giảm Y% degradation ở 5% loss
-3. **Multiplexing hiệu quả**: Không có HOL blocking giữa streams
-4. **0-RTT**: Giảm latency Z% cho returning connections
+2. **0-RTT**: Giảm latency Z% cho returning connections
+3. **Built-in encryption**: Đơn giản hóa deployment
 ```
 
 **Bước 2: Viết Khuyến nghị (1 giờ)**
@@ -1519,12 +1479,6 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 
 ## 4.3 Throughput
 [Similar structure]
-
-## 4.4 Packet Loss Impact
-[Similar structure]
-
-## 4.5 Multiplexing
-[Similar structure]
 ```
 
 **Bước 2: Insert all charts và tables (3 giờ)**
@@ -1545,7 +1499,6 @@ Nghiên cứu đã cho thấy QUIC có nhiều ưu điểm so với HTTP/2:
 |--------|------|--------|-------------|
 | Handshake (100ms RTT) | X | Y | Z% |
 | Throughput (1MB) | X | Y | Z% |
-| Loss Recovery (5%) | X | Y | Z% |
 ```
 
 #### Task 7.4 (TV1): Thiết kế Slide

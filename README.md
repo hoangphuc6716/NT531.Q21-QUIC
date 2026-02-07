@@ -1136,6 +1136,331 @@ Output     [Docs    ][Docs    ][Tech    ][Demos   ][Analysis][Cases   ][Summary 
 
 ---
 
+## 🌐 KỊCH BẢN TOPOLOGY DEMO - 2 CLOUD ENVIRONMENTS
+
+### Tổng quan Topology
+
+Topology demo mô phỏng kết nối QUIC giữa 2 cloud environments khác nhau để thể hiện các tính năng nổi bật của giao thức QUIC như Connection Migration, Low Latency, và Stream Multiplexing.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              QUIC DEMO TOPOLOGY                                      │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  ┌──────────────────────────────┐         ┌──────────────────────────────┐          │
+│  │        CLOUD 1 (AWS)         │         │       CLOUD 2 (GCP)          │          │
+│  │     Region: us-east-1        │         │    Region: asia-southeast1   │          │
+│  │                              │         │                              │          │
+│  │  ┌────────────────────────┐  │         │  ┌────────────────────────┐  │          │
+│  │  │    QUIC Server         │  │         │  │    QUIC Server         │  │          │
+│  │  │    (quiche-server)     │  │         │  │    (quiche-server)     │  │          │
+│  │  │    Port: 4433          │  │         │  │    Port: 4433          │  │          │
+│  │  │    IP: 10.0.1.10       │  │◄───────►│  │    IP: 10.0.2.10       │  │          │
+│  │  └────────────────────────┘  │  QUIC   │  └────────────────────────┘  │          │
+│  │              │               │ over    │              │               │          │
+│  │              │               │ Internet│              │               │          │
+│  │  ┌────────────────────────┐  │         │  ┌────────────────────────┐  │          │
+│  │  │    QUIC Client         │  │         │  │    QUIC Client         │  │          │
+│  │  │    (quiche-client)     │  │         │  │    (quiche-client)     │  │          │
+│  │  │    IP: 10.0.1.20       │  │         │  │    IP: 10.0.2.20       │  │          │
+│  │  └────────────────────────┘  │         │  └────────────────────────┘  │          │
+│  │                              │         │                              │          │
+│  │  VPC: 10.0.1.0/24           │         │  VPC: 10.0.2.0/24           │          │
+│  └──────────────────────────────┘         └──────────────────────────────┘          │
+│                                                                                      │
+│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
+│  │                         NETWORK CONDITIONS                                    │   │
+│  │  • Cross-region latency: ~150-200ms RTT                                       │   │
+│  │  • Bandwidth: 100Mbps - 1Gbps                                                │   │
+│  │  • Packet loss simulation: 0.1% - 5%                                         │   │
+│  └──────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Chi tiết từng Cloud Environment
+
+#### Cloud 1 (AWS - Primary)
+
+| Component | Specifications | Purpose |
+|-----------|---------------|---------|
+| **EC2 Instance** | t3.medium (2 vCPU, 4GB RAM) | QUIC Server |
+| **OS** | Ubuntu 22.04 LTS | Server OS |
+| **Network** | VPC 10.0.1.0/24 | Private network |
+| **Public IP** | Elastic IP assigned | External access |
+| **Security Group** | UDP 4433 inbound | QUIC traffic |
+| **Software** | quiche, Wireshark, tcpdump | QUIC stack & monitoring |
+
+#### Cloud 2 (GCP - Secondary)
+
+| Component | Specifications | Purpose |
+|-----------|---------------|---------|
+| **Compute Instance** | e2-medium (2 vCPU, 4GB RAM) | QUIC Client & Server |
+| **OS** | Ubuntu 22.04 LTS | Server OS |
+| **Network** | VPC 10.0.2.0/24 | Private network |
+| **External IP** | Static IP assigned | External access |
+| **Firewall** | UDP 4433 allow | QUIC traffic |
+| **Software** | quiche, curl with HTTP/3 | QUIC stack |
+
+### Kịch bản Demo
+
+#### Kịch bản 1: Cross-Cloud QUIC Connection
+
+**Mục tiêu:** Thiết lập kết nối QUIC giữa 2 clouds và đo hiệu năng
+
+```bash
+# Cloud 1 (AWS) - Start QUIC Server
+./quiche-server \
+  --cert /path/to/cert.pem \
+  --key /path/to/key.pem \
+  --root /var/www/html \
+  --listen 0.0.0.0:4433
+
+# Cloud 2 (GCP) - Connect as Client
+./quiche-client \
+  --no-verify \
+  https://<AWS_PUBLIC_IP>:4433/index.html
+
+# Metrics to observe:
+# - Connection establishment time
+# - 0-RTT resumption
+# - Throughput
+```
+
+#### Kịch bản 2: Connection Migration Simulation
+
+**Mục tiêu:** Demo khả năng Connection Migration của QUIC khi đổi network
+
+```bash
+# Step 1: Establish connection từ Cloud 2 đến Cloud 1
+./quiche-client --no-verify https://<AWS_IP>:4433/largefile.bin
+
+# Step 2: Simulate network change (switch interface)
+# QUIC connection sẽ tự động migrate sang interface mới
+
+# Step 3: Capture với Wireshark
+tshark -i any -f "udp port 4433" -w migration_demo.pcap
+
+# Observe: PATH_CHALLENGE và PATH_RESPONSE frames
+```
+
+#### Kịch bản 3: Multi-Stream Multiplexing
+
+**Mục tiêu:** Demo khả năng xử lý nhiều streams đồng thời
+
+```bash
+# Cloud 1: Server với multiple files
+mkdir -p /var/www/html/files
+for i in {1..10}; do
+  dd if=/dev/urandom of=/var/www/html/files/file$i.bin bs=1M count=10
+done
+
+# Cloud 2: Multiple concurrent requests
+for i in {1..5}; do
+  ./quiche-client --no-verify https://<AWS_IP>:4433/files/file$i.bin &
+done
+
+# Observe: 
+# - Stream independence
+# - No Head-of-Line blocking
+# - Bandwidth utilization
+```
+
+#### Kịch bản 4: Network Condition Testing
+
+**Mục tiêu:** Test QUIC performance dưới các điều kiện mạng khác nhau
+
+```bash
+# Simulate packet loss (on Cloud 2)
+sudo tc qdisc add dev eth0 root netem loss 2%
+
+# Simulate high latency
+sudo tc qdisc change dev eth0 root netem delay 100ms
+
+# Simulate jitter
+sudo tc qdisc change dev eth0 root netem delay 50ms 20ms
+
+# Test connection và measure impact
+./quiche-client --no-verify https://<AWS_IP>:4433/testfile.bin
+
+# Clear network conditions
+sudo tc qdisc del dev eth0 root
+```
+
+### Script Thiết lập Topology
+
+#### setup_cloud1_aws.sh
+```bash
+#!/bin/bash
+# Cloud 1 (AWS) Setup Script
+
+echo "=== Setting up QUIC Demo Environment on AWS ==="
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    wireshark tshark tcpdump curl git
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
+
+# Create demo directories
+mkdir -p ~/quic-demo/{certs,www,captures}
+
+# Generate SSL certificates
+openssl req -x509 -newkey rsa:4096 \
+  -keyout ~/quic-demo/certs/key.pem \
+  -out ~/quic-demo/certs/cert.pem \
+  -days 365 -nodes \
+  -subj "/C=VN/ST=HCMC/L=HCMC/O=UIT/CN=quic-demo-cloud1"
+
+# Create test content
+echo "<h1>QUIC Demo - Cloud 1 (AWS)</h1>" > ~/quic-demo/www/index.html
+# Create 100MB test file for throughput testing
+dd if=/dev/urandom of=~/quic-demo/www/testfile.bin bs=1M count=100
+
+# Configure firewall (AWS Security Group should also allow UDP 4433)
+sudo ufw allow 4433/udp
+
+echo "=== Cloud 1 Setup Complete ==="
+echo "Start server with: ./quiche/target/release/examples/quiche-server \\"
+echo "  --cert ~/quic-demo/certs/cert.pem \\"
+echo "  --key ~/quic-demo/certs/key.pem \\"
+echo "  --root ~/quic-demo/www \\"
+echo "  --listen 0.0.0.0:4433"
+```
+
+#### setup_cloud2_gcp.sh
+```bash
+#!/bin/bash
+# Cloud 2 (GCP) Setup Script
+
+echo "=== Setting up QUIC Demo Environment on GCP ==="
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    wireshark tshark tcpdump curl git iproute2
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
+
+# Create demo directories
+mkdir -p ~/quic-demo/{certs,www,captures,logs}
+
+# Generate SSL certificates (for local server testing)
+openssl req -x509 -newkey rsa:4096 \
+  -keyout ~/quic-demo/certs/key.pem \
+  -out ~/quic-demo/certs/cert.pem \
+  -days 365 -nodes \
+  -subj "/C=VN/ST=HCMC/L=HCMC/O=UIT/CN=quic-demo-cloud2"
+
+# Create test script for connecting to Cloud 1
+# Note: Replace <CLOUD1_PUBLIC_IP> with actual AWS EC2 public IP address
+# Example usage: ~/quic-demo/test_connection.sh 54.123.45.67
+cat > ~/quic-demo/test_connection.sh << 'EOF'
+#!/bin/bash
+# Usage: ./test_connection.sh <CLOUD1_PUBLIC_IP>
+# Example: ./test_connection.sh 54.123.45.67
+CLOUD1_IP="${1:-<REPLACE_WITH_AWS_PUBLIC_IP>}"
+
+if [ "$CLOUD1_IP" == "<REPLACE_WITH_AWS_PUBLIC_IP>" ]; then
+    echo "Error: Please provide Cloud 1 (AWS) public IP address"
+    echo "Usage: $0 <AWS_PUBLIC_IP>"
+    exit 1
+fi
+
+echo "Testing connection to Cloud 1 at $CLOUD1_IP"
+
+# Simple connection test
+./quiche/target/release/examples/quiche-client \
+  --no-verify \
+  https://$CLOUD1_IP:4433/index.html
+
+# Download test with timing
+echo "Testing download performance..."
+time ./quiche/target/release/examples/quiche-client \
+  --no-verify \
+  https://$CLOUD1_IP:4433/testfile.bin > /dev/null
+EOF
+chmod +x ~/quic-demo/test_connection.sh
+
+# Configure firewall
+sudo ufw allow 4433/udp
+
+echo "=== Cloud 2 Setup Complete ==="
+echo "Test connection with: ~/quic-demo/test_connection.sh <CLOUD1_IP>"
+```
+
+### Monitoring và Capture
+
+#### Wireshark Capture Commands
+```bash
+# Capture QUIC traffic
+tshark -i eth0 -f "udp port 4433" -w quic_capture.pcap
+
+# Live decode QUIC
+tshark -i eth0 -f "udp port 4433" -Y quic -T fields \
+  -e frame.time -e ip.src -e ip.dst -e quic.packet_number
+
+# Analyze connection establishment
+tshark -r quic_capture.pcap -Y "quic.frame_type == 6" # CRYPTO frames
+
+# Count stream frames
+tshark -r quic_capture.pcap -Y "quic.frame_type == 8" | wc -l
+```
+
+#### qlog Logging
+```bash
+# Enable qlog in quiche (set environment variable)
+export QLOGDIR=~/quic-demo/logs
+
+# Start server with qlog enabled
+./quiche-server --cert cert.pem --key key.pem --root www --listen 0.0.0.0:4433
+
+# Visualize with qvis
+# Upload qlog file to https://qvis.quictools.info
+```
+
+### Kết quả mong đợi
+
+| Metric | Expected Value | Notes |
+|--------|----------------|-------|
+| Connection Setup (1-RTT) | < 200ms | Cross-region |
+| Connection Setup (0-RTT) | < 100ms | With resumption |
+| Throughput | 50-100 Mbps | Depending on network |
+| Stream Multiplexing | 5+ concurrent | No HOL blocking |
+| Connection Migration | < 1s | Seamless handover |
+| Packet Loss Recovery | 0.1-5% | Using QUIC retransmission |
+
+### Troubleshooting
+
+| Issue | Possible Cause | Solution |
+|-------|----------------|----------|
+| Connection refused | Firewall blocking UDP | Check Security Groups/Firewall rules |
+| High latency | Network congestion | Use closer regions or CDN |
+| Certificate errors | Self-signed cert | Use --no-verify flag for testing |
+| Low throughput | Congestion control | Check network conditions, adjust buffer sizes |
+| Migration fails | Different Connection ID | Ensure client supports migration |
+
+---
+
 ## 🔧 Công cụ sử dụng
 
 | Công cụ | Mục đích | Link |
@@ -1160,4 +1485,4 @@ Output     [Docs    ][Docs    ][Tech    ][Demos   ][Analysis][Cases   ][Summary 
 
 ---
 
-*Cập nhật lần cuối: 06/02/2026*
+*Cập nhật lần cuối: 07/02/2026*

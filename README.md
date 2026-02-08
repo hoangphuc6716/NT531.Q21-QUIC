@@ -23,7 +23,7 @@
 |---|----------|---------------------|--------|
 | 1 | **0-RTT Handshake** | Giảm latency xuống 0ms cho returning users | So sánh với TCP+TLS (2-3 RTT) |
 | 2 | **Multiplexed Streams** | Không có Head-of-Line blocking | Demo nhiều streams đồng thời |
-| 3 | **Connection Migration** | Duy trì kết nối khi đổi IP/network | Demo đổi WiFi → 4G |
+| 3 | **Connection Migration** | Duy trì kết nối khi đổi IP/network | Demo đổi WiFi → Ethernet |
 | 4 | **Built-in Encryption** | TLS 1.3 tích hợp, always encrypted | Phân tích bảo mật |
 | 5 | **Improved Loss Recovery** | ACK ranges, NACK implicit | So sánh với TCP |
 | 6 | **User-space Implementation** | Dễ update, không cần kernel changes | Ưu điểm triển khai |
@@ -39,9 +39,290 @@
 | 3 | 0-RTT và 1-RTT Handshake | **Tốc độ kết nối** | Sequence diagrams |
 | 4 | Stream Multiplexing | **Không HOL blocking** | Demo + Capture |
 | 5 | Connection Migration | **Unique feature** | Demo thực tế |
-| 6 | Demo tổng hợp (Topology) | Tất cả features | Video demo |
+| 6 | **DEMO TỔNG HỢP** | Tất cả features + Topology | **VIDEO DEMO** |
 | 7 | Case Studies & Performance | Google, Cloudflare, Meta | Báo cáo phân tích |
 | 8 | Báo cáo & Thuyết trình | Tổng hợp | Báo cáo + Slides |
+
+---
+
+## 🌐 TOPOLOGY DEMO - MÔ PHỎNG THỰC TẾ DUY NHẤT
+
+### Tổng quan Topology
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    QUIC DEMO TOPOLOGY                                             │
+│                        (Ubuntu Server + Multiple Clients + Clear Scenarios)                       │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                   │
+│                              ┌─────────────────────────────────┐                                  │
+│                              │      🖥️ UBUNTU SERVER           │                                  │
+│                              │        (Local/VPS)               │                                  │
+│                              │                                  │                                  │
+│                              │   ┌──────────────────────────┐   │                                  │
+│                              │   │     QUIC Server          │   │                                  │
+│                              │   │     (quiche-server)      │   │                                  │
+│                              │   │     Port: 4433/UDP       │   │                                  │
+│                              │   │     Public IP            │   │                                  │
+│                              │   └──────────────────────────┘   │                                  │
+│                              │                                  │                                  │
+│                              │   OS: Ubuntu 22.04 LTS          │                                  │
+│                              │   RAM: 4GB+                      │                                  │
+│                              │   Storage: 20GB+                 │                                  │
+│                              └─────────────┬───────────────────┘                                  │
+│                                            │                                                      │
+│                                            │ INTERNET (QUIC over UDP/4433)                       │
+│                     ┌──────────────────────┼──────────────────────┐                              │
+│                     │                      │                      │                              │
+│                     ▼                      ▼                      ▼                              │
+│   ┌─────────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────┐         │
+│   │  ☁️ CLOUD CLIENT        │  │  💻 LOCAL CLIENT        │  │  📱 MOBILE CLIENT       │         │
+│   │  (Oracle Cloud Free)    │  │  (Laptop/PC)            │  │  (Optional - Phone)     │         │
+│   │                         │  │                         │  │                         │         │
+│   │  ┌───────────────────┐  │  │  ┌───────────────────┐  │  │  ┌───────────────────┐  │         │
+│   │  │  quiche-client    │  │  │  │  quiche-client    │  │  │  │  HTTP/3 Browser   │  │         │
+│   │  │                   │  │  │  │  + Wireshark      │  │  │  │  or curl          │  │         │
+│   │  └───────────────────┘  │  │  └───────────────────┘  │  │  └───────────────────┘  │         │
+│   │                         │  │                         │  │                         │         │
+│   │  Purpose:               │  │  Purpose:               │  │  Purpose:               │         │
+│   │  - Latency testing      │  │  - Packet capture       │  │  - Real-world test      │         │
+│   │  - Cross-region demo    │  │  - Migration demo       │  │  - Mobile network       │         │
+│   │  - 0-RTT testing        │  │  - HOL blocking demo    │  │  - 4G/5G testing        │         │
+│   │                         │  │  - Stream multiplexing  │  │                         │         │
+│   │  Network: Oracle VCN    │  │  Network: WiFi+Ethernet │  │  Network: WiFi/4G       │         │
+│   └─────────────────────────┘  └─────────────────────────┘  └─────────────────────────┘         │
+│                                                                                                   │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Chi tiết các thành phần
+
+#### 🖥️ UBUNTU SERVER (QUIC Server)
+
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Hardware** | Máy tính local hoặc VPS (4GB RAM, 2 CPU) |
+| **OS** | Ubuntu 22.04 LTS |
+| **Network** | Public IP (hoặc DynDNS nếu IP động) |
+| **Port** | 4433/UDP (mở trên firewall/router) |
+| **Software** | quiche (Cloudflare), Wireshark, tcpdump |
+| **Vai trò** | QUIC Server phục vụ tất cả clients |
+
+#### ☁️ CLOUD CLIENT (Oracle Cloud Free Tier)
+
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Provider** | Oracle Cloud - **Always Free** (miễn phí vĩnh viễn) |
+| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **OS** | Ubuntu 22.04 LTS |
+| **Network** | Oracle VCN với Public IP |
+| **Software** | quiche-client, tc (traffic control) |
+| **Vai trò** | Test latency, 0-RTT, cross-region connection |
+
+#### 💻 LOCAL CLIENT (Laptop/PC)
+
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Hardware** | Laptop hoặc PC của nhóm |
+| **OS** | Ubuntu 22.04 / Windows với WSL2 |
+| **Network** | WiFi + Ethernet (dual network cho migration demo) |
+| **Software** | quiche-client, Wireshark, tc |
+| **Vai trò** | Packet capture, Connection Migration demo, HOL blocking test |
+
+#### 📱 MOBILE CLIENT (Optional)
+
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Device** | Smartphone Android/iOS |
+| **Network** | WiFi + 4G/5G |
+| **Software** | Chrome (HTTP/3 enabled) hoặc curl |
+| **Vai trò** | Real-world mobile network testing |
+
+---
+
+## 🎬 CÁC KỊCH BẢN DEMO CHI TIẾT
+
+### 📌 Kịch bản 1: So sánh Handshake (0-RTT vs 1-RTT vs TCP+TLS)
+
+**Mục tiêu:** Chứng minh QUIC nhanh hơn TCP+TLS trong connection establishment
+
+**Thiết lập:**
+- Server: Ubuntu Server với quiche-server
+- Client: Cloud Client (Oracle)
+
+**Các bước thực hiện:**
+
+```bash
+# === TRÊN CLOUD CLIENT ===
+
+# Bước 1: Test TCP+TLS connection time (baseline)
+echo "=== TCP+TLS Baseline ==="
+time curl -o /dev/null -s https://server-ip/index.html
+
+# Bước 2: Test QUIC 1-RTT (first connection)
+echo "=== QUIC 1-RTT (First Connection) ==="
+time ./quiche-client --no-verify https://server-ip:4433/index.html
+
+# Bước 3: Test QUIC 0-RTT (resumed connection)
+echo "=== QUIC 0-RTT (Resumed Connection) ==="
+time ./quiche-client --no-verify https://server-ip:4433/index.html
+
+# Bước 4: Capture với Wireshark và đếm RTT
+tshark -i eth0 -f "udp port 4433" -c 50 -Y "quic" > handshake_capture.txt
+```
+
+**Kết quả mong đợi:**
+
+| Connection Type | RTTs | Time (100ms RTT) |
+|-----------------|------|------------------|
+| TCP + TLS 1.2 | 3 RTT | ~300ms |
+| TCP + TLS 1.3 | 2 RTT | ~200ms |
+| QUIC 1-RTT | 1 RTT | ~100ms |
+| QUIC 0-RTT | 0 RTT | ~0ms + data |
+
+---
+
+### 📌 Kịch bản 2: Stream Multiplexing + HOL Blocking Demo
+
+**Mục tiêu:** Chứng minh QUIC không bị Head-of-Line blocking khi có packet loss
+
+**Thiết lập:**
+- Server: Ubuntu Server với 5 files (file1.bin - file5.bin, mỗi file 10MB)
+- Client: Local Client với dual terminal
+
+**Các bước thực hiện:**
+
+```bash
+# === TRÊN SERVER ===
+# Tạo test files
+mkdir -p ~/quic-demo/www
+for i in {1..5}; do
+  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=10
+done
+
+# Start server
+./quiche-server --cert cert.pem --key key.pem --root ~/quic-demo/www --listen 0.0.0.0:4433
+
+# === TRÊN LOCAL CLIENT ===
+
+# Terminal 1: Simulate 5% packet loss
+sudo tc qdisc add dev wlan0 root netem loss 5% delay 50ms
+
+# Terminal 2: Download 5 files đồng thời với QUIC
+echo "=== QUIC với 5% packet loss ==="
+time (
+  for i in {1..5}; do
+    ./quiche-client --no-verify https://server:4433/file$i.bin > /tmp/file$i.bin &
+  done
+  wait
+)
+
+# Terminal 3: Capture stream interleaving
+tshark -i wlan0 -f "udp port 4433" -Y "quic.stream" -T fields \
+  -e frame.time_relative -e quic.stream.stream_id -e quic.stream.length \
+  > stream_interleaving.txt
+
+# So sánh với TCP (HTTP/1.1 sequential)
+echo "=== TCP sequential download ==="
+time (
+  for i in {1..5}; do
+    curl -o /tmp/tcp_file$i.bin https://server/file$i.bin
+  done
+)
+
+# Clear packet loss
+sudo tc qdisc del dev wlan0 root
+```
+
+**Kết quả mong đợi:**
+- QUIC: Tất cả streams hoàn thành gần như đồng thời
+- TCP: Mỗi file phải chờ file trước hoàn thành
+- Với packet loss: QUIC chỉ ảnh hưởng stream bị mất gói, TCP block tất cả
+
+---
+
+### 📌 Kịch bản 3: Connection Migration Demo
+
+**Mục tiêu:** Chứng minh QUIC duy trì connection khi đổi network
+
+**Thiết lập:**
+- Server: Ubuntu Server
+- Client: Local Client với WiFi + Ethernet
+
+**Yêu cầu đặc biệt:**
+- Laptop phải có cả WiFi và Ethernet
+- Cả hai đều kết nối được tới Server
+
+**Các bước thực hiện:**
+
+```bash
+# === CHUẨN BỊ ===
+# Đảm bảo cả WiFi (wlan0) và Ethernet (eth0) đều active
+ip addr show
+
+# === THỰC HIỆN ===
+
+# Terminal 1: Start Wireshark capture
+tshark -i any -f "udp port 4433" -w migration_demo.pcap
+
+# Terminal 2: Start download file lớn qua WiFi
+# Đảm bảo route qua wlan0
+sudo ip route add SERVER_IP/32 dev wlan0
+./quiche-client --no-verify https://SERVER_IP:4433/large.bin > /tmp/download.bin
+
+# Terminal 3: TRONG KHI DOWNLOAD - Switch sang Ethernet
+sleep 5  # Chờ download bắt đầu
+echo "=== Switching to Ethernet ==="
+# Setup eth0 route TRƯỚC khi disable wlan0 để minimize downtime
+sudo ip link set eth0 up
+sudo ip route add SERVER_IP/32 dev eth0
+sudo ip link set wlan0 down
+sudo ip route del SERVER_IP/32 dev wlan0 2>/dev/null
+
+# Quan sát: Download vẫn tiếp tục!
+
+# Phân tích capture
+tshark -r migration_demo.pcap -Y "quic.frame_type == 0x1a" # PATH_CHALLENGE
+tshark -r migration_demo.pcap -Y "quic.frame_type == 0x1b" # PATH_RESPONSE
+```
+
+**Kết quả mong đợi:**
+- Download không bị gián đoạn khi đổi network
+- Capture cho thấy PATH_CHALLENGE và PATH_RESPONSE frames
+- Downtime: < 500ms
+
+---
+
+### 📌 Kịch bản 4: Multi-Client Concurrent Connections
+
+**Mục tiêu:** Chứng minh Server handle được nhiều clients đồng thời
+
+**Thiết lập:**
+- Server: Ubuntu Server
+- Clients: Cloud Client + Local Client + Mobile (optional)
+
+**Các bước thực hiện:**
+
+```bash
+# === TRÊN SERVER ===
+# Monitor connections
+watch -n 1 "netstat -anu | grep 4433 | wc -l"
+
+# === TRÊN CLOUD CLIENT ===
+echo "=== Cloud Client downloading ==="
+./quiche-client --no-verify https://server:4433/medium.bin &
+
+# === TRÊN LOCAL CLIENT ===
+echo "=== Local Client downloading ==="
+./quiche-client --no-verify https://server:4433/medium.bin &
+
+# === TRÊN MOBILE (nếu có) ===
+# Mở Chrome, truy cập https://server:4433/index.html
+
+# === TRÊN SERVER ===
+# Observe: Tất cả clients nhận data đồng thời
+tcpdump -i eth0 udp port 4433 -c 100 | grep -E "length [0-9]+"
+```
 
 ---
 
@@ -86,24 +367,18 @@
 | 2.1 | TCP + TLS 1.2 Handshake | 3-RTT (TCP SYN + TLS Full) | 4 | Sequence diagram |
 | 2.2 | TCP + TLS 1.3 Handshake | 2-RTT (TCP SYN + TLS 1-RTT) | 3 | Sequence diagram |
 | 2.3 | QUIC 1-RTT Handshake | 1-RTT (Combined transport + crypto) | 4 | Sequence diagram |
-| 2.4 | QUIC 0-RTT Handshake | 0-RTT với PSK | 4 | Sequence diagram + Security analysis |
+| 2.4 | QUIC 0-RTT Handshake | 0-RTT với PSK, replay attack analysis | 4 | Sequence diagram + Security analysis |
 
 ### Thành viên 2 (15 giờ) - Head-of-Line Blocking
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
-| 2.1 | TCP HOL Blocking | Tại sao HTTP/2 over TCP vẫn bị HOL? | 4 | Diagrams + Explanation |
+| 2.1 | TCP HOL Blocking | Tại sao HTTP/2 over TCP vẫn bị HOL? | 4 | Diagrams |
 | 2.2 | QUIC Stream Independence | Mỗi stream độc lập, packet loss không ảnh hưởng stream khác | 5 | Diagrams |
 | 2.3 | Bảng so sánh tổng hợp | QUIC vs TCP+TLS: Latency, HOL, Migration, Security | 4 | Comparison table |
 | 2.4 | Vẽ infographic | Visual comparison cho báo cáo | 2 | Infographic |
 
-### 📋 Deliverables Tuần 2:
-- [ ] 4 Sequence diagrams so sánh handshake (TV1)
-- [ ] HOL blocking explanation + diagrams (TV2)
-- [ ] Bảng so sánh QUIC vs TCP+TLS (TV2)
-- [ ] Infographic tổng hợp (TV2)
-
-### 📊 Bảng So sánh Quan trọng:
+### 📊 Bảng So sánh:
 
 | Feature | TCP + TLS 1.2 | TCP + TLS 1.3 | QUIC |
 |---------|---------------|---------------|------|
@@ -111,12 +386,11 @@
 | **Resumed Connection** | 2 RTT | 1 RTT | **0 RTT** |
 | **HOL Blocking** | Yes (TCP level) | Yes (TCP level) | **No** |
 | **Connection Migration** | No | No | **Yes** |
-| **Built-in Encryption** | Separate (TLS) | Separate (TLS) | **Integrated** |
-| **User-space** | No (kernel) | No (kernel) | **Yes** |
+| **Built-in Encryption** | Separate | Separate | **Integrated** |
 
 ---
 
-## 🗓️ TUẦN 3: 0-RTT VÀ 1-RTT HANDSHAKE CHI TIẾT (20 giờ/người)
+## 🗓️ TUẦN 3: 0-RTT VÀ 1-RTT HANDSHAKE (20 giờ/người)
 
 ### Mục tiêu: Hiểu sâu cơ chế handshake - USP lớn nhất của QUIC
 
@@ -125,230 +399,232 @@
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
 | 3.1 | 1-RTT Handshake chi tiết | Initial → Handshake → 1-RTT packets | 5 | Detailed sequence |
-| 3.2 | TLS 1.3 Integration | CRYPTO frames, không dùng TLS record layer | 5 | Technical document |
-| 3.3 | 0-RTT Early Data | PSK, session tickets, replay attack mitigation | 5 | Security analysis |
-| 3.4 | Key Derivation | HKDF, encryption levels, key update | 5 | Crypto document |
+| 3.2 | TLS 1.3 Integration | CRYPTO frames, encryption levels | 5 | Technical document |
+| 3.3 | 0-RTT Early Data | PSK, replay attack mitigation | 5 | Security analysis |
+| 3.4 | Key Derivation | HKDF, key update | 5 | Crypto document |
 
-### Thành viên 2 (20 giờ) - Packet Protection
+### Thành viên 2 (20 giờ) - Security & Protection
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
-| 3.1 | Header Protection | Packet number encryption, why needed | 5 | Document + Diagram |
-| 3.2 | Payload Encryption | AEAD (AES-GCM, ChaCha20-Poly1305) | 5 | Technical document |
-| 3.3 | Address Validation | Token, Retry packet, amplification attack | 5 | Security document |
-| 3.4 | Chuẩn bị Demo handshake | Capture QUIC handshake với Wireshark | 5 | Wireshark screenshots |
+| 3.1 | Header Protection | Packet number encryption | 5 | Document |
+| 3.2 | Payload Encryption | AEAD algorithms | 5 | Technical document |
+| 3.3 | Address Validation | Token, Retry packet | 5 | Security document |
+| 3.4 | Setup demo environment | Cài đặt quiche trên Server | 5 | Working server |
 
 ### 📋 Deliverables Tuần 3:
 - [ ] Chi tiết 1-RTT và 0-RTT handshake (TV1)
-- [ ] TLS 1.3 integration document (TV1)
+- [ ] Security analysis document (TV1)
 - [ ] Header/Payload protection document (TV2)
-- [ ] Wireshark capture của handshake (TV2)
-
-### 🔐 0-RTT Security Considerations:
-
-```
-⚠️ 0-RTT Early Data có thể bị REPLAY ATTACK!
-
-Mitigation strategies:
-1. Server chỉ accept idempotent requests trong 0-RTT
-2. Single-use session tickets
-3. Strike register để detect duplicates
-4. Application-level replay protection
-```
+- [ ] Working QUIC Server (TV2)
 
 ---
 
 ## 🗓️ TUẦN 4: STREAM MULTIPLEXING (20 giờ/người)
 
-### Mục tiêu: Hiểu và demo tính năng multiplexing - Giải quyết HOL blocking
+### Mục tiêu: Hiểu và chuẩn bị demo tính năng multiplexing
 
 ### Thành viên 1 (20 giờ) - Stream Concepts
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
 | 4.1 | Stream Types | Bidirectional vs Unidirectional | 4 | Document |
-| 4.2 | Stream ID encoding | Client/Server initiated, Bidi/Uni | 4 | Diagrams |
-| 4.3 | Stream States | Ready, Send, Data Sent, Data Recvd, Reset | 5 | State diagrams |
-| 4.4 | Flow Control | MAX_DATA, MAX_STREAM_DATA, credit-based | 5 | Technical document |
-| 4.5 | Cài đặt quiche | Build từ source, test locally | 2 | Working setup |
+| 4.2 | Stream ID encoding | Client/Server initiated | 4 | Diagrams |
+| 4.3 | Stream States | State machine | 5 | State diagrams |
+| 4.4 | Flow Control | MAX_DATA, MAX_STREAM_DATA | 5 | Technical document |
+| 4.5 | Loss Recovery | ACK ranges, retransmission | 2 | Document |
 
-### Thành viên 2 (20 giờ) - Demo Multiplexing
+### Thành viên 2 (20 giờ) - Chuẩn bị Demo
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
-| 4.1 | Cài đặt demo environment | quiche-server, quiche-client | 4 | Setup guide |
-| 4.2 | Demo multiple streams | 5 concurrent downloads | 5 | Screenshots + Video |
-| 4.3 | Demo HOL blocking comparison | TCP vs QUIC với packet loss | 6 | Comparison video |
-| 4.4 | Capture với Wireshark | Stream frames, interleaving | 3 | Captures + Analysis |
-| 4.5 | Document demo steps | Reproducible demo guide | 2 | Demo guide |
+| 4.1 | Setup Cloud Client | Oracle Cloud VM | 5 | Working client |
+| 4.2 | Setup Local Client | Laptop với dual network | 4 | Working client |
+| 4.3 | Test Kịch bản 1 | Handshake comparison | 4 | Test results |
+| 4.4 | Test Kịch bản 2 | Stream multiplexing | 4 | Test results |
+| 4.5 | Document test steps | Reproducible guide | 3 | Guide |
 
 ### 📋 Deliverables Tuần 4:
-- [ ] Stream types và encoding document (TV1)
-- [ ] Flow control mechanism document (TV1)
-- [ ] Working demo environment (TV2)
-- [ ] Video: Multiple streams + HOL blocking comparison (TV2)
-
-### 🎬 Demo Script - Stream Multiplexing:
-
-```bash
-# Terminal 1: Start QUIC Server
-./quiche-server --cert cert.pem --key key.pem --root ./www --listen 0.0.0.0:4433
-
-# Terminal 2: Multiple concurrent requests (5 streams)
-for i in {1..5}; do
-  ./quiche-client --no-verify https://localhost:4433/file$i.bin &
-done
-wait
-echo "All downloads complete!"
-
-# Terminal 3: Wireshark capture
-tshark -i lo -f "udp port 4433" -Y "quic.stream" -T fields \
-  -e frame.number -e quic.stream.stream_id -e quic.stream.length
-```
+- [ ] Stream types document (TV1)
+- [ ] Flow control document (TV1)
+- [ ] Working Cloud Client (TV2)
+- [ ] Working Local Client (TV2)
+- [ ] Test results cho Kịch bản 1 & 2 (TV2)
 
 ---
 
 ## 🗓️ TUẦN 5: CONNECTION MIGRATION (20 giờ/người)
 
-### Mục tiêu: Hiểu và demo Connection Migration - Unique feature của QUIC
+### Mục tiêu: Hiểu và chuẩn bị demo Connection Migration
 
 ### Thành viên 1 (20 giờ) - Migration Mechanics
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
-| 5.1 | Connection ID concept | Multiple CIDs, rotation, privacy | 5 | Document |
+| 5.1 | Connection ID concept | Multiple CIDs, rotation | 5 | Document |
 | 5.2 | Path Validation | PATH_CHALLENGE, PATH_RESPONSE | 5 | Sequence diagram |
 | 5.3 | NAT Rebinding | Handling NAT timeout | 4 | Technical document |
-| 5.4 | Active vs Passive migration | Client-initiated vs Server detection | 4 | Comparison |
+| 5.4 | Active vs Passive migration | Comparison | 4 | Document |
 | 5.5 | Security aspects | Off-path attack prevention | 2 | Security analysis |
 
-### Thành viên 2 (20 giờ) - Demo Connection Migration
+### Thành viên 2 (20 giờ) - Test Migration
 
 | STT | Công việc | Chi tiết | Giờ | Output |
 |-----|-----------|----------|-----|--------|
-| 5.1 | Setup dual-network environment | WiFi + Ethernet or VMs | 5 | Setup guide |
-| 5.2 | Demo migration scenario | Switch network during download | 6 | Video demo |
+| 5.1 | Setup dual-network | WiFi + Ethernet trên laptop | 4 | Setup guide |
+| 5.2 | Test Kịch bản 3 | Connection Migration | 6 | Test results |
 | 5.3 | Capture PATH frames | Wireshark analysis | 4 | Captures |
-| 5.4 | Measure migration time | Downtime measurement | 3 | Performance data |
-| 5.5 | Compare với TCP | TCP connection drops, QUIC survives | 2 | Comparison |
+| 5.4 | Test Kịch bản 4 | Multi-client | 4 | Test results |
+| 5.5 | Document demo steps | Migration guide | 2 | Guide |
 
 ### 📋 Deliverables Tuần 5:
-- [ ] Connection ID và Path Validation document (TV1)
+- [ ] Connection Migration document (TV1)
+- [ ] Path Validation sequence diagram (TV1)
 - [ ] Working migration demo (TV2)
-- [ ] Video: Connection migration demo (TV2)
-- [ ] Performance comparison: QUIC migration vs TCP reconnect (TV2)
+- [ ] Multi-client test results (TV2)
+- [ ] All 4 scenarios tested (TV2)
 
-### 🔄 Connection Migration Demo Script:
+---
 
-```bash
-# Scenario: Download large file, switch network midway
+## 🗓️ TUẦN 6: DEMO TỔNG HỢP + QUAY VIDEO (20 giờ/người)
 
-# Step 1: Start server
-./quiche-server --cert cert.pem --key key.pem --root ./www --listen 0.0.0.0:4433
+### Mục tiêu: Thực hiện và ghi hình tất cả demo scenarios
 
-# Step 2: Start download on interface eth0
-./quiche-client --no-verify https://server:4433/largefile.bin
+### Thành viên 1 (20 giờ) - Server Management & Recording
 
-# Step 3: During download, disable eth0, enable wlan0
-sudo ip link set eth0 down
-sudo ip link set wlan0 up
-# QUIC connection should survive!
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 6.1 | Chuẩn bị Server | Ensure stability | 3 | Stable server |
+| 6.2 | Quay Kịch bản 1 | Handshake comparison | 4 | Video 1 |
+| 6.3 | Quay Kịch bản 2 | Stream multiplexing | 4 | Video 2 |
+| 6.4 | Quay Kịch bản 3 | Connection Migration | 5 | Video 3 |
+| 6.5 | Quay Kịch bản 4 | Multi-client | 2 | Video 4 |
+| 6.6 | Edit video tổng hợp | Combine all scenarios | 2 | Final video |
 
-# Step 4: Capture and look for PATH_CHALLENGE/PATH_RESPONSE
-tshark -r capture.pcap -Y "quic.frame_type == 0x1a or quic.frame_type == 0x1b"
+### Thành viên 2 (20 giờ) - Client Operations & Documentation
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 6.1 | Thực hiện Kịch bản 1 | Handshake từ Cloud | 4 | Data + Screenshots |
+| 6.2 | Thực hiện Kịch bản 2 | Multiplexing từ Local | 4 | Data + Screenshots |
+| 6.3 | Thực hiện Kịch bản 3 | Migration từ Local | 5 | Data + Screenshots |
+| 6.4 | Thực hiện Kịch bản 4 | Multi-client | 3 | Data + Screenshots |
+| 6.5 | Screenshot compilation | All captures | 2 | Screenshot document |
+| 6.6 | Demo documentation | Step-by-step guide | 2 | Demo guide |
+
+### 📋 Deliverables Tuần 6:
+- [ ] Video Demo hoàn chỉnh (5-10 phút) (TV1)
+- [ ] Screenshots tất cả scenarios (TV2)
+- [ ] Demo guide có thể reproduce (TV2)
+- [ ] Raw data và captures (TV2)
+
+---
+
+## 🗓️ TUẦN 7: CASE STUDIES & PERFORMANCE ANALYSIS (15 giờ/người)
+
+### Thành viên 1 (15 giờ) - Performance Analysis
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 7.1 | Tổng hợp demo metrics | Latency, throughput | 4 | Performance report |
+| 7.2 | So sánh với TCP | Same tests với TCP | 4 | Comparison data |
+| 7.3 | Case Study: Google | YouTube, Search | 3 | Analysis |
+| 7.4 | Case Study: Cloudflare | Edge network | 2 | Analysis |
+| 7.5 | Case Study: Meta | Facebook/Instagram | 2 | Analysis |
+
+### Thành viên 2 (15 giờ) - Future & Extensions
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 7.1 | QUIC v2 (RFC 9369) | Improvements | 3 | Document |
+| 7.2 | Multipath QUIC | Overview | 3 | Document |
+| 7.3 | Other QUIC applications | DNS, WebTransport | 3 | Use cases |
+| 7.4 | Adoption challenges | UDP blocking | 3 | Analysis |
+| 7.5 | Visual summary | Infographics | 3 | Visuals |
+
+### 📋 Deliverables Tuần 7:
+- [ ] Performance comparison report (TV1)
+- [ ] Case studies document (TV1)
+- [ ] QUIC extensions overview (TV2)
+- [ ] Visual assets (TV2)
+
+---
+
+## 🗓️ TUẦN 8: BÁO CÁO VÀ THUYẾT TRÌNH (20 giờ/người)
+
+### Thành viên 1 (20 giờ) - Viết báo cáo
+
+| STT | Công việc | Giờ | Output |
+|-----|-----------|-----|--------|
+| 8.1 | Chương 1: Giới thiệu | 2 | Introduction |
+| 8.2 | Chương 2: Kiến trúc QUIC | 4 | Architecture |
+| 8.3 | Chương 3: Các đặc điểm nổi bật | 5 | Features |
+| 8.4 | Chương 4: Demo thực hành | 4 | Demo documentation |
+| 8.5 | Chương 5: Case Studies | 2 | Analysis |
+| 8.6 | Chương 6: Kết luận | 1 | Conclusion |
+| 8.7 | Review và edit | 2 | Final review |
+
+### Thành viên 2 (20 giờ) - Slides
+
+| STT | Công việc | Giờ | Output |
+|-----|-----------|-----|--------|
+| 8.1 | Slide: Introduction (5 slides) | 2 | Slides |
+| 8.2 | Slide: Architecture (8 slides) | 3 | Slides |
+| 8.3 | Slide: Features (10 slides) | 4 | Slides |
+| 8.4 | Slide: Demo (5 slides + embed video) | 5 | Slides |
+| 8.5 | Slide: Case Studies (4 slides) | 2 | Slides |
+| 8.6 | Slide: Conclusion (3 slides) | 1 | Slides |
+| 8.7 | Review slides | 3 | Final review |
+
+### 📋 Deliverables Tuần 8:
+- [ ] Báo cáo hoàn chỉnh (25-30 trang) (TV1)
+- [ ] Slide thuyết trình (35 slides) (TV2)
+- [ ] Demo video embedded trong slides (TV2)
+
+### 📑 Cấu trúc Báo cáo:
+
+```
+Chương 1: Giới thiệu (2 trang)
+├── 1.1 Đặt vấn đề
+├── 1.2 Mục tiêu
+└── 1.3 Phạm vi
+
+Chương 2: Kiến trúc QUIC (6 trang)
+├── 2.1 Protocol Stack
+├── 2.2 Connection và Stream
+├── 2.3 Packet và Frame Types
+└── 2.4 So sánh với TCP+TLS
+
+Chương 3: Các đặc điểm nổi bật (10 trang)
+├── 3.1 0-RTT và 1-RTT Handshake
+├── 3.2 Stream Multiplexing
+├── 3.3 Connection Migration
+├── 3.4 Built-in Security
+└── 3.5 Loss Recovery
+
+Chương 4: Demo thực hành (5 trang)
+├── 4.1 Topology
+├── 4.2 Kịch bản 1: Handshake
+├── 4.3 Kịch bản 2: Stream Multiplexing
+├── 4.4 Kịch bản 3: Connection Migration
+└── 4.5 Kịch bản 4: Multi-client
+
+Chương 5: Case Studies (3 trang)
+├── 5.1 Google
+├── 5.2 Cloudflare
+└── 5.3 Meta
+
+Chương 6: Kết luận (2 trang)
+├── 6.1 Tổng kết
+├── 6.2 Hạn chế
+└── 6.3 Hướng phát triển
 ```
 
 ---
 
-## 🗓️ TUẦN 6: DEMO THỰC TẾ VỚI TOPOLOGY (20 giờ/người)
+## 📝 SETUP SCRIPTS
 
-### Mục tiêu: Demo tổng hợp tất cả features trên môi trường thực tế
-
-### 🌐 TOPOLOGY DEMO
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                           QUIC DEMO TOPOLOGY                                         │
-│                     (Free Cloud + Local Ubuntu Server)                               │
-├─────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                      │
-│   ┌──────────────────────────────┐              ┌──────────────────────────────┐    │
-│   │     🖥️ UBUNTU SERVER         │              │     ☁️ FREE CLOUD CLIENT     │    │
-│   │        (Local/VPS)           │              │   (Oracle Cloud Free Tier)    │    │
-│   │                              │              │                              │    │
-│   │   ┌────────────────────┐    │              │   ┌────────────────────┐    │    │
-│   │   │   QUIC Server      │    │    QUIC     │   │   QUIC Client      │    │    │
-│   │   │   (quiche-server)  │◄───┼──────────────┼───│   (quiche-client)  │    │    │
-│   │   │   Port: 4433/UDP   │    │   over      │   │                    │    │    │
-│   │   └────────────────────┘    │  Internet   │   └────────────────────┘    │    │
-│   │                              │              │                              │    │
-│   │   OS: Ubuntu 22.04 LTS      │              │   OS: Ubuntu 22.04 LTS      │    │
-│   │   IP: Public IP / DynDNS    │              │   IP: Oracle Cloud IP       │    │
-│   │   Software:                  │              │   Software:                  │    │
-│   │   - quiche (Cloudflare)     │              │   - quiche (Cloudflare)     │    │
-│   │   - Wireshark               │              │   - curl with HTTP/3        │    │
-│   │   - tcpdump                 │              │   - tc (traffic control)    │    │
-│   └──────────────────────────────┘              └──────────────────────────────┘    │
-│                                                                                      │
-│   ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│   │                            NETWORK CONDITIONS                                 │  │
-│   │   • Real Internet latency: 50-200ms RTT (depending on location)              │  │
-│   │   • Simulated packet loss: 0.1% - 5% using tc netem                          │  │
-│   │   • Bandwidth: Varies (can be limited for testing)                           │  │
-│   └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### ☁️ Tại sao chọn Oracle Cloud Free Tier?
-
-| Cloud Provider | Free Tier | Specs | Lý do chọn/không chọn |
-|----------------|-----------|-------|----------------------|
-| **Oracle Cloud** ✅ | **Always Free** | 2 VMs, 1GB RAM each, 50GB storage | ✅ **CHỌN** - Miễn phí vĩnh viễn, đủ specs |
-| Google Cloud | $300 credit (90 days) | Expired after trial | ❌ Hết hạn sau 90 ngày |
-| AWS | 12 months free | t2.micro only | ❌ Hết hạn sau 1 năm |
-| Azure | $200 credit (30 days) | Limited time | ❌ Quá ngắn |
-
-### 🖥️ Server Setup (Ubuntu Local/VPS)
-
-**Yêu cầu:**
-- Ubuntu 22.04 LTS
-- Public IP hoặc DynDNS
-- Mở port 4433/UDP trên router/firewall
-
-### Thành viên 1 (20 giờ) - Server Setup
-
-| STT | Công việc | Chi tiết | Giờ | Output |
-|-----|-----------|----------|-----|--------|
-| 6.1 | Setup Ubuntu Server | Install OS, configure network | 4 | Working server |
-| 6.2 | Install quiche | Build từ source | 3 | quiche installed |
-| 6.3 | Generate certificates | Self-signed for demo | 2 | cert.pem, key.pem |
-| 6.4 | Configure firewall | UFW, port forwarding | 3 | Accessible from internet |
-| 6.5 | Create test content | Various file sizes | 2 | Test files |
-| 6.6 | Setup monitoring | Wireshark, tcpdump | 3 | Monitoring ready |
-| 6.7 | Document setup | Step-by-step guide | 3 | Setup guide |
-
-### Thành viên 2 (20 giờ) - Cloud Client Setup
-
-| STT | Công việc | Chi tiết | Giờ | Output |
-|-----|-----------|----------|-----|--------|
-| 6.1 | Register Oracle Cloud | Create free account | 1 | Account ready |
-| 6.2 | Create VM instance | Ubuntu 22.04, Always Free | 2 | VM running |
-| 6.3 | Install quiche client | Build từ source | 3 | Client ready |
-| 6.4 | Configure network | Security list, ingress rules | 2 | Network configured |
-| 6.5 | Test connectivity | Ping, basic connection | 2 | Connection working |
-| 6.6 | Run all demos | Handshake, multiplexing, migration | 6 | Demo videos |
-| 6.7 | Record demo video | Screen record with explanation | 4 | Final demo video |
-
-### 📋 Deliverables Tuần 6:
-- [ ] Working Server với public access (TV1)
-- [ ] Working Cloud Client (TV2)
-- [ ] Demo videos cho tất cả scenarios (TV2)
-- [ ] Setup guides cho cả Server và Client (Cả 2)
-
-### 📝 Setup Scripts
-
-#### setup_server.sh (Ubuntu Server)
+### setup_server.sh (Ubuntu Server)
 ```bash
 #!/bin/bash
 echo "=== Setting up QUIC Server on Ubuntu ==="
@@ -380,36 +656,33 @@ openssl req -x509 -newkey rsa:2048 \
   -subj "/CN=quic-demo-server"
 
 # Create test files
-echo "<h1>QUIC Demo Server</h1><p>Connection successful!</p>" > ~/quic-demo/www/index.html
-dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=1K count=100      # 100KB
-dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10      # 10MB  
-dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100      # 100MB
+echo "<h1>QUIC Demo Server</h1>" > ~/quic-demo/www/index.html
+dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1     # 100KB
+dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10     # 10MB
+dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100     # 100MB
+
+# Multiple files for multiplexing test
+for i in {1..5}; do
+  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=10
+done
 
 # Configure firewall
 sudo ufw allow 4433/udp
 sudo ufw reload
 
 echo "=== Server Setup Complete ==="
-echo ""
-echo "Start server with:"
-echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
-echo "  --cert ~/quic-demo/certs/cert.pem \\"
-echo "  --key ~/quic-demo/certs/key.pem \\"
-echo "  --root ~/quic-demo/www \\"
-echo "  --listen 0.0.0.0:4433"
+echo "Start server: cd ~/quiche && ./target/release/examples/quiche-server \\"
+echo "  --cert ~/quic-demo/certs/cert.pem --key ~/quic-demo/certs/key.pem \\"
+echo "  --root ~/quic-demo/www --listen 0.0.0.0:4433"
 ```
 
-#### setup_client.sh (Oracle Cloud VM)
+### setup_cloud_client.sh (Oracle Cloud)
 ```bash
 #!/bin/bash
 echo "=== Setting up QUIC Client on Oracle Cloud ==="
 
-# Update system
 sudo apt update && sudo apt upgrade -y
-
-# Install dependencies
-sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    curl git iproute2
+sudo apt install -y build-essential cmake pkg-config libssl-dev curl git iproute2
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -420,214 +693,59 @@ git clone --recursive https://github.com/cloudflare/quiche.git
 cd quiche
 cargo build --release --examples
 
-# Create test script
-cat > ~/test_quic.sh << 'EOF'
-#!/bin/bash
-SERVER_IP="${1:-YOUR_SERVER_IP}"
-PORT="${2:-4433}"
-
-echo "Testing QUIC connection to $SERVER_IP:$PORT"
-
-# Test 1: Simple connection
-echo "=== Test 1: Simple Connection ==="
-./quiche/target/release/examples/quiche-client \
-  --no-verify https://$SERVER_IP:$PORT/index.html
-
-# Test 2: Download speed test
-echo "=== Test 2: Download Test (10MB) ==="
-time ./quiche/target/release/examples/quiche-client \
-  --no-verify https://$SERVER_IP:$PORT/medium.bin > /dev/null
-
-# Test 3: Multiple streams
-echo "=== Test 3: Multiple Streams ==="
-for i in {1..3}; do
-  ./quiche/target/release/examples/quiche-client \
-    --no-verify https://$SERVER_IP:$PORT/small.bin &
-done
-wait
-echo "All streams complete!"
-EOF
-chmod +x ~/test_quic.sh
-
 echo "=== Client Setup Complete ==="
-echo ""
-echo "Test connection with:"
-echo "~/test_quic.sh YOUR_SERVER_IP 4433"
+echo "Test: ./target/release/examples/quiche-client --no-verify https://YOUR_SERVER:4433/index.html"
 ```
 
-### 🎬 Demo Scenarios
-
-#### Demo 1: 0-RTT vs 1-RTT Handshake
+### setup_local_client.sh (Laptop)
 ```bash
-# First connection (1-RTT) - measure time
-time ./quiche-client --no-verify https://server:4433/index.html
+#!/bin/bash
+echo "=== Setting up QUIC Client on Local Machine ==="
 
-# Second connection (0-RTT) - should be faster
-time ./quiche-client --no-verify https://server:4433/index.html
-```
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    curl git iproute2 wireshark tshark
 
-#### Demo 2: Stream Multiplexing
-```bash
-# Server đã có multiple files
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
 
-# Download 5 files đồng thời
-for i in small medium large; do
-  ./quiche-client --no-verify https://server:4433/$i.bin &
-done
-wait
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
 
-# So sánh với TCP sequential
-```
-
-#### Demo 3: Packet Loss Resilience
-```bash
-# Simulate 5% packet loss
-sudo tc qdisc add dev eth0 root netem loss 5%
-
-# Test QUIC - should still work
-./quiche-client --no-verify https://server:4433/medium.bin
-
-# Clear
-sudo tc qdisc del dev eth0 root
-```
-
----
-
-## 🗓️ TUẦN 7: PHÂN TÍCH HIỆU NĂNG & CASE STUDIES (15 giờ/người)
-
-### Thành viên 1 (15 giờ) - Performance Analysis
-
-| STT | Công việc | Chi tiết | Giờ | Output |
-|-----|-----------|----------|-----|--------|
-| 7.1 | Tổng hợp demo metrics | Latency, throughput, loss recovery | 4 | Performance report |
-| 7.2 | So sánh với TCP baseline | Same tests với TCP | 4 | Comparison data |
-| 7.3 | Case Study: Google | YouTube, Google Search QUIC deployment | 3 | Analysis |
-| 7.4 | Case Study: Cloudflare | Edge network QUIC rollout | 2 | Analysis |
-| 7.5 | Case Study: Meta | Facebook/Instagram QUIC usage | 2 | Analysis |
-
-### Thành viên 2 (15 giờ) - Future & Extensions
-
-| STT | Công việc | Chi tiết | Giờ | Output |
-|-----|-----------|----------|-----|--------|
-| 7.1 | QUIC v2 (RFC 9369) | What's new, improvements | 3 | Document |
-| 7.2 | Multipath QUIC | Multiple paths simultaneously | 3 | Technical overview |
-| 7.3 | QUIC for other protocols | DNS over QUIC, WebTransport | 3 | Use cases |
-| 7.4 | Adoption challenges | UDP blocking, middleboxes | 3 | Analysis |
-| 7.5 | Tạo visual summary | Infographics cho báo cáo | 3 | Visuals |
-
-### 📋 Deliverables Tuần 7:
-- [ ] Performance comparison report (TV1)
-- [ ] Case studies document (TV1)
-- [ ] QUIC extensions overview (TV2)
-- [ ] Visual assets cho báo cáo (TV2)
-
-### 📈 Performance Metrics to Report:
-
-| Metric | Expected QUIC | Expected TCP | Improvement |
-|--------|---------------|--------------|-------------|
-| New Connection Setup | ~1 RTT (50-100ms) | ~2-3 RTT (100-200ms) | **50% faster** |
-| Resumed Connection | ~0 RTT | ~1-2 RTT | **100% faster** |
-| HOL Blocking Impact | None | Significant with loss | **Eliminated** |
-| Network Switch Recovery | <500ms | Connection dropped | **Seamless** |
-
----
-
-## 🗓️ TUẦN 8: BÁO CÁO VÀ THUYẾT TRÌNH (20 giờ/người)
-
-### Thành viên 1 (20 giờ) - Viết báo cáo
-
-| STT | Công việc | Giờ | Output |
-|-----|-----------|-----|--------|
-| 8.1 | Chương 1: Giới thiệu | 2 | Introduction |
-| 8.2 | Chương 2: Kiến trúc QUIC | 4 | Architecture |
-| 8.3 | Chương 3: Các đặc điểm nổi bật | 5 | Features |
-| 8.4 | Chương 4: Demo thực hành | 4 | Demo documentation |
-| 8.5 | Chương 5: Case Studies | 2 | Analysis |
-| 8.6 | Chương 6: Kết luận | 1 | Conclusion |
-| 8.7 | Review và edit | 2 | Final review |
-
-### Thành viên 2 (20 giờ) - Slides và Demo Video
-
-| STT | Công việc | Giờ | Output |
-|-----|-----------|-----|--------|
-| 8.1 | Slide: Introduction (5 slides) | 2 | Slides |
-| 8.2 | Slide: Architecture (8 slides) | 3 | Slides |
-| 8.3 | Slide: Features (10 slides) | 4 | Slides |
-| 8.4 | Slide: Demo (5 slides + video) | 4 | Slides + Video |
-| 8.5 | Slide: Conclusion (3 slides) | 1 | Slides |
-| 8.6 | Edit demo video | 4 | Final video |
-| 8.7 | Review slides | 2 | Final review |
-
-### 📋 Deliverables Tuần 8:
-- [ ] Báo cáo hoàn chỉnh (25-30 trang) (TV1)
-- [ ] Slide thuyết trình (30-35 slides) (TV2)
-- [ ] Demo video (5-10 phút) (TV2)
-
-### 📑 Cấu trúc Báo cáo:
-
-```
-Chương 1: Giới thiệu (2 trang)
-├── 1.1 Đặt vấn đề
-├── 1.2 Mục tiêu
-└── 1.3 Phạm vi
-
-Chương 2: Kiến trúc QUIC (6 trang)
-├── 2.1 Protocol Stack
-├── 2.2 Connection và Stream
-├── 2.3 Packet và Frame Types
-└── 2.4 So sánh với TCP+TLS
-
-Chương 3: Các đặc điểm nổi bật (10 trang)
-├── 3.1 0-RTT và 1-RTT Handshake
-├── 3.2 Stream Multiplexing (No HOL)
-├── 3.3 Connection Migration
-├── 3.4 Built-in Security
-└── 3.5 Loss Recovery
-
-Chương 4: Demo thực hành (5 trang)
-├── 4.1 Topology
-├── 4.2 Demo scenarios
-├── 4.3 Kết quả
-└── 4.4 Screenshots
-
-Chương 5: Case Studies (3 trang)
-├── 5.1 Google
-├── 5.2 Cloudflare
-└── 5.3 Meta
-
-Chương 6: Kết luận (2 trang)
-├── 6.1 Tổng kết
-├── 6.2 Hạn chế
-└── 6.3 Hướng phát triển
+echo "=== Local Client Setup Complete ==="
+echo "Ensure you have both WiFi and Ethernet for migration demo"
 ```
 
 ---
 
 ## ✅ CHECKLIST TIẾN ĐỘ
 
-### Tuần 1-2: Lý thuyết cơ bản
+### Tuần 1-2: Lý thuyết
 - [ ] Protocol Stack diagram (TV1)
 - [ ] Packet/Frame structure (TV2)
 - [ ] So sánh handshake (TV1)
 - [ ] HOL blocking explanation (TV2)
 
-### Tuần 3-4: Cơ chế chi tiết
+### Tuần 3-4: Cơ chế + Setup
 - [ ] 0-RTT/1-RTT document (TV1)
-- [ ] Handshake Wireshark capture (TV2)
-- [ ] Stream multiplexing demo (TV2)
-- [ ] Flow control document (TV1)
+- [ ] Server setup complete (TV2)
+- [ ] Cloud Client setup (TV2)
+- [ ] Local Client setup (TV2)
 
-### Tuần 5-6: Demo thực hành
-- [ ] Server setup complete (TV1)
-- [ ] Client setup complete (TV2)
-- [ ] All demo videos recorded (TV2)
-- [ ] Setup guides written (Cả 2)
+### Tuần 5-6: Demo
+- [ ] All 4 scenarios tested ✓
+- [ ] Video demo recorded ✓
+- [ ] Screenshots collected ✓
+- [ ] Demo guide written ✓
 
-### Tuần 7-8: Báo cáo
+### Tuần 7-8: Report
 - [ ] Performance report (TV1)
 - [ ] Case studies (TV1)
-- [ ] Final report (TV1)
-- [ ] Slides + Video (TV2)
+- [ ] Final report 25-30 pages (TV1)
+- [ ] Slides 35 slides (TV2)
 
 ---
 
@@ -638,8 +756,8 @@ Chương 6: Kết luận (2 trang)
 | quiche | QUIC implementation | https://github.com/cloudflare/quiche |
 | Wireshark | Packet analysis | https://wireshark.org |
 | Oracle Cloud | Free cloud VM | https://oracle.com/cloud/free |
-| draw.io | Diagrams | https://app.diagrams.net |
 | OBS Studio | Screen recording | https://obsproject.com |
+| draw.io | Diagrams | https://app.diagrams.net |
 
 ## 📚 Tài liệu tham khảo
 
@@ -657,12 +775,13 @@ Chương 6: Kết luận (2 trang)
 
 | Tiêu chí | Yêu cầu | ✓ |
 |----------|---------|---|
-| **Nội dung đầy đủ** | Bao quát tất cả đặc điểm quan trọng của QUIC | |
-| **Demo thực tế** | Có topology hoạt động, video demo | |
-| **So sánh rõ ràng** | QUIC vs TCP+TLS với data cụ thể | |
-| **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
-| **Trình bày đẹp** | Diagrams, infographics, slides chuyên nghiệp | |
-| **Thuyết trình tốt** | Demo live + video backup | |
+| **Nội dung đầy đủ** | Bao quát tất cả đặc điểm QUIC | |
+| **Demo thực tế** | 4 kịch bản demo với video | |
+| **Topology rõ ràng** | Server + 3 clients với scenarios cụ thể | |
+| **So sánh data** | QUIC vs TCP+TLS với số liệu thực | |
+| **Hiểu sâu** | Giải thích WHY, không chỉ WHAT | |
+| **Trình bày đẹp** | Diagrams, slides chuyên nghiệp | |
+| **Demo live** | Có thể demo trực tiếp + video backup | |
 
 ---
 

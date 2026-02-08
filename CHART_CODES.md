@@ -131,7 +131,7 @@ import matplotlib.pyplot as plt
 
 # Data
 labels = ['QUIC (HTTP/3)', 'HTTP/2', 'HTTP/1.1']
-sizes = [26.5, 45.3, 28.2]  # Approximate percentages from W3Techs
+sizes = [26.5, 45.3, 28.2]  # Approximate percentages from W3Techs (Q4 2024)
 colors = ['#3498db', '#2ecc71', '#e74c3c']
 explode = (0.05, 0, 0)
 
@@ -522,6 +522,7 @@ plt.show()
 ```python
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
 
 fig, ax = plt.subplots(figsize=(16, 6))
 

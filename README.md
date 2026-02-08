@@ -243,20 +243,24 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A1.1 | Lịch sử phát triển QUIC | gQUIC (2012) → IETF QUIC (2016-2021) → RFC 9000 | Timeline document |
 | A1.2 | Động lực phát triển | Tại sao cần QUIC? Vấn đề của TCP? | Analysis document |
 | A1.3 | QUIC adoption statistics | Google, Cloudflare, Meta, etc. | Statistics summary |
+| A1.4 | 📊 **Vẽ biểu đồ timeline** | Timeline phát triển QUIC từ 2012-2021 | **Timeline diagram** |
 
 ### Công việc của Thành viên 2:
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| A1.4 | Các RFC liên quan | RFC 9000, 9001, 9002, 9114, 9369 | RFC summary |
-| A1.5 | QUIC implementations | quiche, ngtcp2, quinn, etc. | Comparison table |
-| A1.6 | Browser support | Chrome, Firefox, Edge, Safari | Support matrix |
+| A1.5 | Các RFC liên quan | RFC 9000, 9001, 9002, 9114, 9369 | RFC summary |
+| A1.6 | QUIC implementations | quiche, ngtcp2, quinn, etc. | Comparison table |
+| A1.7 | Browser support | Chrome, Firefox, Edge, Safari | Support matrix |
+| A1.8 | 📊 **Vẽ biểu đồ adoption** | Pie/Bar chart: QUIC adoption % theo platform | **Adoption chart** |
 
 ### 📋 Deliverables A1:
 - [ ] Timeline lịch sử QUIC (TV1)
 - [ ] Analysis tại sao cần QUIC (TV1)
 - [ ] RFC summary table (TV2)
 - [ ] Implementation comparison (TV2)
+- [ ] 📊 **Timeline diagram (TV1)**
+- [ ] 📊 **Adoption pie/bar chart (TV2)**
 
 ---
 
@@ -271,11 +275,13 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A2.3 | Connection concept | Connection ID, multiplexing, states | Technical document |
 | A2.4 | Stream concept | Stream ID, types (bidi/unidi), states | Technical document |
 | A2.5 | Đọc RFC 9000 Sections 1-5 | Overview, Versions, Streams | Ghi chú tóm tắt |
+| A2.6 | 📊 **Vẽ sơ đồ Protocol Stack** | QUIC vs TCP/TLS/HTTP stack side-by-side | **Stack comparison diagram** |
 
 ### 📋 Deliverables A2:
 - [ ] QUIC Protocol Stack diagram (TV1)
 - [ ] Stack comparison diagram (TV1)
 - [ ] Connection/Stream concepts document (TV1)
+- [ ] 📊 **Stack comparison visual diagram (TV1)**
 
 ---
 
@@ -294,11 +300,13 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A3.7 | CRYPTO Frame | TLS handshake messages | Document |
 | A3.8 | Flow Control Frames | MAX_DATA, MAX_STREAM_DATA, etc. | Document |
 | A3.9 | Đọc RFC 9000 Sections 12-19 | Packet/Frame formats | Ghi chú |
+| A3.10 | 📊 **Vẽ sơ đồ Packet/Frame** | Diagram các loại packet và frame structure | **Packet/Frame diagrams** |
 
 ### 📋 Deliverables A3:
 - [ ] Packet Types diagram (TV2)
 - [ ] Complete Frame Types table (TV2)
 - [ ] STREAM/ACK Frame analysis (TV2)
+- [ ] 📊 **Packet structure diagrams (TV2)**
 
 ---
 
@@ -318,12 +326,16 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A4.8 | Version Negotiation | Version selection process | Document |
 | A4.9 | 0-RTT Security | Replay attack mitigation | Security analysis |
 | A4.10 | Đọc RFC 9001 | Using TLS to Secure QUIC | Ghi chú |
+| A4.11 | 📊 **Vẽ timing diagram** | So sánh thời gian: TCP+TLS vs QUIC 1-RTT vs 0-RTT | **Timing comparison chart** |
+| A4.12 | 📊 **Vẽ sequence diagram** | Sequence diagram chi tiết cho handshake flows | **Handshake sequence diagrams** |
 
 ### 📋 Deliverables A4:
 - [ ] 1-RTT Handshake sequence diagram (TV1)
 - [ ] 0-RTT sequence diagram (TV1)
 - [ ] TLS 1.3 integration document (TV1)
 - [ ] 0-RTT security analysis (TV1)
+- [ ] 📊 **Timing comparison chart: TCP vs QUIC (TV1)**
+- [ ] 📊 **Detailed handshake sequence diagrams (TV1)**
 
 ---
 
@@ -341,11 +353,15 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A5.6 | QUIC giải quyết HOL | Stream independence | Explanation + Diagram |
 | A5.7 | Stream Concurrency | MAX_STREAMS frame | Document |
 | A5.8 | Đọc RFC 9000 Section 2 | Streams | Ghi chú |
+| A5.9 | 📊 **Vẽ HOL blocking diagram** | So sánh trực quan TCP HOL vs QUIC no-HOL | **HOL comparison diagram** |
+| A5.10 | 📊 **Vẽ Stream state diagram** | State machine cho QUIC streams | **State machine diagram** |
 
 ### 📋 Deliverables A5:
 - [ ] Stream types document (TV2)
 - [ ] Stream state diagram (TV2)
 - [ ] HOL blocking explanation (TV2)
+- [ ] 📊 **HOL blocking comparison diagram (TV2)**
+- [ ] 📊 **Stream state machine diagram (TV2)**
 
 ---
 
@@ -363,11 +379,13 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A6.6 | Passive Migration | Server detects address change | Document |
 | A6.7 | Migration Security | Off-path attack prevention | Security analysis |
 | A6.8 | Đọc RFC 9000 Section 9 | Connection Migration | Ghi chú |
+| A6.9 | 📊 **Vẽ migration sequence** | Sequence diagram cho connection migration process | **Migration sequence diagram** |
 
 ### 📋 Deliverables A6:
 - [ ] Connection ID document (TV1)
 - [ ] Path Validation sequence (TV1)
 - [ ] Migration types comparison (TV1)
+- [ ] 📊 **Migration sequence diagram (TV1)**
 
 ---
 
@@ -384,10 +402,12 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A7.5 | Initial Limits | Transport parameters | Document |
 | A7.6 | Flow Control Tuning | Performance implications | Analysis |
 | A7.7 | Đọc RFC 9000 Section 4 | Flow Control | Ghi chú |
+| A7.8 | 📊 **Vẽ flow control diagram** | Diagram credit-based flow control mechanism | **Flow control visual diagram** |
 
 ### 📋 Deliverables A7:
 - [ ] Flow Control mechanism document (TV2)
 - [ ] Connection vs Stream flow control diagram (TV2)
+- [ ] 📊 **Flow control visual diagram (TV2)**
 
 ---
 
@@ -406,11 +426,15 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A8.7 | BBR Support | Optional, better for some cases | Document |
 | A8.8 | ECN Support | Explicit Congestion Notification | Document |
 | A8.9 | Đọc RFC 9002 | Loss Detection and Congestion Control | Ghi chú |
+| A8.10 | 📊 **Vẽ congestion window graph** | Graph cwnd theo thời gian (CUBIC vs NewReno) | **Congestion control chart** |
+| A8.11 | 📊 **Vẽ RTT estimation diagram** | Diagram RTT calculation | **RTT estimation diagram** |
 
 ### 📋 Deliverables A8:
 - [ ] ACK mechanism document (TV1)
 - [ ] Loss detection algorithm (TV1)
 - [ ] Congestion control overview (TV1)
+- [ ] 📊 **Congestion window graph (TV1)**
+- [ ] 📊 **RTT estimation diagram (TV1)**
 
 ---
 
@@ -469,6 +493,8 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A11.6 | Deployment comparison | TV2 | Pros/Cons analysis |
 | A11.7 | Tạo bảng so sánh tổng hợp | Cả 2 | Final comparison table |
 | A11.8 | Vẽ infographic | TV2 | Visual comparison |
+| A11.9 | 📊 **Vẽ bar chart so sánh** | Bar chart so sánh latency, throughput các protocol | **Performance comparison bar chart** |
+| A11.10 | 📊 **Vẽ radar chart** | Radar chart so sánh features | **Feature radar chart** |
 
 ### 📊 Bảng So sánh Tổng hợp:
 
@@ -486,6 +512,8 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 ### 📋 Deliverables A11:
 - [ ] Complete comparison table (Cả 2)
 - [ ] Infographic (TV2)
+- [ ] 📊 **Performance comparison bar chart (TV1)**
+- [ ] 📊 **Feature radar chart (TV2)**
 
 ---
 
@@ -802,6 +830,7 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 - [ ] Comparison table (TV1)
 - [ ] Wireshark captures (TV2)
 - [ ] Screenshots (TV1 + TV2)
+- [ ] 📊 **Bar chart so sánh handshake timing (TV1)**
 
 ---
 
@@ -819,6 +848,8 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 | B3.4 | Run TCP comparison | Sequential downloads | Timing results |
 | B3.5 | Capture stream interleaving | Wireshark | Captures |
 | B3.6 | Analyze results | HOL blocking evidence | Analysis document |
+| B3.7 | 📊 **Vẽ stream timeline** | Timeline diagram các streams xen kẽ | **Stream interleaving diagram** |
+| B3.8 | 📊 **Vẽ so sánh completion time** | Bar chart so sánh TCP vs QUIC với packet loss | **Completion time comparison chart** |
 
 ### Kịch bản Demo:
 
@@ -859,6 +890,8 @@ ls -la ~/quic-demo/downloads/
 - [ ] Wireshark captures showing interleaving (TV2)
 - [ ] Timing comparison data (TV2)
 - [ ] Screenshots (TV2)
+- [ ] 📊 **Stream interleaving diagram (TV2)**
+- [ ] 📊 **Completion time comparison chart: QUIC vs TCP (TV2)**
 
 ---
 
@@ -876,6 +909,7 @@ ls -la ~/quic-demo/downloads/
 | B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | Wireshark capture |
 | B4.5 | Measure downtime | Time to resume after switch | Measurements |
 | B4.6 | Compare with TCP | TCP connection drops | Comparison |
+| B4.7 | 📊 **Vẽ migration timeline** | Timeline diagram showing migration process | **Migration timeline diagram** |
 
 ### Yêu cầu Network:
 - PC2 cần có cả WiFi và Ethernet kết nối được tới PC1
@@ -935,6 +969,7 @@ sudo ip link set eth0 up
 - [ ] PATH_CHALLENGE/RESPONSE captures (TV1)
 - [ ] Downtime measurement (TV1)
 - [ ] TCP comparison showing dropped connection (TV1)
+- [ ] 📊 **Migration timeline diagram (TV1)**
 
 ---
 
@@ -952,6 +987,8 @@ sudo ip link set eth0 up
 | B5.4 | Capture ACK frames | ACK ranges analysis | Wireshark captures |
 | B5.5 | Compare recovery | QUIC vs TCP | Comparison table |
 | B5.6 | Document findings | Analysis | Report |
+| B5.7 | 📊 **Vẽ line chart packet loss** | Line chart: Packet loss % vs Download time | **Packet loss impact chart** |
+| B5.8 | 📊 **Vẽ recovery comparison** | Bar chart so sánh QUIC vs TCP recovery | **Recovery comparison chart** |
 
 ### Kịch bản Demo:
 
@@ -996,6 +1033,8 @@ sudo tc qdisc del dev eth0 root
 - [ ] Packet loss test results (TV2)
 - [ ] ACK frame captures (TV2)
 - [ ] Recovery comparison table (TV2)
+- [ ] 📊 **Packet loss impact line chart (TV2)**
+- [ ] 📊 **Recovery comparison bar chart (TV2)**
 
 ---
 
@@ -1012,6 +1051,7 @@ sudo tc qdisc del dev eth0 root
 | B6.3 | Run stress test | Cả 2 | Test results |
 | B6.4 | Analyze throughput | TV1 | Performance data |
 | B6.5 | Document results | TV2 | Test report |
+| B6.6 | 📊 **Vẽ throughput chart** | Chart số clients vs throughput | **Scalability chart** |
 
 ### Kịch bản Demo:
 
@@ -1043,6 +1083,7 @@ wait
 - [ ] Multi-client test completed (Cả 2)
 - [ ] Server metrics captured (TV1)
 - [ ] Test report (TV2)
+- [ ] 📊 **Scalability chart: Clients vs Throughput (TV1)**
 
 ---
 
@@ -1084,11 +1125,15 @@ wait
 | C1.4 | Migration performance | Downtime measurement | Analysis |
 | C1.5 | Create performance charts | Graphs, tables | Visualizations |
 | C1.6 | Write performance report | Complete analysis | Document |
+| C1.7 | 📊 **Vẽ tổng hợp performance** | Bar/Line charts tổng hợp từ tất cả demos | **Comprehensive performance charts** |
+| C1.8 | 📊 **Vẽ summary dashboard** | Dashboard tổng kết metrics | **Performance dashboard** |
 
 ### 📋 Deliverables C1:
 - [ ] Performance data compiled (TV1)
 - [ ] Charts và visualizations (TV1)
 - [ ] Performance analysis report (TV1)
+- [ ] 📊 **Comprehensive performance charts (TV1)**
+- [ ] 📊 **Performance summary dashboard (TV1)**
 
 ---
 
@@ -1104,12 +1149,16 @@ wait
 | C2.4 | Akamai QUIC | CDN implementation | Case study |
 | C2.5 | Adoption statistics | Global QUIC adoption | Data summary |
 | C2.6 | Write case studies report | All cases combined | Document |
+| C2.7 | 📊 **Vẽ adoption statistics** | Pie/Bar chart QUIC adoption theo company/platform | **Adoption statistics charts** |
+| C2.8 | 📊 **Vẽ performance comparison** | Charts so sánh hiệu năng từ case studies | **Case study performance charts** |
 
 ### 📋 Deliverables C2:
 - [ ] Google case study (TV2)
 - [ ] Cloudflare case study (TV2)
 - [ ] Meta case study (TV2)
 - [ ] Case studies report (TV2)
+- [ ] 📊 **QUIC adoption statistics charts (TV2)**
+- [ ] 📊 **Case study performance comparison charts (TV2)**
 
 ---
 
@@ -1266,7 +1315,7 @@ wait
 |----------|---------|---|
 | **Nội dung toàn diện** | Bao quát TẤT CẢ đặc điểm QUIC (11 chủ đề lý thuyết) | |
 | **Demo thực tế** | 5 kịch bản demo với video và captures | |
-| **Topology rõ ràng** | 2 Ubuntu PCs, các scenario cụ thể | |
+| **Topology rõ ràng** | 2 Ubuntu PCs + Cloud, các scenario cụ thể | |
 | **So sánh data thực** | QUIC vs TCP+TLS với số liệu từ demo | |
 | **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
 | **Báo cáo chất lượng** | 40-50 trang, diagrams chuyên nghiệp | |
@@ -1274,6 +1323,71 @@ wait
 | **Demo live** | Có thể demo trực tiếp + video backup | |
 | **Phân tích case studies** | Google, Cloudflare, Meta | |
 | **Hướng phát triển** | QUIC v2, Future extensions | |
+| **📊 Biểu đồ chuyên nghiệp** | Charts, diagrams minh họa rõ ràng | |
+
+---
+
+## 📊 DANH SÁCH BIỂU ĐỒ CẦN VẼ
+
+> **Lưu ý**: Biểu đồ là phần QUAN TRỌNG để báo cáo và slides đạt điểm cao. Sử dụng các công cụ như **draw.io**, **Excel/Google Sheets**, **Matplotlib/Python**, hoặc **Canva**.
+
+### Biểu đồ Lý thuyết (PHẦN A):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 1 | Timeline | Lịch sử phát triển QUIC (2012-2021) | TV1 | A1 |
+| 2 | Pie/Bar Chart | QUIC adoption statistics theo platform | TV2 | A1 |
+| 3 | Diagram | QUIC vs TCP/TLS Protocol Stack | TV1 | A2 |
+| 4 | Diagram | Packet và Frame Structure | TV2 | A3 |
+| 5 | Timing Diagram | Handshake comparison: TCP vs QUIC | TV1 | A4 |
+| 6 | Sequence Diagram | 1-RTT và 0-RTT handshake flows | TV1 | A4 |
+| 7 | Diagram | HOL blocking: TCP vs QUIC | TV2 | A5 |
+| 8 | State Diagram | Stream state machine | TV2 | A5 |
+| 9 | Sequence Diagram | Connection Migration process | TV1 | A6 |
+| 10 | Diagram | Flow Control mechanism | TV2 | A7 |
+| 11 | Line Graph | Congestion window over time | TV1 | A8 |
+| 12 | Diagram | RTT estimation | TV1 | A8 |
+| 13 | Bar Chart | Performance comparison (latency, throughput) | TV1 | A11 |
+| 14 | Radar Chart | Feature comparison QUIC vs TCP | TV2 | A11 |
+
+### Biểu đồ Demo (PHẦN B):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 15 | Bar Chart | Handshake timing: Local vs Cloud | TV1 | B2 |
+| 16 | Timeline | Stream interleaving during download | TV2 | B3 |
+| 17 | Bar Chart | Completion time: QUIC vs TCP with loss | TV2 | B3 |
+| 18 | Timeline | Migration process with timestamps | TV1 | B4 |
+| 19 | Line Chart | Packet loss % vs Download time | TV2 | B5 |
+| 20 | Bar Chart | Recovery comparison: QUIC vs TCP | TV2 | B5 |
+| 21 | Line Chart | Scalability: Clients vs Throughput | TV1 | B6 |
+
+### Biểu đồ Phân tích (PHẦN C):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 22 | Dashboard | Performance summary từ tất cả demos | TV1 | C1 |
+| 23 | Mixed Charts | Comprehensive performance comparison | TV1 | C1 |
+| 24 | Pie Chart | QUIC adoption by company | TV2 | C2 |
+| 25 | Bar Chart | Case study performance improvements | TV2 | C2 |
+
+### Tổng hợp phân bổ biểu đồ:
+
+| Thành viên | Số biểu đồ | Loại chính |
+|------------|------------|------------|
+| **TV1** | 13 biểu đồ | Timing, Sequence, Performance, Dashboard |
+| **TV2** | 12 biểu đồ | Diagrams, Charts, State machines, Adoption |
+
+### Công cụ vẽ biểu đồ khuyến nghị:
+
+| Loại biểu đồ | Công cụ |
+|--------------|---------|
+| Diagrams, Flowcharts | draw.io, Lucidchart |
+| Sequence Diagrams | draw.io, PlantUML, Mermaid |
+| Bar/Line/Pie Charts | Excel, Google Sheets, Matplotlib |
+| Infographics | Canva, Figma |
+| Network Topology | draw.io, Packet Tracer |
+| State Diagrams | draw.io, PlantUML |
 
 ---
 

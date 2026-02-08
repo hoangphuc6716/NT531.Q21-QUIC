@@ -1,6 +1,6 @@
-# PHÂN CÔNG CÔNG VIỆC VÀ THỜI GIAN THỰC HIỆN
+# 🚀 ĐỒ ÁN: NGHIÊN CỨU GIAO THỨC QUIC
 
-## Đề tài: Nghiên cứu toàn diện giao thức QUIC - Thiết kế, Cơ chế hoạt động và Ứng dụng thực tế
+## Đề tài: Nghiên cứu và Demo các Đặc điểm Nổi bật của Giao thức QUIC
 
 ### Môn học: NT531.Q21 - Mạng máy tính nâng cao
 
@@ -10,1291 +10,348 @@
 
 | STT | Họ và tên | MSSV | Vai trò | Trách nhiệm chính |
 |-----|-----------|------|---------|-------------------|
-| 1 | Thành viên 1 | [MSSV] | Trưởng nhóm | Kiến trúc QUIC, Bảo mật, Connection Management |
-| 2 | Thành viên 2 | [MSSV] | Thành viên | Stream Multiplexing, Congestion Control, Demo thực hành |
+| 1 | Thành viên 1 | [MSSV] | Trưởng nhóm | Kiến trúc QUIC, Bảo mật, 0-RTT/1-RTT Handshake |
+| 2 | Thành viên 2 | [MSSV] | Thành viên | Stream Multiplexing, Connection Migration, Demo thực hành |
 
 ---
 
-## 🎯 Mục tiêu đề tài
+## 🎯 Mục tiêu đề tài - Điểm 10/10
 
-1. **Nghiên cứu kiến trúc QUIC** - Hiểu rõ thiết kế và các thành phần cốt lõi của giao thức
-2. **Phân tích cơ chế bảo mật** - Tìm hiểu tích hợp TLS 1.3 và các tính năng bảo mật
-3. **Nghiên cứu Stream Multiplexing** - Hiểu cách QUIC xử lý nhiều streams đồng thời
-4. **Nghiên cứu Connection Migration** - Khả năng duy trì kết nối khi đổi mạng
-5. **Phân tích Loss Detection & Congestion Control** - Cơ chế phát hiện mất gói và điều khiển tắc nghẽn
-6. **Xây dựng Demo thực hành** - Triển khai và demo các tính năng của QUIC
-7. **Phân tích ứng dụng thực tế** - Tìm hiểu việc triển khai QUIC trong các hệ thống lớn
+### Các đặc điểm nổi bật của QUIC cần nghiên cứu:
 
----
-
-## 📅 Kế hoạch thời gian tổng quan
-
-| Giai đoạn | Nội dung | Thời gian | Số tuần | Giờ/tuần/người |
-|-----------|----------|-----------|---------|----------------|
-| 1 | Nghiên cứu nền tảng và kiến trúc QUIC | Tuần 1-2 | 2 tuần | 15 giờ/tuần |
-| 2 | Nghiên cứu các cơ chế hoạt động | Tuần 3-4 | 2 tuần | 17.5 giờ/tuần |
-| 3 | Triển khai và Demo thực hành | Tuần 5-6 | 2 tuần | 20 giờ/tuần |
-| 4 | Phân tích ứng dụng và Case Studies | Tuần 7 | 1 tuần | 15 giờ |
-| 5 | Viết báo cáo và hoàn thiện | Tuần 8 | 1 tuần | 20 giờ |
-| **TỔNG** | | **8 tuần** | | **~145 giờ/người** |
+| # | Đặc điểm | Tại sao quan trọng? | Output |
+|---|----------|---------------------|--------|
+| 1 | **0-RTT Handshake** | Giảm latency xuống 0ms cho returning users | So sánh với TCP+TLS (2-3 RTT) |
+| 2 | **Multiplexed Streams** | Không có Head-of-Line blocking | Demo nhiều streams đồng thời |
+| 3 | **Connection Migration** | Duy trì kết nối khi đổi IP/network | Demo đổi WiFi → 4G |
+| 4 | **Built-in Encryption** | TLS 1.3 tích hợp, always encrypted | Phân tích bảo mật |
+| 5 | **Improved Loss Recovery** | ACK ranges, NACK implicit | So sánh với TCP |
+| 6 | **User-space Implementation** | Dễ update, không cần kernel changes | Ưu điểm triển khai |
 
 ---
 
-## 📝 CHI TIẾT PHÂN CÔNG CÔNG VIỆC THEO TUẦN
+## 📅 Kế hoạch thời gian - 8 tuần
+
+| Tuần | Nội dung chính | Đặc điểm QUIC focus | Output |
+|------|----------------|---------------------|--------|
+| 1 | Kiến trúc QUIC cơ bản | Protocol Stack, Packet/Frame | Tài liệu kiến trúc |
+| 2 | So sánh QUIC vs TCP+TLS | Tại sao QUIC tốt hơn? | Bảng so sánh chi tiết |
+| 3 | 0-RTT và 1-RTT Handshake | **Tốc độ kết nối** | Sequence diagrams |
+| 4 | Stream Multiplexing | **Không HOL blocking** | Demo + Capture |
+| 5 | Connection Migration | **Unique feature** | Demo thực tế |
+| 6 | Demo tổng hợp (Topology) | Tất cả features | Video demo |
+| 7 | Case Studies & Performance | Google, Cloudflare, Meta | Báo cáo phân tích |
+| 8 | Báo cáo & Thuyết trình | Tổng hợp | Báo cáo + Slides |
 
 ---
 
-## 🗓️ TUẦN 1: NỀN TẢNG VÀ KIẾN TRÚC QUIC (15 giờ/người)
+## 🗓️ TUẦN 1: KIẾN TRÚC QUIC CƠ BẢN (15 giờ/người)
 
-### Thành viên 1 (15 giờ) - Lịch sử và Kiến trúc cốt lõi
+### Mục tiêu: Hiểu cấu trúc và các thành phần của QUIC
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 1.1 | Nghiên cứu lịch sử phát triển QUIC | - Đọc tài liệu về gQUIC (Google QUIC 2012-2015)<br>- Quá trình chuẩn hóa IETF (2016-2021)<br>- Sự khác biệt gQUIC vs IETF QUIC<br>- Động lực phát triển QUIC | 4 | Tài liệu 2-3 trang |
-| 1.2 | Nghiên cứu kiến trúc QUIC Protocol Stack | - Vẽ sơ đồ protocol stack (QUIC, TLS 1.3, UDP, IP)<br>- Mô tả Connection, Stream, Frame, Packet<br>- Phân tích mối quan hệ giữa các components | 5 | Sơ đồ kiến trúc + mô tả chi tiết |
-| 1.3 | Đọc RFC 9000 (Sections 1-8) | - Giới thiệu và tổng quan<br>- Packet Types và Formats<br>- Stream States và Lifecycle<br>- Frame Types và Encoding | 4 | Ghi chú tóm tắt với diagrams |
-| 1.4 | Thu thập tài liệu tham khảo | - RFC 9000, 9001, 9002, 9114<br>- Academic papers từ Google Scholar<br>- Blog posts từ Cloudflare, Google, Meta | 2 | Danh sách 15-20 tài liệu có chú thích |
+### Thành viên 1 (15 giờ) - Protocol Stack & History
 
-### Thành viên 2 (15 giờ) - Packet Structure và Frame Types
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 1.1 | Lịch sử QUIC | gQUIC (2012) → IETF QUIC (2021) → RFC 9000 | 3 | Timeline document |
+| 1.2 | QUIC Protocol Stack | Application → QUIC → TLS 1.3 → UDP → IP | 4 | Sơ đồ kiến trúc |
+| 1.3 | Connection & Stream concepts | Connection ID, Stream ID, multiplexing | 4 | Tài liệu khái niệm |
+| 1.4 | Đọc RFC 9000 (Sections 1-10) | Overview, Streams, Flow Control | 4 | Ghi chú tóm tắt |
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 1.1 | Nghiên cứu QUIC Packet Structure | - Long Header vs Short Header packets<br>- Packet Number Spaces (Initial, Handshake, 1-RTT)<br>- Version Negotiation packet<br>- Retry packet | 4 | Tài liệu kỹ thuật với diagrams |
-| 1.2 | Phân tích chi tiết Frame Types | - STREAM, ACK, CRYPTO frames<br>- CONNECTION_CLOSE, RESET_STREAM<br>- PADDING, PING, PATH_CHALLENGE<br>- MAX_DATA, MAX_STREAM_DATA | 5 | Bảng tổng hợp Frame Types |
-| 1.3 | Đọc RFC 9000 (Sections 9-19) | - Connection Termination<br>- Error Handling<br>- Security Considerations<br>- IANA Considerations | 4 | Ghi chú tóm tắt |
-| 1.4 | Tìm hiểu HTTP/3 và mối quan hệ với QUIC | - HTTP/3 sử dụng QUIC như thế nào<br>- QPACK header compression<br>- Mapping HTTP semantics to QUIC streams | 2 | Tài liệu tóm tắt HTTP/3 |
+### Thành viên 2 (15 giờ) - Packet & Frame Structure
 
-### 📋 Deliverables cuối Tuần 1:
-> **Ghi chú:** TV1 = Thành viên 1, TV2 = Thành viên 2
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 1.1 | Packet Types | Long Header (Initial, Handshake) vs Short Header (1-RTT) | 4 | Diagrams |
+| 1.2 | Frame Types | STREAM, ACK, CRYPTO, MAX_DATA, PATH_CHALLENGE | 5 | Bảng tổng hợp |
+| 1.3 | Packet Number Spaces | Initial, Handshake, Application Data | 3 | Tài liệu |
+| 1.4 | Đọc RFC 9000 (Sections 11-22) | Frames, Packets, Error Codes | 3 | Ghi chú |
 
-- [ ] Tài liệu lịch sử và động lực phát triển QUIC (TV1)
-- [ ] Sơ đồ kiến trúc QUIC Protocol Stack (TV1)
-- [ ] Tài liệu về QUIC Packet Structure (TV2)
+### 📋 Deliverables Tuần 1:
+- [ ] Sơ đồ QUIC Protocol Stack (TV1)
 - [ ] Bảng tổng hợp Frame Types (TV2)
-- [ ] Danh sách tài liệu tham khảo (Cả 2)
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 1
-
-#### Task 1.1 (TV1): Nghiên cứu lịch sử phát triển QUIC
-
-**Bước 1: Tìm nguồn tài liệu (30 phút)**
-- Truy cập https://www.chromium.org/quic/ để đọc tài liệu gốc của Google
-- Tìm blog posts từ Google về gQUIC (2013-2015)
-- Tìm IETF mailing list archives về QUIC standardization
-
-**Bước 2: Đọc và ghi chép về gQUIC (1 giờ)**
-- Đọc paper "The QUIC Transport Protocol: Design and Internet-Scale Deployment" (Google, 2017)
-- Ghi chú các đặc điểm của gQUIC:
-  - Năm bắt đầu phát triển (2012)
-  - Mục tiêu ban đầu (giảm latency cho Google services)
-  - Các phiên bản gQUIC (Q043, Q046, etc.)
-
-**Bước 3: Nghiên cứu quá trình chuẩn hóa IETF (1.5 giờ)**
-- Đọc timeline từ IETF QUIC Working Group
-- Ghi chú các milestones:
-  - 2016: IETF bắt đầu làm việc với QUIC
-  - 2018: Draft versions
-  - 2021: RFC 9000 được publish
-
-**Bước 4: Phân tích động lực phát triển (1 giờ)**
-- Vấn đề của TCP: HOL blocking, handshake chậm
-- Nhu cầu từ các ứng dụng web hiện đại
-- Sự phổ biến của mobile internet
-
-**Bước 5: Viết tài liệu tổng hợp (30 phút)**
-- Viết 2-3 trang tổng hợp
-- Thêm timeline diagram
-- Cite nguồn tài liệu
-
-#### Task 1.2 (TV1): Nghiên cứu kiến trúc QUIC Protocol Stack
-
-**Bước 1: Đọc RFC 9000 Section 2 - Overview (1 giờ)**
-- Hiểu khái niệm Connection
-- Hiểu khái niệm Stream
-- Hiểu khái niệm Packet và Frame
-
-**Bước 2: Vẽ sơ đồ Protocol Stack (1 giờ)**
-- Sử dụng draw.io hoặc Lucidchart
-- Vẽ các layers:
-  ```
-  +------------------+
-  |    HTTP/3        |
-  +------------------+
-  |    QUIC          |
-  +------------------+
-  |    TLS 1.3       | (integrated)
-  +------------------+
-  |    UDP           |
-  +------------------+
-  |    IP            |
-  +------------------+
-  ```
-
-**Bước 3: Mô tả các thành phần cốt lõi (2 giờ)**
-- **Connection**: Connection ID, state machine, multiple paths
-- **Stream**: Stream ID, bidirectional/unidirectional, states, flow control
-- **Frame**: STREAM, ACK, CRYPTO, PADDING, CONNECTION_CLOSE, etc.
-- **Packet**: Long header vs Short header, packet number spaces
-
-**Bước 4: Viết mô tả chi tiết (1 giờ)**
-- Giải thích từng component
-- Thêm ví dụ cụ thể
-- Export sơ đồ dạng PNG/SVG
-
-#### Task 1.1 (TV2): Nghiên cứu QUIC Packet Structure
-
-**Bước 1: Đọc RFC 9000 Section 17 - Packet Formats (1 giờ)**
-- Long Header Packets: Initial, 0-RTT, Handshake, Retry
-- Short Header Packets: 1-RTT
-
-**Bước 2: Vẽ diagram Packet Headers (1.5 giờ)**
-```
-Long Header Packet:
-+-+-+-+-+-+-+-+-+
-|1|1| Type |Res |  Header Form = 1 (Long)
-+-+-+-+-+-+-+-+-+
-|    Version    |
-+-+-+-+-+-+-+-+-+
-| DCID Len | Destination Connection ID ...
-+-+-+-+-+-+-+-+-+
-| SCID Len | Source Connection ID ...
-+-+-+-+-+-+-+-+-+
-| Payload ...
-+-+-+-+-+-+-+-+-+
-
-Short Header Packet:
-+-+-+-+-+-+-+-+-+
-|0|1|S|R|R|K|P P|  Header Form = 0 (Short)
-+-+-+-+-+-+-+-+-+
-| Destination Connection ID ...
-+-+-+-+-+-+-+-+-+
-| Packet Number ...
-+-+-+-+-+-+-+-+-+
-| Protected Payload ...
-+-+-+-+-+-+-+-+-+
-```
-
-**Bước 3: Phân tích Packet Number Spaces (1 giờ)**
-- Initial Packet Number Space
-- Handshake Packet Number Space
-- Application Data Packet Number Space
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
-- Tổng hợp về packet structure
-- Thêm diagrams
-
-#### Task 1.2 (TV2): Phân tích chi tiết Frame Types
-
-**Bước 1: Đọc RFC 9000 Section 19 - Frame Types (2 giờ)**
-- Liệt kê tất cả Frame Types
-- Hiểu format của mỗi frame
-
-**Bước 2: Tạo bảng tổng hợp Frame Types (2 giờ)**
-```
-| Frame Type | Value | Description | Use Case |
-|------------|-------|-------------|----------|
-| PADDING | 0x00 | Padding frame | Increase packet size |
-| PING | 0x01 | Keep-alive | Connection liveness |
-| ACK | 0x02-0x03 | Acknowledgment | Reliable delivery |
-| RESET_STREAM | 0x04 | Reset stream | Error handling |
-| STOP_SENDING | 0x05 | Stop sending | Flow control |
-| CRYPTO | 0x06 | Crypto data | TLS handshake |
-| NEW_TOKEN | 0x07 | New token | Address validation |
-| STREAM | 0x08-0x0f | Stream data | Application data |
-| MAX_DATA | 0x10 | Connection-level flow control | |
-| MAX_STREAM_DATA | 0x11 | Stream-level flow control | |
-| ... | ... | ... | ... |
-```
-
-**Bước 3: Viết mô tả chi tiết (1 giờ)**
-- Giải thích use case của từng frame
-- Thêm ví dụ cụ thể
+- [ ] Tài liệu Connection/Stream concepts (TV1)
+- [ ] Diagrams Packet Structure (TV2)
 
 ---
 
-## 🗓️ TUẦN 2: BẢO MẬT VÀ CONNECTION MANAGEMENT (15 giờ/người)
+## 🗓️ TUẦN 2: SO SÁNH QUIC vs TCP+TLS (15 giờ/người)
 
-### Thành viên 1 (15 giờ) - Bảo mật và Handshake
+### Mục tiêu: Hiểu rõ tại sao QUIC tốt hơn TCP+TLS
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 2.1 | Nghiên cứu TLS 1.3 Integration | - Cách QUIC tích hợp TLS 1.3<br>- CRYPTO frames và TLS messages<br>- Không dùng TLS record layer<br>- Encryption levels | 5 | Tài liệu bảo mật chi tiết |
-| 2.2 | Nghiên cứu 1-RTT và 0-RTT Handshake | - Phân tích 1-RTT handshake chi tiết<br>- Cơ chế 0-RTT Resumption<br>- Pre-Shared Key (PSK)<br>- Replay attack considerations | 5 | Sequence diagrams + tài liệu |
-| 2.3 | Nghiên cứu Packet Protection | - Header protection mechanism<br>- Payload encryption (AEAD)<br>- Key derivation process | 3 | Tài liệu kỹ thuật |
-| 2.4 | Phân tích Security Considerations | - Address validation<br>- Connection ID và privacy<br>- Amplification attack mitigation | 2 | Security analysis document |
+### Thành viên 1 (15 giờ) - Connection Establishment
 
-### Thành viên 2 (15 giờ) - Connection Migration và Flow Control
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 2.1 | TCP + TLS 1.2 Handshake | 3-RTT (TCP SYN + TLS Full) | 4 | Sequence diagram |
+| 2.2 | TCP + TLS 1.3 Handshake | 2-RTT (TCP SYN + TLS 1-RTT) | 3 | Sequence diagram |
+| 2.3 | QUIC 1-RTT Handshake | 1-RTT (Combined transport + crypto) | 4 | Sequence diagram |
+| 2.4 | QUIC 0-RTT Handshake | 0-RTT với PSK | 4 | Sequence diagram + Security analysis |
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 2.1 | Nghiên cứu Connection Migration | - Khả năng đổi IP/port<br>- Connection ID rotation<br>- Path validation<br>- NAT rebinding handling | 5 | Tài liệu + diagrams |
-| 2.2 | Nghiên cứu Flow Control | - Connection-level flow control<br>- Stream-level flow control<br>- MAX_DATA, MAX_STREAM_DATA frames<br>- Credit-based flow control | 4 | Tài liệu kỹ thuật |
-| 2.3 | Nghiên cứu Stream Multiplexing | - Stream ID encoding<br>- Bidirectional vs Unidirectional streams<br>- Stream prioritization<br>- Stream concurrency limits | 4 | Tài liệu + diagrams |
-| 2.4 | Phân tích NAT/Firewall Traversal | - UDP và middleboxes<br>- Connection ID và NAT<br>- Fallback mechanisms | 2 | Analysis document |
+### Thành viên 2 (15 giờ) - Head-of-Line Blocking
 
-### 📋 Deliverables cuối Tuần 2:
-- [ ] Tài liệu TLS 1.3 Integration (TV1)
-- [ ] Sequence diagrams cho 1-RTT và 0-RTT handshake (TV1)
-- [ ] Tài liệu Connection Migration (TV2)
-- [ ] Tài liệu Flow Control và Stream Multiplexing (TV2)
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 2.1 | TCP HOL Blocking | Tại sao HTTP/2 over TCP vẫn bị HOL? | 4 | Diagrams + Explanation |
+| 2.2 | QUIC Stream Independence | Mỗi stream độc lập, packet loss không ảnh hưởng stream khác | 5 | Diagrams |
+| 2.3 | Bảng so sánh tổng hợp | QUIC vs TCP+TLS: Latency, HOL, Migration, Security | 4 | Comparison table |
+| 2.4 | Vẽ infographic | Visual comparison cho báo cáo | 2 | Infographic |
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 2
+### 📋 Deliverables Tuần 2:
+- [ ] 4 Sequence diagrams so sánh handshake (TV1)
+- [ ] HOL blocking explanation + diagrams (TV2)
+- [ ] Bảng so sánh QUIC vs TCP+TLS (TV2)
+- [ ] Infographic tổng hợp (TV2)
 
-#### Task 2.1 (TV1): Nghiên cứu TLS 1.3 Integration
+### 📊 Bảng So sánh Quan trọng:
 
-**Bước 1: Đọc RFC 9001 - Using TLS to Secure QUIC (1.5 giờ)**
-- Hiểu cách QUIC integrate TLS 1.3
-- Không dùng TLS record layer
-- CRYPTO frames carry TLS messages
-
-**Bước 2: Hiểu Encryption Levels (1.5 giờ)**
-```
-Level 0: Initial (derived from connection ID)
-         - Dùng cho Initial packets
-         - Keys derived from Destination Connection ID
-         
-Level 1: Handshake (derived from handshake secrets)
-         - Dùng sau khi nhận ServerHello
-         
-Level 2: 1-RTT (derived from handshake completion)
-         - Application data encryption
-         
-Level 3: 0-RTT (derived from PSK)
-         - Early data encryption
-```
-
-**Bước 3: Hiểu Key Derivation (1.5 giờ)**
-- HKDF-Extract và HKDF-Expand-Label
-- Separate keys cho client và server
-- Separate keys cho header protection
-- Key update mechanism
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
-
-#### Task 2.2 (TV1): Nghiên cứu 1-RTT và 0-RTT Handshake
-
-**Bước 1: Vẽ 1-RTT Handshake Sequence Diagram (1.5 giờ)**
-```
-Client                                    Server
-  |                                         |
-  |--- Initial[CRYPTO: ClientHello] ------->|
-  |<-- Initial[CRYPTO: ServerHello] --------|
-  |<-- Handshake[CRYPTO: EncryptedExt] -----|
-  |<-- Handshake[CRYPTO: Certificate] ------|
-  |<-- Handshake[CRYPTO: CertVerify] -------|
-  |<-- Handshake[CRYPTO: Finished] ---------|
-  |--- Handshake[CRYPTO: Finished] -------->|
-  |<========== 1-RTT Data =================>|
-```
-
-**Bước 2: Vẽ 0-RTT Resumption Diagram (1.5 giờ)**
-```
-Client                                    Server
-  |                                         |
-  |--- Initial[CRYPTO: ClientHello] ------->|
-  |--- 0-RTT[STREAM: Early Data] ---------->|  <- Data sent immediately!
-  |<-- Initial[CRYPTO: ServerHello] --------|
-  |<-- Handshake[...] ----------------------|
-  |<========== 1-RTT Data =================>|
-```
-
-**Bước 3: Phân tích 0-RTT Security (1.5 giờ)**
-- Replay attack risk
-- Anti-replay mechanisms
-- Idempotent requests only
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
-
-#### Task 2.1 (TV2): Nghiên cứu Connection Migration
-
-**Bước 1: Đọc RFC 9000 Section 9 (1.5 giờ)**
-- Connection Migration cơ bản
-- Path validation process
-- Connection ID rotation
-
-**Bước 2: Vẽ diagrams (2 giờ)**
-```
-Connection Migration Scenario:
-Client (WiFi: IP1) ────────────> Server
-        |                           |
-        | [Switch to Mobile]        |
-        |                           |
-Client (4G: IP2) ──────────────────>|  <- Same Connection ID!
-        |                           |
-        |<── PATH_CHALLENGE ────────|
-        |─── PATH_RESPONSE ────────>|
-        |                           |
-        |<═══ Continue Data ════════|
-```
-
-**Bước 3: Phân tích use cases (1 giờ)**
-- Mobile handoff (WiFi → Cellular)
-- NAT rebinding
-- Multi-path QUIC (future)
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
-
-#### Task 2.2 (TV2): Nghiên cứu Flow Control
-
-**Bước 1: Hiểu Connection-level Flow Control (1 giờ)**
-- MAX_DATA frame
-- Initial connection flow control limit
-- Flow control window updates
-
-**Bước 2: Hiểu Stream-level Flow Control (1 giờ)**
-- MAX_STREAM_DATA frame
-- Per-stream limits
-- Independent of connection-level
-
-**Bước 3: Vẽ diagrams (1.5 giờ)**
-```
-Flow Control Example:
-Client                                    Server
-  |                                         |
-  |─── STREAM (1000 bytes) ───────────────>|
-  |                                         |
-  |<── MAX_STREAM_DATA (limit: 5000) ──────|  <- More credit
-  |                                         |
-  |─── STREAM (2000 bytes) ───────────────>|
-```
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
+| Feature | TCP + TLS 1.2 | TCP + TLS 1.3 | QUIC |
+|---------|---------------|---------------|------|
+| **New Connection** | 3 RTT | 2 RTT | **1 RTT** |
+| **Resumed Connection** | 2 RTT | 1 RTT | **0 RTT** |
+| **HOL Blocking** | Yes (TCP level) | Yes (TCP level) | **No** |
+| **Connection Migration** | No | No | **Yes** |
+| **Built-in Encryption** | Separate (TLS) | Separate (TLS) | **Integrated** |
+| **User-space** | No (kernel) | No (kernel) | **Yes** |
 
 ---
 
-## 🗓️ TUẦN 3: LOSS DETECTION VÀ CONGESTION CONTROL (20 giờ/người)
+## 🗓️ TUẦN 3: 0-RTT VÀ 1-RTT HANDSHAKE CHI TIẾT (20 giờ/người)
 
-### Thành viên 1 (20 giờ) - Loss Detection
+### Mục tiêu: Hiểu sâu cơ chế handshake - USP lớn nhất của QUIC
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 3.1 | Nghiên cứu ACK Mechanism | - ACK frame structure<br>- ACK ranges và gaps<br>- ACK Delay field<br>- RTT estimation | 6 | Tài liệu kỹ thuật |
-| 3.2 | Nghiên cứu Packet Number Encoding | - Packet number spaces<br>- Truncated packet numbers<br>- Packet number decoding | 4 | Tài liệu |
-| 3.3 | Nghiên cứu Loss Detection Algorithm | - Time-based detection<br>- Packet-based detection (3 packets)<br>- Probe Timeout (PTO)<br>- Persistent Congestion | 6 | Tài liệu chi tiết + flowcharts |
-| 3.4 | So sánh với TCP Loss Detection | - TCP FACK<br>- TCP RACK<br>- Ưu điểm của QUIC approach | 4 | Comparison document |
+### Thành viên 1 (20 giờ) - Handshake Mechanics
 
-### Thành viên 2 (20 giờ) - Congestion Control
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 3.1 | 1-RTT Handshake chi tiết | Initial → Handshake → 1-RTT packets | 5 | Detailed sequence |
+| 3.2 | TLS 1.3 Integration | CRYPTO frames, không dùng TLS record layer | 5 | Technical document |
+| 3.3 | 0-RTT Early Data | PSK, session tickets, replay attack mitigation | 5 | Security analysis |
+| 3.4 | Key Derivation | HKDF, encryption levels, key update | 5 | Crypto document |
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 3.1 | Nghiên cứu QUIC Congestion Control | - Congestion window<br>- Slow start<br>- Congestion avoidance<br>- Recovery phase | 6 | Tài liệu kỹ thuật |
-| 3.2 | Phân tích RFC 9002 Algorithms | - NewReno-like congestion control<br>- Pacing<br>- Application-limited behavior | 5 | Tài liệu |
-| 3.3 | Tìm hiểu các Congestion Control khác | - CUBIC for QUIC<br>- BBR for QUIC<br>- Pluggable congestion control | 5 | Comparison document |
-| 3.4 | Nghiên cứu ECN support | - Explicit Congestion Notification<br>- ECN in QUIC<br>- Benefits và limitations | 4 | Tài liệu |
+### Thành viên 2 (20 giờ) - Packet Protection
 
-### 📋 Deliverables cuối Tuần 3:
-- [ ] Tài liệu ACK Mechanism và Loss Detection (TV1)
-- [ ] Flowcharts cho Loss Detection Algorithm (TV1)
-- [ ] Tài liệu Congestion Control (TV2)
-- [ ] Comparison document: QUIC CC vs TCP CC (TV2)
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 3.1 | Header Protection | Packet number encryption, why needed | 5 | Document + Diagram |
+| 3.2 | Payload Encryption | AEAD (AES-GCM, ChaCha20-Poly1305) | 5 | Technical document |
+| 3.3 | Address Validation | Token, Retry packet, amplification attack | 5 | Security document |
+| 3.4 | Chuẩn bị Demo handshake | Capture QUIC handshake với Wireshark | 5 | Wireshark screenshots |
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 3
+### 📋 Deliverables Tuần 3:
+- [ ] Chi tiết 1-RTT và 0-RTT handshake (TV1)
+- [ ] TLS 1.3 integration document (TV1)
+- [ ] Header/Payload protection document (TV2)
+- [ ] Wireshark capture của handshake (TV2)
 
-#### Task 3.1 (TV1): Nghiên cứu ACK Mechanism
+### 🔐 0-RTT Security Considerations:
 
-**Bước 1: Đọc RFC 9002 Section 2 (1.5 giờ)**
-- Hiểu ACK frame structure
-- Largest Acknowledged, ACK Delay, ACK Range Count
-- First ACK Range, ACK Ranges
-
-**Bước 2: Vẽ diagram ACK mechanism (2 giờ)**
 ```
-ACK Frame Example:
-Largest Acknowledged: 10
-ACK Delay: 25ms
-ACK Range Count: 2
-First ACK Range: 3        -> Received: 10, 9, 8, 7
-ACK Range [Gap: 1, Length: 2] -> Received: 5, 4, 3
-                          -> Missing: 6
+⚠️ 0-RTT Early Data có thể bị REPLAY ATTACK!
 
-Received packets: 3, 4, 5, 7, 8, 9, 10
-Missing packet: 6
+Mitigation strategies:
+1. Server chỉ accept idempotent requests trong 0-RTT
+2. Single-use session tickets
+3. Strike register để detect duplicates
+4. Application-level replay protection
 ```
-
-**Bước 3: Hiểu RTT Estimation (1.5 giờ)**
-- min_rtt, smoothed_rtt, rttvar
-- RTT calculation from ACK Delay
-- Impact on loss detection
-
-**Bước 4: Viết tài liệu (1 giờ)**
-
-#### Task 3.3 (TV1): Nghiên cứu Loss Detection Algorithm
-
-**Bước 1: Hiểu Packet-based Detection (2 giờ)**
-- Packet Threshold: kPacketThreshold = 3
-- Khi nhận ACK cho packet N, packets < N-3 được coi là lost
-
-**Bước 2: Hiểu Time-based Detection (2 giờ)**
-- Time Threshold: 9/8 * max(smoothed_rtt, latest_rtt)
-- Packets sent before time threshold are lost
-
-**Bước 3: Vẽ flowchart (1.5 giờ)**
-```
-                    ┌─────────────────┐
-                    │ Receive ACK     │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                              │
-    ┌─────────▼─────────┐        ┌──────────▼──────────┐
-    │ Packet Threshold  │        │  Time Threshold     │
-    │ Check (N-3 rule)  │        │  Check              │
-    └─────────┬─────────┘        └──────────┬──────────┘
-              │                              │
-              └──────────────┬───────────────┘
-                             │
-                    ┌────────▼────────┐
-                    │ Mark packets    │
-                    │ as LOST         │
-                    └────────┬────────┘
-                             │
-                    ┌────────▼────────┐
-                    │ Retransmit      │
-                    │ lost data       │
-                    └─────────────────┘
-```
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
-
-#### Task 3.1 (TV2): Nghiên cứu QUIC Congestion Control
-
-**Bước 1: Đọc RFC 9002 Sections 6-7 (2 giờ)**
-- Congestion window (cwnd)
-- Slow start threshold (ssthresh)
-- Bytes in flight
-
-**Bước 2: Hiểu các phases (2 giờ)**
-```
-Slow Start:
-- cwnd tăng theo số bytes được ACK
-- Dừng khi cwnd >= ssthresh hoặc có loss
-
-Congestion Avoidance:
-- cwnd tăng chậm hơn (additive increase)
-- Dựa trên RTT
-
-Recovery:
-- Khi phát hiện loss
-- cwnd = cwnd / 2
-- ssthresh = cwnd
-```
-
-**Bước 3: Hiểu Pacing (1.5 giờ)**
-- Spread packets over time
-- Avoid bursts
-- Pacing rate calculation
-
-**Bước 4: Viết tài liệu (0.5 giờ)**
 
 ---
 
-## 🗓️ TUẦN 4: TRIỂN KHAI VÀ DEMO THỰC HÀNH (20 giờ/người)
+## 🗓️ TUẦN 4: STREAM MULTIPLEXING (20 giờ/người)
 
-### Thành viên 1 (20 giờ) - Setup QUIC Environment
+### Mục tiêu: Hiểu và demo tính năng multiplexing - Giải quyết HOL blocking
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 4.1 | Cài đặt QUIC Implementation | - Chọn implementation: quiche (Cloudflare) hoặc msquic (Microsoft)<br>- Cài đặt dependencies<br>- Build từ source | 6 | Working QUIC stack |
-| 4.2 | Tạo QUIC Server Demo | - Setup QUIC server với HTTP/3<br>- Tạo SSL certificates<br>- Configure server parameters | 5 | QUIC Server running |
-| 4.3 | Demo Connection Establishment | - Capture 1-RTT handshake với Wireshark<br>- Demo 0-RTT resumption<br>- Phân tích packets | 5 | Wireshark captures + screenshots |
-| 4.4 | Demo Packet Protection | - Capture encrypted packets<br>- Show header protection in action<br>- Compare với unencrypted | 4 | Demo documentation |
+### Thành viên 1 (20 giờ) - Stream Concepts
 
-### Thành viên 2 (20 giờ) - Demo các tính năng QUIC
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 4.1 | Stream Types | Bidirectional vs Unidirectional | 4 | Document |
+| 4.2 | Stream ID encoding | Client/Server initiated, Bidi/Uni | 4 | Diagrams |
+| 4.3 | Stream States | Ready, Send, Data Sent, Data Recvd, Reset | 5 | State diagrams |
+| 4.4 | Flow Control | MAX_DATA, MAX_STREAM_DATA, credit-based | 5 | Technical document |
+| 4.5 | Cài đặt quiche | Build từ source, test locally | 2 | Working setup |
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 4.1 | Demo Stream Multiplexing | - Setup multiple concurrent streams<br>- Show stream independence<br>- Capture stream frames | 6 | Demo + screenshots |
-| 4.2 | Demo Flow Control | - Configure flow control limits<br>- Show MAX_DATA, MAX_STREAM_DATA<br>- Monitor flow control behavior | 5 | Demo documentation |
-| 4.3 | Demo Connection Migration | - Simulate IP change<br>- Show connection maintained<br>- PATH_CHALLENGE/RESPONSE | 5 | Demo + screenshots |
-| 4.4 | Setup Monitoring Tools | - Wireshark với QUIC dissector<br>- qlog format logging<br>- Visualization tools | 4 | Tools configured |
+### Thành viên 2 (20 giờ) - Demo Multiplexing
 
-### 📋 Deliverables cuối Tuần 4:
-- [ ] QUIC Server hoạt động (TV1)
-- [ ] Demo Connection Establishment với captures (TV1)
-- [ ] Demo Stream Multiplexing (TV2)
-- [ ] Demo Connection Migration (TV2)
-- [ ] Monitoring tools configured (TV2)
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 4.1 | Cài đặt demo environment | quiche-server, quiche-client | 4 | Setup guide |
+| 4.2 | Demo multiple streams | 5 concurrent downloads | 5 | Screenshots + Video |
+| 4.3 | Demo HOL blocking comparison | TCP vs QUIC với packet loss | 6 | Comparison video |
+| 4.4 | Capture với Wireshark | Stream frames, interleaving | 3 | Captures + Analysis |
+| 4.5 | Document demo steps | Reproducible demo guide | 2 | Demo guide |
 
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 4
+### 📋 Deliverables Tuần 4:
+- [ ] Stream types và encoding document (TV1)
+- [ ] Flow control mechanism document (TV1)
+- [ ] Working demo environment (TV2)
+- [ ] Video: Multiple streams + HOL blocking comparison (TV2)
 
-#### Task 4.1 (TV1): Cài đặt QUIC Implementation
+### 🎬 Demo Script - Stream Multiplexing:
 
-**Bước 1: Cài đặt quiche (Cloudflare) (2 giờ)**
 ```bash
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
+# Terminal 1: Start QUIC Server
+./quiche-server --cert cert.pem --key key.pem --root ./www --listen 0.0.0.0:4433
 
-# Install dependencies
-sudo apt install -y cmake build-essential pkg-config libssl-dev
-
-# Clone và build quiche
-git clone --recursive https://github.com/cloudflare/quiche.git
-cd quiche
-cargo build --release --examples
-
-# Test với quiche-client (terminal khác)
-./target/release/examples/quiche-client \
-  --no-verify \
-  https://localhost:4433/index.html
-```
-```
-
-**Bước 2: Verify installation (1 giờ)**
-```bash
-# Check built binaries
-ls -la target/release/examples/
-# Should see: quiche-server, quiche-client
-
-# Test basic functionality
-./target/release/examples/quiche-client --help
-./target/release/examples/quiche-server --help
-```
-
-**Bước 3: Tạo SSL certificates (1 giờ)**
-```bash
-mkdir -p ~/quic-demo/certs
-cd ~/quic-demo/certs
-
-# Generate self-signed certificate
-openssl req -x509 -newkey rsa:4096 \
-  -keyout key.pem -out cert.pem \
-  -days 365 -nodes \
-  -subj "/C=VN/ST=HCMC/L=HCMC/O=UIT/CN=localhost"
-```
-
-**Bước 4: Document setup (2 giờ)**
-- Ghi chú các bước cài đặt
-- Note các issues gặp phải
-- Tạo troubleshooting guide
-
-#### Task 4.2 (TV1): Tạo QUIC Server Demo
-
-**Bước 1: Start QUIC server (1 giờ)**
-```bash
-cd ~/quiche
-./target/release/examples/quiche-server \
-  --cert ~/quic-demo/certs/cert.pem \
-  --key ~/quic-demo/certs/key.pem \
-  --root ~/quic-demo/www \
-  --listen 0.0.0.0:4433
-```
-
-**Bước 2: Create test content (1 giờ)**
-```bash
-mkdir -p ~/quic-demo/www
-echo "<h1>QUIC Demo Server</h1>" > ~/quic-demo/www/index.html
-```
-
-**Bước 3: Test với client (2 giờ)**
-```bash
-# Test with quiche-client
-./target/release/examples/quiche-client \
-  --no-verify \
-  https://localhost:4433/index.html
-
-# Test with curl (if HTTP/3 enabled)
-curl --http3 -k https://localhost:4433/index.html
-```
-
-**Bước 4: Document server setup (1 giờ)**
-
-#### Task 4.1 (TV2): Demo Stream Multiplexing
-
-**Bước 1: Setup test scenario (2 giờ)**
-```bash
-# Create multiple files for concurrent requests
+# Terminal 2: Multiple concurrent requests (5 streams)
 for i in {1..5}; do
-  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=100K count=1
+  ./quiche-client --no-verify https://localhost:4433/file$i.bin &
 done
+wait
+echo "All downloads complete!"
+
+# Terminal 3: Wireshark capture
+tshark -i lo -f "udp port 4433" -Y "quic.stream" -T fields \
+  -e frame.number -e quic.stream.stream_id -e quic.stream.length
 ```
 
-**Bước 2: Capture multiplexed streams (2 giờ)**
+---
+
+## 🗓️ TUẦN 5: CONNECTION MIGRATION (20 giờ/người)
+
+### Mục tiêu: Hiểu và demo Connection Migration - Unique feature của QUIC
+
+### Thành viên 1 (20 giờ) - Migration Mechanics
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 5.1 | Connection ID concept | Multiple CIDs, rotation, privacy | 5 | Document |
+| 5.2 | Path Validation | PATH_CHALLENGE, PATH_RESPONSE | 5 | Sequence diagram |
+| 5.3 | NAT Rebinding | Handling NAT timeout | 4 | Technical document |
+| 5.4 | Active vs Passive migration | Client-initiated vs Server detection | 4 | Comparison |
+| 5.5 | Security aspects | Off-path attack prevention | 2 | Security analysis |
+
+### Thành viên 2 (20 giờ) - Demo Connection Migration
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 5.1 | Setup dual-network environment | WiFi + Ethernet or VMs | 5 | Setup guide |
+| 5.2 | Demo migration scenario | Switch network during download | 6 | Video demo |
+| 5.3 | Capture PATH frames | Wireshark analysis | 4 | Captures |
+| 5.4 | Measure migration time | Downtime measurement | 3 | Performance data |
+| 5.5 | Compare với TCP | TCP connection drops, QUIC survives | 2 | Comparison |
+
+### 📋 Deliverables Tuần 5:
+- [ ] Connection ID và Path Validation document (TV1)
+- [ ] Working migration demo (TV2)
+- [ ] Video: Connection migration demo (TV2)
+- [ ] Performance comparison: QUIC migration vs TCP reconnect (TV2)
+
+### 🔄 Connection Migration Demo Script:
+
 ```bash
-# Start Wireshark with QUIC filter
-# Filter: quic
+# Scenario: Download large file, switch network midway
 
-# Run concurrent requests
-# Observe multiple STREAM frames on same connection
-```
+# Step 1: Start server
+./quiche-server --cert cert.pem --key key.pem --root ./www --listen 0.0.0.0:4433
 
-**Bước 3: Analyze stream independence (1.5 giờ)**
-- Show multiple Stream IDs
-- Demonstrate data on different streams
-- Note: streams don't block each other
+# Step 2: Start download on interface eth0
+./quiche-client --no-verify https://server:4433/largefile.bin
 
-**Bước 4: Document findings (0.5 giờ)**
+# Step 3: During download, disable eth0, enable wlan0
+sudo ip link set eth0 down
+sudo ip link set wlan0 up
+# QUIC connection should survive!
 
-#### Task 4.3 (TV2): Demo Connection Migration
-
-**Bước 1: Setup network interfaces (1.5 giờ)**
-```bash
-# Tạo virtual network interface để test connection migration
-sudo ip link add dummy0 type dummy
-sudo ip addr add 192.168.100.1/24 dev dummy0
-sudo ip link set dummy0 up
-
-# Hoặc sử dụng Docker để tạo các network namespaces
-docker network create quic-net-1
-docker network create quic-net-2
-
-# Kiểm tra network interfaces
-ip addr show
-```
-
-**Bước 2: Demo migration scenario (2 giờ)**
-```bash
-# Terminal 1: Start QUIC server
-cd ~/quiche
-./target/release/examples/quiche-server \
-  --cert ~/quic-demo/certs/cert.pem \
-  --key ~/quic-demo/certs/key.pem \
-  --root ~/quic-demo/www \
-  --listen 0.0.0.0:4433
-
-# Terminal 2: Start Wireshark capture
-tshark -i any -f "udp port 4433" -w ~/quic-demo/migration.pcap
-
-# Terminal 3: Start client và trigger migration
-# Bước 1: Kết nối qua interface A
-./target/release/examples/quiche-client \
-  --no-verify \
-  https://localhost:4433/largefile.bin
-
-# Note: Connection Migration scenario:
-# 1. Establish QUIC connection on Interface A
-# 2. During data transfer, change source IP
-# 3. QUIC will automatically send PATH_CHALLENGE
-# 4. Server responds with PATH_RESPONSE
-# 5. Connection continues with same Connection ID
-```
-
-**Bước 3: Capture và analyze (1 giờ)**
-- Wireshark capture before/after migration
-- Show Connection ID unchanged
-- Show PATH validation frames
-
-**Bước 4: Document demo (0.5 giờ)**
-
----
-
-## 🗓️ TUẦN 5: PHÂN TÍCH SÂU CÁC CƠ CHẾ (20 giờ/người)
-
-### Thành viên 1 (20 giờ) - Phân tích Handshake và Bảo mật
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 5.1 | Phân tích chi tiết Handshake Packets | - Decode Initial packets<br>- Decode Handshake packets<br>- Analyze CRYPTO frames content | 6 | Detailed packet analysis |
-| 5.2 | Phân tích Key Derivation | - Track key derivation process<br>- Show encryption key changes<br>- Document key hierarchy | 5 | Technical document |
-| 5.3 | Phân tích Header Protection | - Show protected vs unprotected headers<br>- Analyze protection algorithm<br>- Impact on security | 5 | Analysis document |
-| 5.4 | Security Analysis Summary | - Summarize security mechanisms<br>- Compare với TLS over TCP<br>- Identify potential vulnerabilities | 4 | Security summary |
-
-### Thành viên 2 (20 giờ) - Phân tích Performance Mechanisms
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 5.1 | Phân tích ACK Behavior | - Capture ACK frames<br>- Analyze ACK ranges<br>- Measure ACK Delay | 6 | ACK analysis document |
-| 5.2 | Phân tích Congestion Control | - Monitor cwnd changes<br>- Observe slow start<br>- Capture loss recovery | 5 | CC analysis document |
-| 5.3 | Phân tích Flow Control | - Track flow control limits<br>- Analyze credit updates<br>- Stream vs Connection level | 5 | Flow control analysis |
-| 5.4 | Performance Summary | - Summarize performance mechanisms<br>- Identify optimization opportunities<br>- Best practices | 4 | Performance summary |
-
-### 📋 Deliverables cuối Tuần 5:
-- [ ] Detailed Handshake Analysis (TV1)
-- [ ] Key Derivation Documentation (TV1)
-- [ ] ACK và Congestion Control Analysis (TV2)
-- [ ] Performance Mechanisms Summary (TV2)
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 5
-
-#### Task 5.1 (TV1): Phân tích chi tiết Handshake Packets
-
-**Bước 1: Capture handshake với Wireshark (2 giờ)**
-```
-Wireshark settings:
-- Capture filter: udp port 4433
-- Display filter: quic
-- Enable QUIC decryption (if possible)
-```
-
-**Bước 2: Decode Initial Packets (2 giờ)**
-- Identify packet type (Long Header, Type = Initial)
-- Decode Connection IDs
-- Analyze CRYPTO frame với ClientHello
-
-**Bước 3: Document each packet (2 giờ)**
-```
-Initial Packet Analysis:
-- Header Form: Long (1)
-- Fixed Bit: 1
-- Type: Initial (0x00)
-- Version: 0x00000001
-- DCID Length: 8
-- DCID: [bytes]
-- SCID Length: 0
-- Token Length: 0
-- Payload: CRYPTO frame containing TLS ClientHello
-```
-
-#### Task 5.1 (TV2): Phân tích ACK Behavior
-
-**Bước 1: Capture ACK frames (2 giờ)**
-- Start data transfer
-- Capture ACK frames
-- Note ACK timing
-
-**Bước 2: Analyze ACK content (2 giờ)**
-```
-ACK Frame Analysis:
-- Largest Acknowledged: 15
-- ACK Delay: 2500 (25ms)
-- ACK Range Count: 1
-- First ACK Range: 5 (acknowledges 11-15)
-- Gap: 2 (missing 8, 9)
-- ACK Range: 3 (acknowledges 4-7)
-
-→ Received: 4,5,6,7,11,12,13,14,15
-→ Missing: 8,9,10
-```
-
-**Bước 3: Calculate RTT (1.5 giờ)**
-- Track packet send time
-- Receive ACK time
-- Calculate RTT samples
-
-**Bước 4: Document findings (0.5 giờ)**
-
----
-
-## 🗓️ TUẦN 6: ỨNG DỤNG THỰC TẾ VÀ CASE STUDIES (20 giờ/người)
-
-### Thành viên 1 (20 giờ) - Triển khai QUIC trong thực tế
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 6.1 | Nghiên cứu Google's QUIC Deployment | - Chrome browser support<br>- YouTube, Google services<br>- Deployment statistics | 5 | Case study document |
-| 6.2 | Nghiên cứu Cloudflare's QUIC | - Cloudflare edge network<br>- HTTP/3 support<br>- Performance improvements | 5 | Case study document |
-| 6.3 | Nghiên cứu Facebook/Meta's QUIC | - Proxygen framework<br>- Mobile app usage<br>- Performance results | 5 | Case study document |
-| 6.4 | Tổng hợp Deployment Best Practices | - Server configuration<br>- Client compatibility<br>- Fallback strategies | 5 | Best practices guide |
-
-### Thành viên 2 (20 giờ) - Challenges và Future của QUIC
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 6.1 | Phân tích Deployment Challenges | - UDP blocking<br>- Middlebox issues<br>- CPU overhead | 5 | Challenges document |
-| 6.2 | Nghiên cứu QUIC Extensions | - QUIC Version 2 (RFC 9369)<br>- Multipath QUIC<br>- QUIC-LB (Load Balancing) | 5 | Extensions document |
-| 6.3 | Nghiên cứu QUIC Applications | - WebTransport<br>- MASQUE (proxy)<br>- Media over QUIC | 5 | Applications document |
-| 6.4 | Tổng hợp Future Directions | - Ongoing IETF work<br>- Research areas<br>- Industry adoption | 5 | Future directions |
-
-### 📋 Deliverables cuối Tuần 6:
-- [ ] Case Studies: Google, Cloudflare, Meta (TV1)
-- [ ] Deployment Best Practices Guide (TV1)
-- [ ] Challenges và Solutions Document (TV2)
-- [ ] QUIC Extensions và Future Document (TV2)
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 6
-
-#### Task 6.1 (TV1): Nghiên cứu Google's QUIC Deployment
-
-**Bước 1: Thu thập thông tin (2 giờ)**
-- Google QUIC blog posts
-- Chrome platform status
-- YouTube engineering blog
-
-**Bước 2: Phân tích deployment scale (2 giờ)**
-```
-Google QUIC Statistics:
-- % traffic using QUIC
-- Services using QUIC: YouTube, Gmail, Google Search, etc.
-- Latency improvements observed
-- Mobile vs desktop usage
-```
-
-**Bước 3: Viết case study (1 giờ)**
-```markdown
-## Case Study: Google QUIC Deployment
-
-### Background
-- Google developed gQUIC in 2012
-- Initial deployment in Chrome 2013
-
-### Scale
-- X% of Google's traffic uses QUIC
-- Billions of connections per day
-
-### Key Results
-- Y% reduction in latency
-- Z% improvement in video rebuffering
-
-### Lessons Learned
-- ...
-```
-
-#### Task 6.1 (TV2): Phân tích Deployment Challenges
-
-**Bước 1: Research UDP blocking (1.5 giờ)**
-- Corporate firewalls
-- Mobile carriers
-- Statistics on UDP reachability
-
-**Bước 2: Analyze middlebox issues (1.5 giờ)**
-- NAT behavior
-- Load balancer challenges
-- DDoS protection
-
-**Bước 3: Document CPU overhead (1.5 giờ)**
-- User-space vs kernel
-- Encryption cost
-- Comparison với TCP
-
-**Bước 4: Write summary (0.5 giờ)**
-```markdown
-## QUIC Deployment Challenges
-
-### 1. UDP Blocking
-- ~5-10% of networks block UDP/443
-- Solution: Fallback to TCP/TLS
-
-### 2. Middlebox Issues
-- NATs may timeout UDP flows faster
-- Load balancers need Connection ID awareness
-- Solution: QUIC-LB protocol
-
-### 3. CPU Overhead
-- User-space processing costs
-- Encryption in software
-- Solution: Hardware acceleration, kernel implementation
+# Step 4: Capture and look for PATH_CHALLENGE/PATH_RESPONSE
+tshark -r capture.pcap -Y "quic.frame_type == 0x1a or quic.frame_type == 0x1b"
 ```
 
 ---
 
-## 🗓️ TUẦN 7: PHÂN TÍCH VÀ ĐÁNH GIÁ (15 giờ/người)
+## 🗓️ TUẦN 6: DEMO THỰC TẾ VỚI TOPOLOGY (20 giờ/người)
 
-### Thành viên 1 (15 giờ) - Tổng hợp và Đánh giá
+### Mục tiêu: Demo tổng hợp tất cả features trên môi trường thực tế
 
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 7.1 | Tổng hợp kiến thức về QUIC | - Kiến trúc và thiết kế<br>- Các cơ chế hoạt động<br>- Ưu điểm chính | 4 | Summary document |
-| 7.2 | Đánh giá ưu điểm QUIC | - Faster handshake<br>- No HOL blocking<br>- Connection migration<br>- Built-in encryption | 4 | Advantages analysis |
-| 7.3 | Đánh giá hạn chế QUIC | - UDP challenges<br>- CPU overhead<br>- Deployment complexity | 3 | Limitations analysis |
-| 7.4 | Đưa ra khuyến nghị | - Khi nào nên dùng QUIC<br>- Best practices<br>- Migration strategies | 4 | Recommendations |
-
-### Thành viên 2 (15 giờ) - Chuẩn bị Demo và Presentation
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 7.1 | Chuẩn bị Demo Script | - Demo scenarios<br>- Step-by-step guide<br>- Troubleshooting | 4 | Demo script |
-| 7.2 | Tạo Video Demo | - Record demo sessions<br>- Edit và annotate<br>- Voiceover | 5 | Demo videos |
-| 7.3 | Tạo Diagrams tổng hợp | - Architecture diagrams<br>- Flow diagrams<br>- Comparison charts | 4 | Visual assets |
-| 7.4 | Review Demo với TV1 | - Run through demos<br>- Fix issues<br>- Finalize | 2 | Ready demos |
-
-### 📋 Deliverables cuối Tuần 7:
-- [ ] Tổng hợp kiến thức QUIC (TV1)
-- [ ] Đánh giá ưu/nhược điểm (TV1)
-- [ ] Demo Script và Videos (TV2)
-- [ ] Visual Assets (TV2)
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 7
-
-#### Task 7.1 (TV1): Tổng hợp kiến thức về QUIC
-
-**Bước 1: Compile all research (2 giờ)**
-- Review Tuần 1-6 materials
-- Organize by topic
-- Identify key points
-
-**Bước 2: Write summary (2 giờ)**
-```markdown
-## Tổng hợp: QUIC Protocol
-
-### 1. Kiến trúc
-- Transport layer over UDP
-- Integrated TLS 1.3
-- Stream-based multiplexing
-
-### 2. Các cơ chế chính
-- 1-RTT/0-RTT handshake
-- Connection migration
-- Per-stream flow control
-- Pluggable congestion control
-
-### 3. Bảo mật
-- Always encrypted
-- Header protection
-- Forward secrecy
-
-### 4. Ứng dụng
-- HTTP/3
-- WebTransport
-- Real-time media
-```
-
-#### Task 7.2 (TV2): Tạo Video Demo
-
-**Bước 1: Plan demo scenarios (1 giờ)**
-```
-Demo 1: QUIC Handshake (3 minutes)
-- Show 1-RTT handshake
-- Packet analysis
-
-Demo 2: Stream Multiplexing (3 minutes)
-- Multiple concurrent streams
-- Show independence
-
-Demo 3: Connection Migration (2 minutes)
-- IP change
-- Connection persists
-```
-
-**Bước 2: Record demos (3 giờ)**
-- Screen recording
-- Clear explanations
-- Highlight key points
-
-**Bước 3: Edit videos (1 giờ)**
-- Add annotations
-- Cut unnecessary parts
-- Add voiceover
-
----
-
-## 🗓️ TUẦN 8: VIẾT BÁO CÁO VÀ HOÀN THIỆN (20 giờ/người)
-
-### Thành viên 1 (20 giờ) - Viết báo cáo
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 8.1 | Viết Chương 1: Giới thiệu | - Đặt vấn đề<br>- Mục tiêu nghiên cứu<br>- Phạm vi | 3 | Chương 1 (2-3 trang) |
-| 8.2 | Viết Chương 2: Kiến trúc QUIC | - Lịch sử phát triển<br>- Kiến trúc tổng quan<br>- Packet và Frame structure | 6 | Chương 2 (10-12 trang) |
-| 8.3 | Viết Chương 3: Các cơ chế hoạt động | - Handshake<br>- Stream Multiplexing<br>- Loss Detection<br>- Congestion Control | 6 | Chương 3 (10-12 trang) |
-| 8.4 | Viết Chương 6: Kết luận | - Tóm tắt<br>- Đóng góp<br>- Hướng phát triển | 3 | Chương 6 (2-3 trang) |
-| 8.5 | Review báo cáo | - Kiểm tra lỗi<br>- Đồng bộ format<br>- References | 2 | Final review |
-
-### Thành viên 2 (20 giờ) - Viết báo cáo và Slides
-
-| STT | Công việc | Chi tiết yêu cầu | Giờ | Output |
-|-----|-----------|------------------|-----|--------|
-| 8.1 | Viết Chương 4: Demo và Thực hành | - Môi trường setup<br>- Demo scenarios<br>- Screenshots | 5 | Chương 4 (8-10 trang) |
-| 8.2 | Viết Chương 5: Ứng dụng thực tế | - Case studies<br>- Best practices<br>- Challenges | 5 | Chương 5 (8-10 trang) |
-| 8.3 | Thiết kế Slides thuyết trình | - 20-25 slides<br>- Key findings<br>- Demo screenshots | 5 | Slide deck |
-| 8.4 | Format báo cáo | - Mục lục<br>- Danh mục hình<br>- Tài liệu tham khảo | 3 | Formatted document |
-| 8.5 | Review và finalize | - Final proofreading<br>- Cross-check data<br>- Package deliverables | 2 | Final review |
-
-### 📋 Deliverables cuối Tuần 8:
-- [ ] Báo cáo hoàn chỉnh (40-50 trang)
-- [ ] Slide thuyết trình (20-25 slides)
-- [ ] Demo videos
-- [ ] Source code và scripts
-
-### 📖 HƯỚNG DẪN THỰC HIỆN CHI TIẾT - TUẦN 8
-
-#### Task 8.1 (TV1): Viết Chương 1 - Giới thiệu
-
-**Outline:**
-```markdown
-## Chương 1: Giới thiệu
-
-### 1.1 Đặt vấn đề
-- Sự phát triển của Internet và nhu cầu về hiệu năng
-- Hạn chế của TCP trong môi trường hiện đại
-- Nhu cầu về giao thức transport mới
-
-### 1.2 Mục tiêu nghiên cứu
-- Tìm hiểu toàn diện về QUIC protocol
-- Phân tích các cơ chế hoạt động
-- Đánh giá ứng dụng thực tế
-- Xây dựng demo thực hành
-
-### 1.3 Phạm vi và giới hạn
-- Tập trung vào IETF QUIC (RFC 9000)
-- Không đi sâu vào implementation details
-- Focus on concepts và mechanisms
-```
-
-#### Task 8.2 (TV2): Thiết kế Slides
-
-**Slide Structure:**
-```
-1. Title slide
-2. Agenda
-3-4. Introduction & Problem Statement
-5-8. QUIC Architecture
-9-12. Key Mechanisms (Handshake, Streams, etc.)
-13-15. Security Features
-16-18. Demo Screenshots
-19-21. Real-world Applications
-22-23. Challenges & Future
-24. Conclusions
-25. Q&A
-```
-
----
-
-## 📊 BẢNG TỔNG HỢP PHÂN CÔNG THEO THÀNH VIÊN
-
-### Thành viên 1 - Trưởng nhóm (Kiến trúc, Bảo mật, Connection)
-
-| Tuần | Công việc chính | Giờ |
-|------|----------------|-----|
-| 1 | Lịch sử QUIC + Kiến trúc Protocol Stack + RFC 9000 | 15 |
-| 2 | TLS 1.3 Integration + Handshake + Packet Protection | 15 |
-| 3 | Loss Detection + ACK Mechanism | 20 |
-| 4 | QUIC Implementation Setup + Connection Demo | 20 |
-| 5 | Handshake Analysis + Security Analysis | 20 |
-| 6 | Case Studies: Google, Cloudflare, Meta | 20 |
-| 7 | Tổng hợp + Đánh giá + Khuyến nghị | 15 |
-| 8 | Chương 1, 2, 3, 6 + Review | 20 |
-| **TỔNG** | | **145 giờ** |
-
-### Thành viên 2 (Stream Multiplexing, Congestion Control, Demo)
-
-| Tuần | Công việc chính | Giờ |
-|------|----------------|-----|
-| 1 | Packet Structure + Frame Types + HTTP/3 | 15 |
-| 2 | Connection Migration + Flow Control + Stream Multiplexing | 15 |
-| 3 | Congestion Control + ECN | 20 |
-| 4 | Stream Demo + Flow Control Demo + Migration Demo | 20 |
-| 5 | ACK Analysis + Performance Analysis | 20 |
-| 6 | Challenges + Extensions + Future Directions | 20 |
-| 7 | Demo Script + Videos + Diagrams | 15 |
-| 8 | Chương 4, 5 + Slides + Format | 20 |
-| **TỔNG** | | **145 giờ** |
-
----
-
-## 📈 Biểu đồ Gantt
-
-```
-Tuần        1         2         3         4         5         6         7         8
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-TV1        [Kiến trúc][Bảo mật ][Loss Det][Demo    ][Analysis][Cases   ][Tổng hợp][Báo cáo ]
-           [History ][Handshake][ACK     ][Setup   ][Security][Studies ][Đánh giá][Ch1,2,3,6]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-TV2        [Packets ][Migration][Congest ][Demo    ][Perform ][Future  ][Demo    ][Báo cáo ]
-           [Frames  ][Flow Ctrl][Control ][Features][Analysis][Ext     ][Videos  ][Ch4,5   ]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-Output     [Docs    ][Docs    ][Tech    ][Demos   ][Analysis][Cases   ][Summary ][Report  ]
-           [Diagrams][Diagrams][Docs    ][Captures][Docs    ][Guides  ][Slides  ][Slides  ]
-           |---------|---------|---------|---------|---------|---------|---------|---------|
-```
-
----
-
-## ✅ CHECKLIST TIẾN ĐỘ CHI TIẾT
-
-### Tuần 1: Nền tảng và Kiến trúc
-- [ ] Tài liệu lịch sử và động lực phát triển QUIC (TV1)
-- [ ] Sơ đồ kiến trúc QUIC Protocol Stack (TV1)
-- [ ] Tài liệu QUIC Packet Structure (TV2)
-- [ ] Bảng tổng hợp Frame Types (TV2)
-- [ ] Danh sách tài liệu tham khảo (Cả 2)
-
-### Tuần 2: Bảo mật và Connection Management
-- [ ] Tài liệu TLS 1.3 Integration (TV1)
-- [ ] Sequence diagrams cho 1-RTT và 0-RTT handshake (TV1)
-- [ ] Tài liệu Connection Migration (TV2)
-- [ ] Tài liệu Flow Control và Stream Multiplexing (TV2)
-
-### Tuần 3: Loss Detection và Congestion Control
-- [ ] Tài liệu ACK Mechanism (TV1)
-- [ ] Flowcharts cho Loss Detection Algorithm (TV1)
-- [ ] Tài liệu Congestion Control (TV2)
-- [ ] Comparison document: QUIC CC vs TCP CC (TV2)
-
-### Tuần 4: Triển khai và Demo
-- [ ] QUIC Server hoạt động (TV1)
-- [ ] Demo Connection Establishment (TV1)
-- [ ] Demo Stream Multiplexing (TV2)
-- [ ] Demo Connection Migration (TV2)
-
-### Tuần 5: Phân tích sâu
-- [ ] Detailed Handshake Analysis (TV1)
-- [ ] Security Mechanisms Summary (TV1)
-- [ ] ACK và Performance Analysis (TV2)
-- [ ] Performance Mechanisms Summary (TV2)
-
-### Tuần 6: Ứng dụng thực tế
-- [ ] Case Studies: Google, Cloudflare, Meta (TV1)
-- [ ] Deployment Best Practices Guide (TV1)
-- [ ] Challenges và Solutions (TV2)
-- [ ] QUIC Extensions và Future (TV2)
-
-### Tuần 7: Phân tích và Đánh giá
-- [ ] Tổng hợp kiến thức QUIC (TV1)
-- [ ] Đánh giá ưu/nhược điểm (TV1)
-- [ ] Demo Script và Videos (TV2)
-- [ ] Visual Assets (TV2)
-
-### Tuần 8: Báo cáo
-- [ ] Chương 1: Giới thiệu (TV1)
-- [ ] Chương 2: Kiến trúc QUIC (TV1)
-- [ ] Chương 3: Các cơ chế hoạt động (TV1)
-- [ ] Chương 4: Demo và Thực hành (TV2)
-- [ ] Chương 5: Ứng dụng thực tế (TV2)
-- [ ] Chương 6: Kết luận (TV1)
-- [ ] Slide thuyết trình (TV2)
-- [ ] Nộp báo cáo (Cả 2)
-
----
-
-## 🌐 KỊCH BẢN TOPOLOGY DEMO - 2 CLOUD ENVIRONMENTS
-
-### Tổng quan Topology
-
-Topology demo mô phỏng kết nối QUIC giữa 2 cloud environments khác nhau để thể hiện các tính năng nổi bật của giao thức QUIC như Connection Migration, Low Latency, và Stream Multiplexing.
+### 🌐 TOPOLOGY DEMO
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                              QUIC DEMO TOPOLOGY                                      │
+│                           QUIC DEMO TOPOLOGY                                         │
+│                     (Free Cloud + Local Ubuntu Server)                               │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
-│  ┌──────────────────────────────┐         ┌──────────────────────────────┐          │
-│  │        CLOUD 1 (AWS)         │         │       CLOUD 2 (GCP)          │          │
-│  │     Region: us-east-1        │         │    Region: asia-southeast1   │          │
-│  │                              │         │                              │          │
-│  │  ┌────────────────────────┐  │         │  ┌────────────────────────┐  │          │
-│  │  │    QUIC Server         │  │         │  │    QUIC Server         │  │          │
-│  │  │    (quiche-server)     │  │         │  │    (quiche-server)     │  │          │
-│  │  │    Port: 4433          │  │         │  │    Port: 4433          │  │          │
-│  │  │    IP: 10.0.1.10       │  │◄───────►│  │    IP: 10.0.2.10       │  │          │
-│  │  └────────────────────────┘  │  QUIC   │  └────────────────────────┘  │          │
-│  │              │               │ over    │              │               │          │
-│  │              │               │ Internet│              │               │          │
-│  │  ┌────────────────────────┐  │         │  ┌────────────────────────┐  │          │
-│  │  │    QUIC Client         │  │         │  │    QUIC Client         │  │          │
-│  │  │    (quiche-client)     │  │         │  │    (quiche-client)     │  │          │
-│  │  │    IP: 10.0.1.20       │  │         │  │    IP: 10.0.2.20       │  │          │
-│  │  └────────────────────────┘  │         │  └────────────────────────┘  │          │
-│  │                              │         │                              │          │
-│  │  VPC: 10.0.1.0/24           │         │  VPC: 10.0.2.0/24           │          │
-│  └──────────────────────────────┘         └──────────────────────────────┘          │
+│   ┌──────────────────────────────┐              ┌──────────────────────────────┐    │
+│   │     🖥️ UBUNTU SERVER         │              │     ☁️ FREE CLOUD CLIENT     │    │
+│   │        (Local/VPS)           │              │   (Oracle Cloud Free Tier)    │    │
+│   │                              │              │                              │    │
+│   │   ┌────────────────────┐    │              │   ┌────────────────────┐    │    │
+│   │   │   QUIC Server      │    │    QUIC     │   │   QUIC Client      │    │    │
+│   │   │   (quiche-server)  │◄───┼──────────────┼───│   (quiche-client)  │    │    │
+│   │   │   Port: 4433/UDP   │    │   over      │   │                    │    │    │
+│   │   └────────────────────┘    │  Internet   │   └────────────────────┘    │    │
+│   │                              │              │                              │    │
+│   │   OS: Ubuntu 22.04 LTS      │              │   OS: Ubuntu 22.04 LTS      │    │
+│   │   IP: Public IP / DynDNS    │              │   IP: Oracle Cloud IP       │    │
+│   │   Software:                  │              │   Software:                  │    │
+│   │   - quiche (Cloudflare)     │              │   - quiche (Cloudflare)     │    │
+│   │   - Wireshark               │              │   - curl with HTTP/3        │    │
+│   │   - tcpdump                 │              │   - tc (traffic control)    │    │
+│   └──────────────────────────────┘              └──────────────────────────────┘    │
 │                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                         NETWORK CONDITIONS                                    │   │
-│  │  • Cross-region latency: ~150-200ms RTT                                       │   │
-│  │  • Bandwidth: 100Mbps - 1Gbps                                                │   │
-│  │  • Packet loss simulation: 0.1% - 5%                                         │   │
-│  └──────────────────────────────────────────────────────────────────────────────┘   │
+│   ┌──────────────────────────────────────────────────────────────────────────────┐  │
+│   │                            NETWORK CONDITIONS                                 │  │
+│   │   • Real Internet latency: 50-200ms RTT (depending on location)              │  │
+│   │   • Simulated packet loss: 0.1% - 5% using tc netem                          │  │
+│   │   • Bandwidth: Varies (can be limited for testing)                           │  │
+│   └──────────────────────────────────────────────────────────────────────────────┘  │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Chi tiết từng Cloud Environment
+### ☁️ Tại sao chọn Oracle Cloud Free Tier?
 
-#### Cloud 1 (AWS - Primary)
+| Cloud Provider | Free Tier | Specs | Lý do chọn/không chọn |
+|----------------|-----------|-------|----------------------|
+| **Oracle Cloud** ✅ | **Always Free** | 2 VMs, 1GB RAM each, 50GB storage | ✅ **CHỌN** - Miễn phí vĩnh viễn, đủ specs |
+| Google Cloud | $300 credit (90 days) | Expired after trial | ❌ Hết hạn sau 90 ngày |
+| AWS | 12 months free | t2.micro only | ❌ Hết hạn sau 1 năm |
+| Azure | $200 credit (30 days) | Limited time | ❌ Quá ngắn |
 
-| Component | Specifications | Purpose |
-|-----------|---------------|---------|
-| **EC2 Instance** | t3.medium (2 vCPU, 4GB RAM) | QUIC Server |
-| **OS** | Ubuntu 22.04 LTS | Server OS |
-| **Network** | VPC 10.0.1.0/24 | Private network |
-| **Public IP** | Elastic IP assigned | External access |
-| **Security Group** | UDP 4433 inbound | QUIC traffic |
-| **Software** | quiche, Wireshark, tcpdump | QUIC stack & monitoring |
+### 🖥️ Server Setup (Ubuntu Local/VPS)
 
-#### Cloud 2 (GCP - Secondary)
+**Yêu cầu:**
+- Ubuntu 22.04 LTS
+- Public IP hoặc DynDNS
+- Mở port 4433/UDP trên router/firewall
 
-| Component | Specifications | Purpose |
-|-----------|---------------|---------|
-| **Compute Instance** | e2-medium (2 vCPU, 4GB RAM) | QUIC Client & Server |
-| **OS** | Ubuntu 22.04 LTS | Server OS |
-| **Network** | VPC 10.0.2.0/24 | Private network |
-| **External IP** | Static IP assigned | External access |
-| **Firewall** | UDP 4433 allow | QUIC traffic |
-| **Software** | quiche, curl with HTTP/3 | QUIC stack |
+### Thành viên 1 (20 giờ) - Server Setup
 
-### Kịch bản Demo
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 6.1 | Setup Ubuntu Server | Install OS, configure network | 4 | Working server |
+| 6.2 | Install quiche | Build từ source | 3 | quiche installed |
+| 6.3 | Generate certificates | Self-signed for demo | 2 | cert.pem, key.pem |
+| 6.4 | Configure firewall | UFW, port forwarding | 3 | Accessible from internet |
+| 6.5 | Create test content | Various file sizes | 2 | Test files |
+| 6.6 | Setup monitoring | Wireshark, tcpdump | 3 | Monitoring ready |
+| 6.7 | Document setup | Step-by-step guide | 3 | Setup guide |
 
-#### Kịch bản 1: Cross-Cloud QUIC Connection
+### Thành viên 2 (20 giờ) - Cloud Client Setup
 
-**Mục tiêu:** Thiết lập kết nối QUIC giữa 2 clouds và đo hiệu năng
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 6.1 | Register Oracle Cloud | Create free account | 1 | Account ready |
+| 6.2 | Create VM instance | Ubuntu 22.04, Always Free | 2 | VM running |
+| 6.3 | Install quiche client | Build từ source | 3 | Client ready |
+| 6.4 | Configure network | Security list, ingress rules | 2 | Network configured |
+| 6.5 | Test connectivity | Ping, basic connection | 2 | Connection working |
+| 6.6 | Run all demos | Handshake, multiplexing, migration | 6 | Demo videos |
+| 6.7 | Record demo video | Screen record with explanation | 4 | Final demo video |
 
-```bash
-# Cloud 1 (AWS) - Start QUIC Server
-./quiche-server \
-  --cert /path/to/cert.pem \
-  --key /path/to/key.pem \
-  --root /var/www/html \
-  --listen 0.0.0.0:4433
+### 📋 Deliverables Tuần 6:
+- [ ] Working Server với public access (TV1)
+- [ ] Working Cloud Client (TV2)
+- [ ] Demo videos cho tất cả scenarios (TV2)
+- [ ] Setup guides cho cả Server và Client (Cả 2)
 
-# Cloud 2 (GCP) - Connect as Client
-./quiche-client \
-  --no-verify \
-  https://<AWS_PUBLIC_IP>:4433/index.html
+### 📝 Setup Scripts
 
-# Metrics to observe:
-# - Connection establishment time
-# - 0-RTT resumption
-# - Throughput
-```
-
-#### Kịch bản 2: Connection Migration Simulation
-
-**Mục tiêu:** Demo khả năng Connection Migration của QUIC khi đổi network
-
-```bash
-# Step 1: Establish connection từ Cloud 2 đến Cloud 1
-./quiche-client --no-verify https://<AWS_IP>:4433/largefile.bin
-
-# Step 2: Simulate network change (switch interface)
-# QUIC connection sẽ tự động migrate sang interface mới
-
-# Step 3: Capture với Wireshark
-tshark -i any -f "udp port 4433" -w migration_demo.pcap
-
-# Observe: PATH_CHALLENGE và PATH_RESPONSE frames
-```
-
-#### Kịch bản 3: Multi-Stream Multiplexing
-
-**Mục tiêu:** Demo khả năng xử lý nhiều streams đồng thời
-
-```bash
-# Cloud 1: Server với multiple files
-mkdir -p /var/www/html/files
-for i in {1..10}; do
-  dd if=/dev/urandom of=/var/www/html/files/file$i.bin bs=1M count=10
-done
-
-# Cloud 2: Multiple concurrent requests
-for i in {1..5}; do
-  ./quiche-client --no-verify https://<AWS_IP>:4433/files/file$i.bin &
-done
-
-# Observe: 
-# - Stream independence
-# - No Head-of-Line blocking
-# - Bandwidth utilization
-```
-
-#### Kịch bản 4: Network Condition Testing
-
-**Mục tiêu:** Test QUIC performance dưới các điều kiện mạng khác nhau
-
-```bash
-# Simulate packet loss (on Cloud 2)
-sudo tc qdisc add dev eth0 root netem loss 2%
-
-# Simulate high latency
-sudo tc qdisc change dev eth0 root netem delay 100ms
-
-# Simulate jitter
-sudo tc qdisc change dev eth0 root netem delay 50ms 20ms
-
-# Test connection và measure impact
-./quiche-client --no-verify https://<AWS_IP>:4433/testfile.bin
-
-# Clear network conditions
-sudo tc qdisc del dev eth0 root
-```
-
-### Script Thiết lập Topology
-
-#### setup_cloud1_aws.sh
+#### setup_server.sh (Ubuntu Server)
 ```bash
 #!/bin/bash
-# Cloud 1 (AWS) Setup Script
-
-echo "=== Setting up QUIC Demo Environment on AWS ==="
+echo "=== Setting up QUIC Server on Ubuntu ==="
 
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -1312,45 +369,47 @@ git clone --recursive https://github.com/cloudflare/quiche.git
 cd quiche
 cargo build --release --examples
 
-# Create demo directories
+# Create directories
 mkdir -p ~/quic-demo/{certs,www,captures}
 
-# Generate SSL certificates
-openssl req -x509 -newkey rsa:4096 \
+# Generate certificates
+openssl req -x509 -newkey rsa:2048 \
   -keyout ~/quic-demo/certs/key.pem \
   -out ~/quic-demo/certs/cert.pem \
   -days 365 -nodes \
-  -subj "/C=VN/ST=HCMC/L=HCMC/O=UIT/CN=quic-demo-cloud1"
+  -subj "/CN=quic-demo-server"
 
-# Create test content
-echo "<h1>QUIC Demo - Cloud 1 (AWS)</h1>" > ~/quic-demo/www/index.html
-# Create 100MB test file for throughput testing
-dd if=/dev/urandom of=~/quic-demo/www/testfile.bin bs=1M count=100
+# Create test files
+echo "<h1>QUIC Demo Server</h1><p>Connection successful!</p>" > ~/quic-demo/www/index.html
+dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=1K count=100      # 100KB
+dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10      # 10MB  
+dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100      # 100MB
 
-# Configure firewall (AWS Security Group should also allow UDP 4433)
+# Configure firewall
 sudo ufw allow 4433/udp
+sudo ufw reload
 
-echo "=== Cloud 1 Setup Complete ==="
-echo "Start server with: ./quiche/target/release/examples/quiche-server \\"
+echo "=== Server Setup Complete ==="
+echo ""
+echo "Start server with:"
+echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
 echo "  --cert ~/quic-demo/certs/cert.pem \\"
 echo "  --key ~/quic-demo/certs/key.pem \\"
 echo "  --root ~/quic-demo/www \\"
 echo "  --listen 0.0.0.0:4433"
 ```
 
-#### setup_cloud2_gcp.sh
+#### setup_client.sh (Oracle Cloud VM)
 ```bash
 #!/bin/bash
-# Cloud 2 (GCP) Setup Script
-
-echo "=== Setting up QUIC Demo Environment on GCP ==="
+echo "=== Setting up QUIC Client on Oracle Cloud ==="
 
 # Update system
 sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
 sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    wireshark tshark tcpdump curl git iproute2
+                    curl git iproute2
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -1361,103 +420,214 @@ git clone --recursive https://github.com/cloudflare/quiche.git
 cd quiche
 cargo build --release --examples
 
-# Create demo directories
-mkdir -p ~/quic-demo/{certs,www,captures,logs}
-
-# Generate SSL certificates (for local server testing)
-openssl req -x509 -newkey rsa:4096 \
-  -keyout ~/quic-demo/certs/key.pem \
-  -out ~/quic-demo/certs/cert.pem \
-  -days 365 -nodes \
-  -subj "/C=VN/ST=HCMC/L=HCMC/O=UIT/CN=quic-demo-cloud2"
-
-# Create test script for connecting to Cloud 1
-# Note: Replace <CLOUD1_PUBLIC_IP> with actual AWS EC2 public IP address
-# Example usage: ~/quic-demo/test_connection.sh 54.123.45.67
-cat > ~/quic-demo/test_connection.sh << 'EOF'
+# Create test script
+cat > ~/test_quic.sh << 'EOF'
 #!/bin/bash
-# Usage: ./test_connection.sh <CLOUD1_PUBLIC_IP>
-# Example: ./test_connection.sh 54.123.45.67
-CLOUD1_IP="${1:-<REPLACE_WITH_AWS_PUBLIC_IP>}"
+SERVER_IP="${1:-YOUR_SERVER_IP}"
+PORT="${2:-4433}"
 
-if [ "$CLOUD1_IP" == "<REPLACE_WITH_AWS_PUBLIC_IP>" ]; then
-    echo "Error: Please provide Cloud 1 (AWS) public IP address"
-    echo "Usage: $0 <AWS_PUBLIC_IP>"
-    exit 1
-fi
+echo "Testing QUIC connection to $SERVER_IP:$PORT"
 
-echo "Testing connection to Cloud 1 at $CLOUD1_IP"
-
-# Simple connection test
+# Test 1: Simple connection
+echo "=== Test 1: Simple Connection ==="
 ./quiche/target/release/examples/quiche-client \
-  --no-verify \
-  https://$CLOUD1_IP:4433/index.html
+  --no-verify https://$SERVER_IP:$PORT/index.html
 
-# Download test with timing
-echo "Testing download performance..."
+# Test 2: Download speed test
+echo "=== Test 2: Download Test (10MB) ==="
 time ./quiche/target/release/examples/quiche-client \
-  --no-verify \
-  https://$CLOUD1_IP:4433/testfile.bin > /dev/null
+  --no-verify https://$SERVER_IP:$PORT/medium.bin > /dev/null
+
+# Test 3: Multiple streams
+echo "=== Test 3: Multiple Streams ==="
+for i in {1..3}; do
+  ./quiche/target/release/examples/quiche-client \
+    --no-verify https://$SERVER_IP:$PORT/small.bin &
+done
+wait
+echo "All streams complete!"
 EOF
-chmod +x ~/quic-demo/test_connection.sh
+chmod +x ~/test_quic.sh
 
-# Configure firewall
-sudo ufw allow 4433/udp
-
-echo "=== Cloud 2 Setup Complete ==="
-echo "Test connection with: ~/quic-demo/test_connection.sh <CLOUD1_IP>"
+echo "=== Client Setup Complete ==="
+echo ""
+echo "Test connection with:"
+echo "~/test_quic.sh YOUR_SERVER_IP 4433"
 ```
 
-### Monitoring và Capture
+### 🎬 Demo Scenarios
 
-#### Wireshark Capture Commands
+#### Demo 1: 0-RTT vs 1-RTT Handshake
 ```bash
-# Capture QUIC traffic
-tshark -i eth0 -f "udp port 4433" -w quic_capture.pcap
+# First connection (1-RTT) - measure time
+time ./quiche-client --no-verify https://server:4433/index.html
 
-# Live decode QUIC
-tshark -i eth0 -f "udp port 4433" -Y quic -T fields \
-  -e frame.time -e ip.src -e ip.dst -e quic.packet_number
-
-# Analyze connection establishment
-tshark -r quic_capture.pcap -Y "quic.frame_type == 6" # CRYPTO frames
-
-# Count stream frames
-tshark -r quic_capture.pcap -Y "quic.frame_type == 8" | wc -l
+# Second connection (0-RTT) - should be faster
+time ./quiche-client --no-verify https://server:4433/index.html
 ```
 
-#### qlog Logging
+#### Demo 2: Stream Multiplexing
 ```bash
-# Enable qlog in quiche (set environment variable)
-export QLOGDIR=~/quic-demo/logs
+# Server đã có multiple files
 
-# Start server with qlog enabled
-./quiche-server --cert cert.pem --key key.pem --root www --listen 0.0.0.0:4433
+# Download 5 files đồng thời
+for i in small medium large; do
+  ./quiche-client --no-verify https://server:4433/$i.bin &
+done
+wait
 
-# Visualize with qvis
-# Upload qlog file to https://qvis.quictools.info
+# So sánh với TCP sequential
 ```
 
-### Kết quả mong đợi
+#### Demo 3: Packet Loss Resilience
+```bash
+# Simulate 5% packet loss
+sudo tc qdisc add dev eth0 root netem loss 5%
 
-| Metric | Expected Value | Notes |
-|--------|----------------|-------|
-| Connection Setup (1-RTT) | < 200ms | Cross-region |
-| Connection Setup (0-RTT) | < 100ms | With resumption |
-| Throughput | 50-100 Mbps | Depending on network |
-| Stream Multiplexing | 5+ concurrent | No HOL blocking |
-| Connection Migration | < 1s | Seamless handover |
-| Packet Loss Recovery | 0.1-5% | Using QUIC retransmission |
+# Test QUIC - should still work
+./quiche-client --no-verify https://server:4433/medium.bin
 
-### Troubleshooting
+# Clear
+sudo tc qdisc del dev eth0 root
+```
 
-| Issue | Possible Cause | Solution |
-|-------|----------------|----------|
-| Connection refused | Firewall blocking UDP | Check Security Groups/Firewall rules |
-| High latency | Network congestion | Use closer regions or CDN |
-| Certificate errors | Self-signed cert | Use --no-verify flag for testing |
-| Low throughput | Congestion control | Check network conditions, adjust buffer sizes |
-| Migration fails | Different Connection ID | Ensure client supports migration |
+---
+
+## 🗓️ TUẦN 7: PHÂN TÍCH HIỆU NĂNG & CASE STUDIES (15 giờ/người)
+
+### Thành viên 1 (15 giờ) - Performance Analysis
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 7.1 | Tổng hợp demo metrics | Latency, throughput, loss recovery | 4 | Performance report |
+| 7.2 | So sánh với TCP baseline | Same tests với TCP | 4 | Comparison data |
+| 7.3 | Case Study: Google | YouTube, Google Search QUIC deployment | 3 | Analysis |
+| 7.4 | Case Study: Cloudflare | Edge network QUIC rollout | 2 | Analysis |
+| 7.5 | Case Study: Meta | Facebook/Instagram QUIC usage | 2 | Analysis |
+
+### Thành viên 2 (15 giờ) - Future & Extensions
+
+| STT | Công việc | Chi tiết | Giờ | Output |
+|-----|-----------|----------|-----|--------|
+| 7.1 | QUIC v2 (RFC 9369) | What's new, improvements | 3 | Document |
+| 7.2 | Multipath QUIC | Multiple paths simultaneously | 3 | Technical overview |
+| 7.3 | QUIC for other protocols | DNS over QUIC, WebTransport | 3 | Use cases |
+| 7.4 | Adoption challenges | UDP blocking, middleboxes | 3 | Analysis |
+| 7.5 | Tạo visual summary | Infographics cho báo cáo | 3 | Visuals |
+
+### 📋 Deliverables Tuần 7:
+- [ ] Performance comparison report (TV1)
+- [ ] Case studies document (TV1)
+- [ ] QUIC extensions overview (TV2)
+- [ ] Visual assets cho báo cáo (TV2)
+
+### 📈 Performance Metrics to Report:
+
+| Metric | Expected QUIC | Expected TCP | Improvement |
+|--------|---------------|--------------|-------------|
+| New Connection Setup | ~1 RTT (50-100ms) | ~2-3 RTT (100-200ms) | **50% faster** |
+| Resumed Connection | ~0 RTT | ~1-2 RTT | **100% faster** |
+| HOL Blocking Impact | None | Significant with loss | **Eliminated** |
+| Network Switch Recovery | <500ms | Connection dropped | **Seamless** |
+
+---
+
+## 🗓️ TUẦN 8: BÁO CÁO VÀ THUYẾT TRÌNH (20 giờ/người)
+
+### Thành viên 1 (20 giờ) - Viết báo cáo
+
+| STT | Công việc | Giờ | Output |
+|-----|-----------|-----|--------|
+| 8.1 | Chương 1: Giới thiệu | 2 | Introduction |
+| 8.2 | Chương 2: Kiến trúc QUIC | 4 | Architecture |
+| 8.3 | Chương 3: Các đặc điểm nổi bật | 5 | Features |
+| 8.4 | Chương 4: Demo thực hành | 4 | Demo documentation |
+| 8.5 | Chương 5: Case Studies | 2 | Analysis |
+| 8.6 | Chương 6: Kết luận | 1 | Conclusion |
+| 8.7 | Review và edit | 2 | Final review |
+
+### Thành viên 2 (20 giờ) - Slides và Demo Video
+
+| STT | Công việc | Giờ | Output |
+|-----|-----------|-----|--------|
+| 8.1 | Slide: Introduction (5 slides) | 2 | Slides |
+| 8.2 | Slide: Architecture (8 slides) | 3 | Slides |
+| 8.3 | Slide: Features (10 slides) | 4 | Slides |
+| 8.4 | Slide: Demo (5 slides + video) | 4 | Slides + Video |
+| 8.5 | Slide: Conclusion (3 slides) | 1 | Slides |
+| 8.6 | Edit demo video | 4 | Final video |
+| 8.7 | Review slides | 2 | Final review |
+
+### 📋 Deliverables Tuần 8:
+- [ ] Báo cáo hoàn chỉnh (25-30 trang) (TV1)
+- [ ] Slide thuyết trình (30-35 slides) (TV2)
+- [ ] Demo video (5-10 phút) (TV2)
+
+### 📑 Cấu trúc Báo cáo:
+
+```
+Chương 1: Giới thiệu (2 trang)
+├── 1.1 Đặt vấn đề
+├── 1.2 Mục tiêu
+└── 1.3 Phạm vi
+
+Chương 2: Kiến trúc QUIC (6 trang)
+├── 2.1 Protocol Stack
+├── 2.2 Connection và Stream
+├── 2.3 Packet và Frame Types
+└── 2.4 So sánh với TCP+TLS
+
+Chương 3: Các đặc điểm nổi bật (10 trang)
+├── 3.1 0-RTT và 1-RTT Handshake
+├── 3.2 Stream Multiplexing (No HOL)
+├── 3.3 Connection Migration
+├── 3.4 Built-in Security
+└── 3.5 Loss Recovery
+
+Chương 4: Demo thực hành (5 trang)
+├── 4.1 Topology
+├── 4.2 Demo scenarios
+├── 4.3 Kết quả
+└── 4.4 Screenshots
+
+Chương 5: Case Studies (3 trang)
+├── 5.1 Google
+├── 5.2 Cloudflare
+└── 5.3 Meta
+
+Chương 6: Kết luận (2 trang)
+├── 6.1 Tổng kết
+├── 6.2 Hạn chế
+└── 6.3 Hướng phát triển
+```
+
+---
+
+## ✅ CHECKLIST TIẾN ĐỘ
+
+### Tuần 1-2: Lý thuyết cơ bản
+- [ ] Protocol Stack diagram (TV1)
+- [ ] Packet/Frame structure (TV2)
+- [ ] So sánh handshake (TV1)
+- [ ] HOL blocking explanation (TV2)
+
+### Tuần 3-4: Cơ chế chi tiết
+- [ ] 0-RTT/1-RTT document (TV1)
+- [ ] Handshake Wireshark capture (TV2)
+- [ ] Stream multiplexing demo (TV2)
+- [ ] Flow control document (TV1)
+
+### Tuần 5-6: Demo thực hành
+- [ ] Server setup complete (TV1)
+- [ ] Client setup complete (TV2)
+- [ ] All demo videos recorded (TV2)
+- [ ] Setup guides written (Cả 2)
+
+### Tuần 7-8: Báo cáo
+- [ ] Performance report (TV1)
+- [ ] Case studies (TV1)
+- [ ] Final report (TV1)
+- [ ] Slides + Video (TV2)
 
 ---
 
@@ -1465,24 +635,35 @@ export QLOGDIR=~/quic-demo/logs
 
 | Công cụ | Mục đích | Link |
 |---------|----------|------|
-| quiche | QUIC implementation từ Cloudflare | https://github.com/cloudflare/quiche |
-| msquic | QUIC implementation từ Microsoft | https://github.com/microsoft/msquic |
-| Wireshark | Packet capture và analysis | https://wireshark.org |
-| qvis | QUIC visualization tool | https://qvis.quictools.info |
-| curl | HTTP client với HTTP/3 support | https://curl.se |
-| draw.io | Vẽ diagrams | https://app.diagrams.net |
+| quiche | QUIC implementation | https://github.com/cloudflare/quiche |
+| Wireshark | Packet analysis | https://wireshark.org |
+| Oracle Cloud | Free cloud VM | https://oracle.com/cloud/free |
+| draw.io | Diagrams | https://app.diagrams.net |
+| OBS Studio | Screen recording | https://obsproject.com |
 
-## 📚 Tài liệu tham khảo chính
+## 📚 Tài liệu tham khảo
 
 | Tài liệu | Mô tả |
 |----------|-------|
-| RFC 9000 | QUIC: A UDP-Based Multiplexed and Secure Transport |
+| RFC 9000 | QUIC Transport Protocol |
 | RFC 9001 | Using TLS to Secure QUIC |
 | RFC 9002 | QUIC Loss Detection and Congestion Control |
 | RFC 9114 | HTTP/3 |
 | RFC 9369 | QUIC Version 2 |
-| Google Paper | The QUIC Transport Protocol: Design and Internet-Scale Deployment (2017) |
 
 ---
 
-*Cập nhật lần cuối: 07/02/2026*
+## 🎯 Tiêu chí đạt điểm 10
+
+| Tiêu chí | Yêu cầu | ✓ |
+|----------|---------|---|
+| **Nội dung đầy đủ** | Bao quát tất cả đặc điểm quan trọng của QUIC | |
+| **Demo thực tế** | Có topology hoạt động, video demo | |
+| **So sánh rõ ràng** | QUIC vs TCP+TLS với data cụ thể | |
+| **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
+| **Trình bày đẹp** | Diagrams, infographics, slides chuyên nghiệp | |
+| **Thuyết trình tốt** | Demo live + video backup | |
+
+---
+
+*Cập nhật lần cuối: 08/02/2026*

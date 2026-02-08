@@ -8,10 +8,11 @@
 
 ## 📋 Thông tin nhóm
 
-| STT | Họ và tên | MSSV | Vai trò | PC |
-|-----|-----------|------|---------|-----|
+| STT | Họ và tên | MSSV | Vai trò | Thiết bị |
+|-----|-----------|------|---------|----------|
 | 1 | Thành viên 1 | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
-| 2 | Thành viên 2 | [MSSV] | Thành viên | Ubuntu PC 2 (Client) |
+| 2 | Thành viên 2 | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
+| - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM (Remote testing) |
 
 ---
 
@@ -76,54 +77,80 @@
 
 ---
 
-## 🌐 TOPOLOGY DEMO - 2 UBUNTU PCs
+## 🌐 TOPOLOGY DEMO - 2 UBUNTU PCs + CLOUD
 
 ### Sơ đồ Topology
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│                              QUIC DEMO TOPOLOGY                                       │
-│                          (2 Ubuntu PCs - Local Network)                               │
-├──────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                       │
-│   ┌─────────────────────────────────┐       ┌─────────────────────────────────┐      │
-│   │   🖥️ UBUNTU PC 1 (Thành viên 1)  │       │   🖥️ UBUNTU PC 2 (Thành viên 2)  │      │
-│   │                                  │       │                                  │      │
-│   │   ┌────────────────────────┐    │       │   ┌────────────────────────┐    │      │
-│   │   │    QUIC SERVER         │    │       │   │    QUIC CLIENT         │    │      │
-│   │   │    (quiche-server)     │    │ LAN   │   │    (quiche-client)     │    │      │
-│   │   │    Port: 4433/UDP      │◄───┼───────┼───│                        │    │      │
-│   │   │    IP: 192.168.1.100   │    │       │   │    IP: 192.168.1.101   │    │      │
-│   │   └────────────────────────┘    │       │   └────────────────────────┘    │      │
-│   │                                  │       │                                  │      │
-│   │   ┌────────────────────────┐    │       │   ┌────────────────────────┐    │      │
-│   │   │    QUIC CLIENT         │    │       │   │    Wireshark           │    │      │
-│   │   │    (quiche-client)     │    │       │   │    tcpdump             │    │      │
-│   │   │    (Self-test)         │    │       │   │    tc (traffic ctrl)   │    │      │
-│   │   └────────────────────────┘    │       │   └────────────────────────┘    │      │
-│   │                                  │       │                                  │      │
-│   │   OS: Ubuntu 22.04 LTS          │       │   OS: Ubuntu 22.04 LTS          │      │
-│   │   RAM: 4GB+                      │       │   RAM: 4GB+                      │      │
-│   │   Network: Ethernet + WiFi       │       │   Network: Ethernet + WiFi       │      │
-│   └─────────────────────────────────┘       └─────────────────────────────────┘      │
-│                                                                                       │
-│   ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│   │                              NETWORK SETUP                                    │   │
-│   │                                                                               │   │
-│   │   Option 1: Same LAN (192.168.1.0/24)                                        │   │
-│   │   ├── PC1: 192.168.1.100 (Server)                                            │   │
-│   │   └── PC2: 192.168.1.101 (Client)                                            │   │
-│   │                                                                               │   │
-│   │   Option 2: Direct Ethernet Cable (Crossover)                                │   │
-│   │   ├── PC1: 10.0.0.1/24                                                       │   │
-│   │   └── PC2: 10.0.0.2/24                                                       │   │
-│   │                                                                               │   │
-│   │   Option 3: WiFi Hotspot (for Migration Demo)                                │   │
-│   │   ├── PC1 creates hotspot: 192.168.43.1                                      │   │
-│   │   └── PC2 connects: 192.168.43.x + Ethernet 192.168.1.x                      │   │
-│   └──────────────────────────────────────────────────────────────────────────────┘   │
-│                                                                                       │
-└──────────────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    QUIC DEMO TOPOLOGY                                                │
+│                        (2 Ubuntu PCs + Cloud - Hybrid Network)                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                      │
+│                                    ☁️ ORACLE CLOUD (Free Tier)                                       │
+│                              ┌──────────────────────────────────────┐                                │
+│                              │     QUIC SERVER / CLIENT (Remote)    │                                │
+│                              │     (quiche-server / quiche-client)  │                                │
+│                              │     Public IP: x.x.x.x               │                                │
+│                              │     Port: 4433/UDP                   │                                │
+│                              │                                      │                                │
+│                              │     OS: Ubuntu 22.04 LTS             │                                │
+│                              │     VM.Standard.E2.1.Micro (Free)    │                                │
+│                              │     1 OCPU, 1GB RAM                  │                                │
+│                              └──────────────┬───────────────────────┘                                │
+│                                             │                                                        │
+│                                             │ INTERNET                                               │
+│                                             │ (Real latency testing)                                 │
+│                                             │                                                        │
+│   ┌─────────────────────────────────────────┴─────────────────────────────────────────┐              │
+│   │                                      ROUTER                                        │              │
+│   │                              (NAT / Port Forwarding)                               │              │
+│   │                              Public IP: y.y.y.y                                    │              │
+│   └───────────────────────────────────┬───────────────────────────────────────────────┘              │
+│                                       │                                                              │
+│                                       │ LAN (192.168.1.0/24)                                         │
+│                    ┌──────────────────┴──────────────────┐                                           │
+│                    │                                     │                                           │
+│   ┌────────────────┴────────────────────┐  ┌────────────┴─────────────────────────┐                 │
+│   │   🖥️ UBUNTU PC 1 (Thành viên 1)      │  │   🖥️ UBUNTU PC 2 (Thành viên 2)      │                 │
+│   │                                      │  │                                      │                 │
+│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
+│   │   │    QUIC SERVER (Local)     │    │  │   │    QUIC CLIENT             │    │                 │
+│   │   │    (quiche-server)         │    │  │   │    (quiche-client)         │    │                 │
+│   │   │    Port: 4433/UDP          │◄───┼──┼───│                            │    │                 │
+│   │   │    IP: 192.168.1.100       │    │  │   │    IP: 192.168.1.101       │    │                 │
+│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
+│   │                                      │  │                                      │                 │
+│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
+│   │   │    QUIC CLIENT             │    │  │   │    Wireshark               │    │                 │
+│   │   │    (quiche-client)         │    │  │   │    tcpdump                 │    │                 │
+│   │   │    (Self-test + Cloud)     │    │  │   │    tc (traffic control)    │    │                 │
+│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
+│   │                                      │  │                                      │                 │
+│   │   OS: Ubuntu 22.04 LTS              │  │   OS: Ubuntu 22.04 LTS              │                 │
+│   │   RAM: 4GB+ (khuyến nghị 8GB)       │  │   RAM: 4GB+ (khuyến nghị 8GB)       │                 │
+│   │   Network: Ethernet + WiFi          │  │   Network: Ethernet + WiFi          │                 │
+│   └──────────────────────────────────────┘  └──────────────────────────────────────┘                 │
+│                                                                                                      │
+│   ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                                    DEMO SCENARIOS                                             │   │
+│   │                                                                                               │   │
+│   │   🔹 LOCAL DEMOS (Low latency, controlled environment):                                      │   │
+│   │      ├── PC1 (Server) ↔ PC2 (Client): Stream multiplexing, HOL blocking                     │   │
+│   │      ├── PC1 ↔ PC2: Connection migration (WiFi ↔ Ethernet)                                  │   │
+│   │      └── PC1 ↔ PC2: Packet loss simulation với tc netem                                     │   │
+│   │                                                                                               │   │
+│   │   🔹 CLOUD DEMOS (Real-world latency, 0-RTT benefits):                                       │   │
+│   │      ├── PC1/PC2 → Cloud Server: 0-RTT vs 1-RTT handshake (thấy rõ latency)                 │   │
+│   │      ├── Cloud Server → PC1/PC2: Cross-network QUIC connection                              │   │
+│   │      └── Multi-path: Local + Cloud simultaneous testing                                     │   │
+│   │                                                                                               │   │
+│   │   🔹 HYBRID DEMOS:                                                                           │   │
+│   │      ├── PC1 as Server: Cloud VM + PC2 connect cùng lúc (multi-client)                      │   │
+│   │      └── Failover testing: Local ↔ Cloud switching                                          │   │
+│   └──────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Chi tiết các thành phần
@@ -135,20 +162,71 @@
 | **Hardware** | PC/Laptop với Ubuntu 22.04 |
 | **RAM** | 4GB+ (khuyến nghị 8GB) |
 | **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.100 (hoặc theo network) |
+| **IP** | 192.168.1.100 (LAN) |
 | **Software** | quiche (server+client), Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Server chính + Client để self-test |
+| **Vai trò** | QUIC Server local + Client để test với Cloud |
+| **Người phụ trách** | **Thành viên 1** |
 
-#### 🖥️ Ubuntu PC 2 (Thành viên 2 - Client)
+#### 🖥️ Ubuntu PC 2 (Thành viên 2 - Client + Analysis)
 
 | Thành phần | Chi tiết |
 |------------|----------|
 | **Hardware** | PC/Laptop với Ubuntu 22.04 |
 | **RAM** | 4GB+ |
 | **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.101 (hoặc theo network) |
+| **IP** | 192.168.1.101 (LAN) |
 | **Software** | quiche-client, Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Client chính + Packet analysis |
+| **Vai trò** | QUIC Client + Packet analysis + Test với Cloud |
+| **Người phụ trách** | **Thành viên 2** |
+
+#### ☁️ Oracle Cloud VM (Free Tier - Cả 2 cùng quản lý)
+
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Provider** | Oracle Cloud Infrastructure - **Always Free Tier** |
+| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **OS** | Ubuntu 22.04 LTS |
+| **Network** | Public IP (x.x.x.x), Security List allow UDP 4433 |
+| **Software** | quiche (server+client) |
+| **Vai trò** | Remote QUIC Server/Client cho real-world latency testing |
+| **Người phụ trách** | **Cả 2 thành viên cùng quản lý** |
+
+### Network Setup Options
+
+#### Option 1: LAN + Cloud (Recommended)
+
+```
+PC1 (192.168.1.100) ─┬── LAN ──┬─ PC2 (192.168.1.101)
+                     │         │
+                     └── Router ─── Internet ─── Cloud VM (x.x.x.x)
+```
+
+- **Local demos**: PC1 ↔ PC2 qua LAN (fast, controlled)
+- **Cloud demos**: PC1/PC2 ↔ Cloud qua Internet (real latency)
+
+#### Option 2: Direct Cable + Cloud
+
+```
+PC1 (10.0.0.1) ──── Crossover Cable ──── PC2 (10.0.0.2)
+       │                                        │
+       └─────────── WiFi/LTE ───────────────────┴─── Cloud VM
+```
+
+- **Direct demos**: PC1 ↔ PC2 qua Ethernet (lowest latency)
+- **Cloud demos**: Cả 2 PC connect Cloud qua WiFi/LTE
+
+#### Option 3: WiFi Hotspot + Cloud (for Migration Demo)
+
+```
+PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
+       │                                          │
+       └─ Ethernet ─┬─ Router ─── Internet ─── Cloud VM
+                    │
+                    └─ PC2 Ethernet (192.168.1.101)
+```
+
+- **Migration demo**: PC2 switch giữa WiFi và Ethernet
+- **Cloud involved**: Cloud VM observe connection migration
 
 ---
 
@@ -536,10 +614,103 @@ echo ""
 echo "Replace SERVER_IP with PC1's IP address (e.g., 192.168.1.100)"
 ```
 
+#### setup_cloud.sh (Oracle Cloud VM - Cả 2 cùng setup)
+```bash
+#!/bin/bash
+echo "=== Setting up QUIC Server/Client on Oracle Cloud VM ==="
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    curl git iproute2 net-tools
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
+
+# Create directories
+mkdir -p ~/quic-demo/{certs,www,captures,logs}
+
+# Generate certificates
+openssl req -x509 -newkey rsa:2048 \
+  -keyout ~/quic-demo/certs/key.pem \
+  -out ~/quic-demo/certs/cert.pem \
+  -days 365 -nodes \
+  -subj "/CN=quic-cloud-server"
+
+# Create test files
+echo "<h1>QUIC Cloud Server</h1><p>Hello from Oracle Cloud!</p>" > ~/quic-demo/www/index.html
+dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1
+dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10
+
+# Note: Configure Oracle Cloud Security List to allow UDP 4433 inbound
+
+echo "=== Cloud Setup Complete ==="
+echo ""
+echo "IMPORTANT: Configure Oracle Cloud Security List:"
+echo "  - Allow Ingress UDP port 4433 from 0.0.0.0/0 (hoặc giới hạn IP nếu cần bảo mật)"
+echo ""
+echo "Start server with:"
+echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
+echo "  --cert ~/quic-demo/certs/cert.pem \\"
+echo "  --key ~/quic-demo/certs/key.pem \\"
+echo "  --root ~/quic-demo/www \\"
+echo "  --listen 0.0.0.0:4433"
+echo ""
+echo "Test from local PCs with:"
+echo "./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html"
+```
+
+### Oracle Cloud Setup Guide (Cả 2 cùng làm)
+
+#### Bước 1: Tạo Oracle Cloud Account (Free Tier)
+1. Truy cập https://www.oracle.com/cloud/free/
+2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
+3. Chọn region gần nhất (e.g., Singapore, Tokyo)
+
+#### Bước 2: Tạo VM Instance
+1. Go to Compute → Instances → Create Instance
+2. Chọn **VM.Standard.E2.1.Micro** (Always Free)
+3. Chọn **Ubuntu 22.04** image
+4. Chọn **Assign public IP address**
+5. Download SSH key pair
+6. Create instance
+
+#### Bước 3: Configure Security List
+1. Go to Networking → Virtual Cloud Networks
+2. Click VCN → Security Lists → Default Security List
+3. Add Ingress Rule:
+   - Source: `0.0.0.0/0` (hoặc giới hạn theo IP của bạn để bảo mật hơn)
+   - Protocol: `UDP`
+   - Destination Port: `4433`
+4. Save
+
+> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP thay vì 0.0.0.0/0
+
+#### Bước 4: SSH và Setup
+```bash
+# Đảm bảo SSH key có quyền đúng
+chmod 600 ~/oracle_key.pem
+
+# SSH từ PC1 hoặc PC2
+ssh -i ~/oracle_key.pem ubuntu@CLOUD_PUBLIC_IP
+
+# Chạy setup script
+./setup_cloud.sh
+```
+
 ### 📋 Deliverables B1:
 - [ ] Working QUIC Server on PC1 (TV1)
 - [ ] Working QUIC Client on PC2 (TV2)
-- [ ] Network connectivity verified (Cả 2)
+- [ ] Working QUIC Server/Client on Cloud VM (Cả 2)
+- [ ] Network connectivity verified: PC1↔PC2, PC1↔Cloud, PC2↔Cloud (Cả 2)
 - [ ] Setup scripts documented (Cả 2)
 
 ---
@@ -561,6 +732,7 @@ echo "Replace SERVER_IP with PC1's IP address (e.g., 192.168.1.100)"
 
 ### Kịch bản Demo:
 
+#### Kịch bản A: Local Network (PC1 ↔ PC2)
 ```bash
 # === TRÊN PC1 (Server) ===
 # Start QUIC server
@@ -574,11 +746,11 @@ cd ~/quiche
 # === TRÊN PC2 (Client) ===
 
 # Test 1: QUIC 1-RTT (First connection - clear any cached session)
-echo "=== QUIC 1-RTT (First Connection) ==="
+echo "=== LOCAL: QUIC 1-RTT (First Connection) ==="
 time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
 
 # Test 2: QUIC 0-RTT (Resumed connection)
-echo "=== QUIC 0-RTT (Resumed Connection) ==="
+echo "=== LOCAL: QUIC 0-RTT (Resumed Connection) ==="
 time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
 
 # Capture handshake with Wireshark
@@ -586,8 +758,47 @@ tshark -i eth0 -f "udp port 4433" -c 20 -Y "quic" -T fields \
   -e frame.number -e frame.time_relative -e quic.packet_type
 ```
 
+#### Kịch bản B: Cloud Testing (PC1/PC2 ↔ Cloud) - Thấy rõ latency benefit
+```bash
+# === TRÊN CLOUD VM (Server) ===
+cd ~/quiche
+./target/release/examples/quiche-server \
+  --cert ~/quic-demo/certs/cert.pem \
+  --key ~/quic-demo/certs/key.pem \
+  --root ~/quic-demo/www \
+  --listen 0.0.0.0:4433
+
+# === TRÊN PC1 hoặc PC2 (Client) ===
+
+# Đo ping để biết RTT thực tế
+ping -c 5 CLOUD_PUBLIC_IP
+
+# Test 1: QUIC 1-RTT to Cloud (thấy rõ latency)
+echo "=== CLOUD: QUIC 1-RTT (First Connection) ==="
+time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
+
+# Test 2: QUIC 0-RTT to Cloud (latency giảm đáng kể!)
+echo "=== CLOUD: QUIC 0-RTT (Resumed Connection) ==="
+time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
+
+# So sánh: Với Cloud latency ~50-100ms, 0-RTT tiết kiệm đáng kể!
+```
+
+### Kết quả mong đợi:
+
+> **Giải thích**: TCP+TLS 1.3 cần 2 RTT (TCP handshake + TLS), QUIC 1-RTT cần 1 RTT, QUIC 0-RTT cần ~0 RTT (data gửi cùng Initial packet)
+
+| Scenario | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings |
+|----------|---------------------|--------------------|--------------------|---------|
+| **Local (LAN ~1ms RTT)** | ~2-3ms | ~1-2ms | ~1ms | Nhỏ |
+| **Cloud (~50ms RTT)** | ~100ms | ~50ms | ~0ms + data | **50-100ms!** |
+| **Cloud (~100ms RTT)** | ~200ms | ~100ms | ~0ms + data | **100-200ms!** |
+
+> 💡 **Key insight**: Với network có latency cao (Cloud/Internet), 0-RTT tiết kiệm đáng kể thời gian!
+
 ### 📋 Deliverables B2:
-- [ ] Handshake timing measurements (TV1)
+- [ ] Handshake timing measurements - Local (TV1)
+- [ ] Handshake timing measurements - Cloud (TV1)
 - [ ] Comparison table (TV1)
 - [ ] Wireshark captures (TV2)
 - [ ] Screenshots (TV1 + TV2)

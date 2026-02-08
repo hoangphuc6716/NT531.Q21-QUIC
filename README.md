@@ -236,6 +236,9 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 
 ## A1. Tổng quan về QUIC
 
+### 🎯 Mục tiêu phần này:
+> Hiểu **tại sao QUIC ra đời**, **QUIC là gì**, và **ai đang sử dụng QUIC**. Đây là nền tảng để hiểu các phần tiếp theo.
+
 ### Công việc của Thành viên 1:
 
 | STT | Công việc | Chi tiết | Output |
@@ -243,24 +246,153 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A1.1 | Lịch sử phát triển QUIC | gQUIC (2012) → IETF QUIC (2016-2021) → RFC 9000 | Timeline document |
 | A1.2 | Động lực phát triển | Tại sao cần QUIC? Vấn đề của TCP? | Analysis document |
 | A1.3 | QUIC adoption statistics | Google, Cloudflare, Meta, etc. | Statistics summary |
+| A1.4 | 📊 **Vẽ biểu đồ timeline** | Timeline phát triển QUIC từ 2012-2021 | **Timeline diagram** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV1</b></summary>
+
+#### A1.1: Lịch sử phát triển QUIC
+**Cần làm gì:**
+- Nghiên cứu và viết tài liệu về lịch sử QUIC từ 2012 đến nay
+- Các mốc quan trọng cần đề cập:
+  - **2012**: Google bắt đầu phát triển gQUIC (Google QUIC)
+  - **2013**: gQUIC được deploy trên Chrome và Google servers
+  - **2016**: IETF Working Group thành lập, bắt đầu chuẩn hóa
+  - **2018**: HTTP/3 được đặt tên (trước đó là HTTP-over-QUIC)
+  - **2021**: RFC 9000, 9001, 9002 được publish → QUIC v1 chính thức
+  - **2023**: RFC 9369 → QUIC v2
+
+**Tại sao cần làm:**
+- Để hiểu quá trình phát triển và motivation của QUIC
+- Để biết QUIC đã được sử dụng production từ lâu, không phải công nghệ mới thử nghiệm
+
+**Kết quả mong đợi:**
+- Document 1-2 trang với timeline rõ ràng
+- Có thể đưa vào báo cáo chương 1
+
+#### A1.2: Động lực phát triển QUIC
+**Cần làm gì:**
+- Phân tích các vấn đề của TCP khiến Google phải phát triển QUIC:
+  1. **Handshake latency**: TCP 3-way handshake + TLS handshake = nhiều RTT
+  2. **Head-of-Line (HOL) blocking**: Mất 1 packet → block tất cả data
+  3. **Không có Connection Migration**: Đổi IP/port = mất connection
+  4. **Ossification**: TCP trong kernel, khó upgrade
+  5. **Middlebox interference**: Firewall/NAT can thiệp TCP
+
+**Tại sao cần làm:**
+- Để trả lời câu hỏi quan trọng: "Tại sao không cải tiến TCP mà lại tạo protocol mới?"
+- Đây là phần quan trọng khi thuyết trình
+
+**Kết quả mong đợi:**
+- Document 2-3 trang phân tích chi tiết
+- Mỗi vấn đề có ví dụ minh họa
+
+#### A1.3: QUIC Adoption Statistics
+**Cần làm gì:**
+- Thu thập số liệu về việc sử dụng QUIC:
+  - Google: >7% of global Internet traffic
+  - Cloudflare: Hỗ trợ QUIC cho tất cả websites
+  - Meta (Facebook, Instagram): Dùng QUIC cho mobile apps
+  - Akamai: CDN hỗ trợ QUIC
+- Nguồn: W3Techs, HTTP Archive, blog posts của các công ty
+
+**Kết quả mong đợi:**
+- Bảng thống kê với số liệu cụ thể
+- Có nguồn reference cho mỗi số liệu
+
+#### A1.4: Vẽ Timeline Diagram
+**Cần làm gì:**
+- Sử dụng draw.io hoặc Canva vẽ timeline ngang
+- Các mốc từ 2012 → 2023
+- Có hình ảnh logo (Google, IETF) nếu được
+
+**Kết quả mong đợi:**
+- File PNG/SVG chất lượng cao
+- Có thể in ra A4 hoặc đưa vào slides
+
+</details>
 
 ### Công việc của Thành viên 2:
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| A1.4 | Các RFC liên quan | RFC 9000, 9001, 9002, 9114, 9369 | RFC summary |
-| A1.5 | QUIC implementations | quiche, ngtcp2, quinn, etc. | Comparison table |
-| A1.6 | Browser support | Chrome, Firefox, Edge, Safari | Support matrix |
+| A1.5 | Các RFC liên quan | RFC 9000, 9001, 9002, 9114, 9369 | RFC summary |
+| A1.6 | QUIC implementations | quiche, ngtcp2, quinn, etc. | Comparison table |
+| A1.7 | Browser support | Chrome, Firefox, Edge, Safari | Support matrix |
+| A1.8 | 📊 **Vẽ biểu đồ adoption** | Pie/Bar chart: QUIC adoption % theo platform | **Adoption chart** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV2</b></summary>
+
+#### A1.5: Các RFC liên quan
+**Cần làm gì:**
+- Đọc tổng quan (Introduction, Abstract) của các RFC:
+  - **RFC 9000**: QUIC: A UDP-Based Multiplexed and Secure Transport (core protocol)
+  - **RFC 9001**: Using TLS to Secure QUIC (security)
+  - **RFC 9002**: QUIC Loss Detection and Congestion Control
+  - **RFC 9114**: HTTP/3 (HTTP over QUIC)
+  - **RFC 9369**: QUIC Version 2 (improvements)
+
+**Tại sao cần làm:**
+- RFC là nguồn chính thức và authoritative nhất
+- Khi cần tra cứu chi tiết, biết tìm ở RFC nào
+
+**Kết quả mong đợi:**
+- Bảng tóm tắt 5 RFC với mô tả ngắn gọn
+- Ghi chú số trang quan trọng để dễ tra cứu
+
+#### A1.6: QUIC Implementations
+**Cần làm gì:**
+- Nghiên cứu các implementation phổ biến:
+  - **quiche** (Cloudflare, Rust): Chúng ta sẽ dùng cái này
+  - **ngtcp2** (C): Được dùng trong curl
+  - **quinn** (Rust): Async QUIC
+  - **quic-go** (Go): Được dùng trong Caddy
+  - **msquic** (Microsoft, C): Windows native
+  - **lsquic** (LiteSpeed, C): Web server
+
+**Kết quả mong đợi:**
+- Bảng so sánh: Language, License, Features, Who uses
+
+#### A1.7: Browser Support
+**Cần làm gì:**
+- Kiểm tra và document QUIC/HTTP/3 support:
+  - **Chrome**: Enabled by default từ version nào?
+  - **Firefox**: Enabled by default từ version nào?
+  - **Edge**: Chromium-based, same as Chrome
+  - **Safari**: iOS 15+, macOS Big Sur+
+- Cách kiểm tra: `chrome://flags/#enable-quic`
+
+**Kết quả mong đợi:**
+- Support matrix với version numbers
+- Screenshot của browser settings
+
+#### A1.8: Vẽ Adoption Chart
+**Cần làm gì:**
+- Dùng Excel/Google Sheets hoặc Canva
+- Vẽ Pie chart: % traffic QUIC vs HTTP/2 vs HTTP/1.1
+- Hoặc Bar chart: Adoption % theo company
+
+**Kết quả mong đợi:**
+- Chart đẹp, có legend rõ ràng
+- File PNG chất lượng cao
+
+</details>
 
 ### 📋 Deliverables A1:
 - [ ] Timeline lịch sử QUIC (TV1)
 - [ ] Analysis tại sao cần QUIC (TV1)
 - [ ] RFC summary table (TV2)
 - [ ] Implementation comparison (TV2)
+- [ ] 📊 **Timeline diagram (TV1)**
+- [ ] 📊 **Adoption pie/bar chart (TV2)**
 
 ---
 
 ## A2. Kiến trúc QUIC Protocol
+
+### 🎯 Mục tiêu phần này:
+> Hiểu **cấu trúc** của QUIC protocol, **các khái niệm cơ bản** như Connection và Stream. Đây là nền tảng kỹ thuật quan trọng nhất.
 
 ### Công việc của Thành viên 1:
 
@@ -271,15 +403,123 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A2.3 | Connection concept | Connection ID, multiplexing, states | Technical document |
 | A2.4 | Stream concept | Stream ID, types (bidi/unidi), states | Technical document |
 | A2.5 | Đọc RFC 9000 Sections 1-5 | Overview, Versions, Streams | Ghi chú tóm tắt |
+| A2.6 | 📊 **Vẽ sơ đồ Protocol Stack** | QUIC vs TCP/TLS/HTTP stack side-by-side | **Stack comparison diagram** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV1</b></summary>
+
+#### A2.1: Protocol Stack
+**Cần làm gì:**
+- Vẽ sơ đồ các tầng của QUIC:
+  ```
+  ┌─────────────────┐
+  │  Application    │  ← Ứng dụng (Browser, curl...)
+  ├─────────────────┤
+  │  HTTP/3         │  ← HTTP semantics
+  ├─────────────────┤
+  │  QUIC           │  ← Connection, Stream, Flow Control, Loss Recovery
+  ├─────────────────┤
+  │  TLS 1.3        │  ← Encryption (tích hợp trong QUIC)
+  ├─────────────────┤
+  │  UDP            │  ← Transport layer
+  ├─────────────────┤
+  │  IP             │  ← Network layer
+  └─────────────────┘
+  ```
+
+**Điểm quan trọng cần giải thích:**
+- QUIC chạy trên **UDP** thay vì TCP
+- TLS 1.3 được **tích hợp** vào QUIC, không phải layer riêng
+- HTTP/3 là tên mới của "HTTP over QUIC"
+
+#### A2.2: So sánh với TCP/TLS/HTTP Stack
+**Cần làm gì:**
+- Vẽ 2 stack cạnh nhau để so sánh:
+  ```
+  QUIC Stack          vs      TCP/TLS Stack
+  ─────────────              ─────────────
+  HTTP/3                     HTTP/1.1 hoặc HTTP/2
+  QUIC                       TLS 1.2/1.3
+  UDP                        TCP
+  IP                         IP
+  ```
+
+**Điểm khác biệt quan trọng:**
+- TCP stack: 3 layers riêng biệt (TCP, TLS, HTTP)
+- QUIC stack: Hợp nhất nhiều chức năng vào QUIC layer
+
+#### A2.3: Connection Concept
+**Cần làm gì:**
+- Giải thích **Connection ID** (CID):
+  - CID là identifier cho QUIC connection
+  - Không dùng 4-tuple (src IP, src port, dst IP, dst port) như TCP
+  - Cho phép **Connection Migration** (đổi IP vẫn giữ connection)
+  - Client và Server có CID riêng
+
+- Connection States:
+  - **Handshaking**: Đang thiết lập connection
+  - **Connected**: Đã kết nối, có thể transfer data
+  - **Draining**: Đang đóng connection
+  - **Closed**: Đã đóng
+
+#### A2.4: Stream Concept
+**Cần làm gì:**
+- Giải thích **Stream** trong QUIC:
+  - Stream là **lightweight channel** trong 1 connection
+  - Mỗi connection có thể có **nhiều streams** đồng thời
+  - Streams **độc lập** nhau (không HOL blocking)
+
+- Stream ID Encoding:
+  ```
+  Bit 0: Client (0) / Server (1) initiated
+  Bit 1: Bidirectional (0) / Unidirectional (1)
+  
+  Ví dụ:
+  - Stream ID 0: Client-initiated, Bidirectional
+  - Stream ID 1: Server-initiated, Bidirectional
+  - Stream ID 2: Client-initiated, Unidirectional
+  - Stream ID 3: Server-initiated, Unidirectional
+  ```
+
+#### A2.5: Đọc RFC 9000
+**Cần làm gì:**
+- Đọc các sections sau của RFC 9000:
+  - **Section 1**: Introduction (tổng quan)
+  - **Section 2**: Streams (quan trọng!)
+  - **Section 3**: Stream States
+  - **Section 4**: Flow Control
+  - **Section 5**: Connections
+
+**Tips khi đọc RFC:**
+- Không cần đọc hết, tập trung vào concepts
+- Ghi chú những điểm quan trọng
+- Mark những phần không hiểu để thảo luận với teammate
+
+#### A2.6: Vẽ Stack Comparison Diagram
+**Cần làm gì:**
+- Dùng draw.io vẽ sơ đồ so sánh
+- 2 columns: QUIC Stack và TCP Stack
+- Dùng màu khác nhau cho từng layer
+- Có arrows chỉ data flow
+
+**Kết quả mong đợi:**
+- File PNG/SVG chất lượng cao
+- Có thể dùng trong báo cáo và slides
+
+</details>
 
 ### 📋 Deliverables A2:
 - [ ] QUIC Protocol Stack diagram (TV1)
 - [ ] Stack comparison diagram (TV1)
 - [ ] Connection/Stream concepts document (TV1)
+- [ ] 📊 **Stack comparison visual diagram (TV1)**
 
 ---
 
 ## A3. Packet và Frame Structure
+
+### 🎯 Mục tiêu phần này:
+> Hiểu **cấu trúc chi tiết** của QUIC packets và frames. Đây là phần kỹ thuật quan trọng để hiểu cách QUIC hoạt động ở mức byte-level.
 
 ### Công việc của Thành viên 2:
 
@@ -294,15 +534,146 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A3.7 | CRYPTO Frame | TLS handshake messages | Document |
 | A3.8 | Flow Control Frames | MAX_DATA, MAX_STREAM_DATA, etc. | Document |
 | A3.9 | Đọc RFC 9000 Sections 12-19 | Packet/Frame formats | Ghi chú |
+| A3.10 | 📊 **Vẽ sơ đồ Packet/Frame** | Diagram các loại packet và frame structure | **Packet/Frame diagrams** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV2</b></summary>
+
+#### A3.1: Long Header Packets
+**Cần làm gì:**
+- Nghiên cứu và document 4 loại Long Header packets:
+
+1. **Initial Packet**: Packet đầu tiên trong handshake
+   - Chứa CRYPTO frame (TLS ClientHello)
+   - Encrypted với Initial keys (derived từ Destination CID)
+   
+2. **0-RTT Packet**: Early data packet
+   - Gửi data trước khi handshake hoàn thành
+   - Dùng PSK (Pre-Shared Key) từ session trước
+   
+3. **Handshake Packet**: Tiếp tục handshake
+   - Chứa CRYPTO frame (TLS messages)
+   - Encrypted với Handshake keys
+   
+4. **Retry Packet**: Server yêu cầu retry
+   - Dùng cho address validation
+   - Chứa Retry Token
+
+**Cấu trúc Long Header:**
+```
+Long Header Format:
++-+-+-+-+-+-+-+-+
+|1|1|T T|X X X X|    1 bit: Header Form (1=Long), 1 bit: Fixed, 2 bits: Type, 4 bits: Type-specific
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                         Version (32)                          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| DCID Len (8)  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|               Destination Connection ID (0..160)              |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| SCID Len (8)  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Source Connection ID (0..160)                 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
+#### A3.2: Short Header Packets (1-RTT)
+**Cần làm gì:**
+- Document cấu trúc Short Header:
+  - Dùng sau khi handshake hoàn thành
+  - Header nhỏ gọn hơn Long Header
+  - Chỉ có Destination CID (không có Source CID)
+
+**Cấu trúc Short Header:**
+```
+Short Header Format:
++-+-+-+-+-+-+-+-+
+|0|1|S|R|R|K|P P|    1 bit: Header Form (0=Short), 1 bit: Fixed, các bit khác
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                 Destination Connection ID (*)                 |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Packet Number (8/16/24/32)               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                          Payload (*)                          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
+#### A3.3: Packet Number Spaces
+**Cần làm gì:**
+- Giải thích 3 Packet Number Spaces:
+  1. **Initial**: Cho Initial packets
+  2. **Handshake**: Cho Handshake packets
+  3. **Application Data**: Cho 0-RTT và 1-RTT packets
+
+**Tại sao có 3 spaces:**
+- Mỗi space có ACK riêng
+- Tránh confusion giữa các loại packets
+- Loss recovery riêng biệt
+
+#### A3.4: Frame Types
+**Cần làm gì:**
+- Tạo bảng tất cả Frame Types trong QUIC:
+
+| Frame Type | Value | Mô tả |
+|------------|-------|-------|
+| PADDING | 0x00 | Padding bytes |
+| PING | 0x01 | Keep-alive |
+| ACK | 0x02-0x03 | Acknowledgment |
+| RESET_STREAM | 0x04 | Reset a stream |
+| STOP_SENDING | 0x05 | Stop sending on stream |
+| CRYPTO | 0x06 | TLS data |
+| NEW_TOKEN | 0x07 | New token for 0-RTT |
+| STREAM | 0x08-0x0f | Stream data |
+| MAX_DATA | 0x10 | Connection flow control |
+| MAX_STREAM_DATA | 0x11 | Stream flow control |
+| MAX_STREAMS | 0x12-0x13 | Stream count limit |
+| DATA_BLOCKED | 0x14 | Connection blocked |
+| STREAM_DATA_BLOCKED | 0x15 | Stream blocked |
+| STREAMS_BLOCKED | 0x16-0x17 | Stream limit blocked |
+| NEW_CONNECTION_ID | 0x18 | New CID |
+| RETIRE_CONNECTION_ID | 0x19 | Retire CID |
+| PATH_CHALLENGE | 0x1a | Path validation |
+| PATH_RESPONSE | 0x1b | Path validation response |
+| CONNECTION_CLOSE | 0x1c-0x1d | Close connection |
+| HANDSHAKE_DONE | 0x1e | Handshake complete |
+
+#### A3.5-A3.8: Chi tiết các Frame quan trọng
+**STREAM Frame:**
+- Chứa application data
+- Có flags: FIN, LEN, OFF
+- Stream ID, Offset, Length, Data
+
+**ACK Frame:**
+- Acknowledge received packets
+- ACK Ranges: Cho phép ACK nhiều packets với gaps
+- ECN counts (optional)
+
+**CRYPTO Frame:**
+- Chứa TLS handshake messages
+- Offset + Length + Crypto Data
+
+#### A3.10: Vẽ Diagrams
+**Cần làm gì:**
+- Dùng draw.io vẽ:
+  1. Long Header structure
+  2. Short Header structure
+  3. STREAM Frame structure
+  4. ACK Frame structure
+
+</details>
 
 ### 📋 Deliverables A3:
 - [ ] Packet Types diagram (TV2)
 - [ ] Complete Frame Types table (TV2)
 - [ ] STREAM/ACK Frame analysis (TV2)
+- [ ] 📊 **Packet structure diagrams (TV2)**
 
 ---
 
 ## A4. Connection Establishment (0-RTT/1-RTT)
+
+### 🎯 Mục tiêu phần này:
+> Hiểu **handshake process** của QUIC - đây là **điểm mạnh nổi bật nhất** của QUIC so với TCP+TLS. Đặc biệt quan trọng là 0-RTT handshake.
 
 ### Công việc của Thành viên 1:
 
@@ -318,16 +689,148 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A4.8 | Version Negotiation | Version selection process | Document |
 | A4.9 | 0-RTT Security | Replay attack mitigation | Security analysis |
 | A4.10 | Đọc RFC 9001 | Using TLS to Secure QUIC | Ghi chú |
+| A4.11 | 📊 **Vẽ timing diagram** | So sánh thời gian: TCP+TLS vs QUIC 1-RTT vs 0-RTT | **Timing comparison chart** |
+| A4.12 | 📊 **Vẽ sequence diagram** | Sequence diagram chi tiết cho handshake flows | **Handshake sequence diagrams** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV1 (QUAN TRỌNG!)</b></summary>
+
+#### A4.1 & A4.2: 1-RTT Handshake
+**Cần làm gì:**
+- Hiểu và vẽ sequence diagram cho QUIC 1-RTT handshake:
+
+```
+Client                                    Server
+   |                                         |
+   |  Initial[CRYPTO: ClientHello]           |
+   |---------------------------------------->|  (1)
+   |                                         |
+   |       Initial[CRYPTO: ServerHello...]   |
+   |       Handshake[CRYPTO: EncryptedExts]  |
+   |       Handshake[CRYPTO: Certificate]    |
+   |       Handshake[CRYPTO: CertVerify]     |
+   |       Handshake[CRYPTO: Finished]       |
+   |<----------------------------------------|  (2)
+   |                                         |
+   |  Handshake[CRYPTO: Finished]            |
+   |  1-RTT[STREAM: Application Data]  ←──── Data có thể gửi ngay!
+   |---------------------------------------->|  (3)
+   |                                         |
+   |       1-RTT[STREAM: Response Data]      |
+   |       HANDSHAKE_DONE                    |
+   |<----------------------------------------|  (4)
+```
+
+**Điểm quan trọng:**
+- **1 RTT** = Client gửi Initial → Server reply → **Client có thể gửi data**
+- So sánh với TCP+TLS 1.3: 
+  - TCP SYN → SYN-ACK → ACK (1 RTT cho TCP)
+  - TLS ClientHello → ServerHello...Finished → Finished (1 RTT cho TLS)
+  - **Tổng: 2 RTT** mới gửi được data
+- QUIC kết hợp cả 2: **1 RTT** tổng cộng!
+
+#### A4.3: 0-RTT Early Data
+**Cần làm gì:**
+- Hiểu và vẽ 0-RTT handshake:
+
+```
+Client                                    Server
+   |                                         |
+   |  Initial[CRYPTO: ClientHello]           |
+   |  0-RTT[STREAM: Early Data]  ←────────── Data gửi CÙNG LÚC với handshake!
+   |---------------------------------------->|  (1)
+   |                                         |
+   |       Initial[CRYPTO: ServerHello...]   |
+   |       Handshake[CRYPTO: ...]            |
+   |       1-RTT[STREAM: Response]           |
+   |<----------------------------------------|  (2)
+```
+
+**Yêu cầu cho 0-RTT:**
+- Client đã từng connect tới Server trước đó
+- Server gửi **NEW_TOKEN** frame hoặc TLS session ticket
+- Client lưu lại và dùng cho lần sau
+
+**Ưu điểm:**
+- Data gửi **ngay lập tức** không cần đợi handshake
+- Với high-latency networks (100ms RTT), tiết kiệm 100-200ms!
+
+**Nhược điểm (Security):**
+- 0-RTT data có thể bị **replay attack**
+- Chỉ nên dùng cho **idempotent requests** (GET, không phải POST payment)
+
+#### A4.4: TLS 1.3 Integration
+**Cần làm gì:**
+- Giải thích cách QUIC tích hợp TLS 1.3:
+  - **Không dùng TLS record layer**: TLS messages đặt trực tiếp trong CRYPTO frames
+  - **Header protection**: QUIC header được encrypt thêm
+  - **Separate packet protection**: Mỗi packet được encrypt riêng với AEAD
+
+**Tại sao không dùng TLS record layer:**
+- TLS record layer được thiết kế cho TCP (byte stream)
+- QUIC là packet-based, không cần record layer
+- Giảm overhead
+
+#### A4.5: Encryption Levels
+**Cần làm gì:**
+- Document 4 encryption levels:
+
+| Level | Keys derived from | Used for |
+|-------|-------------------|----------|
+| **Initial** | Destination Connection ID | Initial packets |
+| **0-RTT** | TLS early_traffic_secret | 0-RTT packets |
+| **Handshake** | TLS handshake_traffic_secret | Handshake packets |
+| **1-RTT** | TLS traffic_secret | 1-RTT packets |
+
+#### A4.9: 0-RTT Security Analysis
+**Cần làm gì (QUAN TRỌNG cho báo cáo):**
+- Phân tích **replay attack risk**:
+  - Attacker có thể capture và replay 0-RTT packets
+  - Server không thể detect replay (stateless)
+  
+- Mitigation strategies:
+  - Chỉ accept 0-RTT cho idempotent requests
+  - Server-side replay detection (với trade-off stateful)
+  - Limited time window cho 0-RTT acceptance
+
+- Viết 1-2 trang phân tích security
+
+#### A4.11 & A4.12: Vẽ Diagrams
+**Timing Comparison Diagram:**
+```
+TCP + TLS 1.3:
+Client ──SYN────────────────> Server
+       <───────────SYN-ACK──
+       ──ACK, ClientHello──>
+       <─ServerHello...Fin──
+       ──Finished, DATA────>          Total: 2 RTT before DATA
+
+QUIC 1-RTT:
+Client ──Initial[ClientHello]────> Server
+       <─Initial,Handshake,1-RTT──
+       ──Handshake,1-RTT[DATA]───>    Total: 1 RTT before DATA
+
+QUIC 0-RTT:
+Client ──Initial,0-RTT[DATA]─────> Server
+       <─All responses──────────      Total: 0 RTT before DATA!
+```
+
+</details>
 
 ### 📋 Deliverables A4:
 - [ ] 1-RTT Handshake sequence diagram (TV1)
 - [ ] 0-RTT sequence diagram (TV1)
 - [ ] TLS 1.3 integration document (TV1)
 - [ ] 0-RTT security analysis (TV1)
+- [ ] 📊 **Timing comparison chart: TCP vs QUIC (TV1)**
+- [ ] 📊 **Detailed handshake sequence diagrams (TV1)**
 
 ---
 
 ## A5. Stream Multiplexing
+
+### 🎯 Mục tiêu phần này:
+> Hiểu **Stream Multiplexing** và **Head-of-Line (HOL) Blocking Problem** - đây là **điểm mạnh thứ 2** của QUIC sau 0-RTT.
 
 ### Công việc của Thành viên 2:
 
@@ -341,15 +844,137 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A5.6 | QUIC giải quyết HOL | Stream independence | Explanation + Diagram |
 | A5.7 | Stream Concurrency | MAX_STREAMS frame | Document |
 | A5.8 | Đọc RFC 9000 Section 2 | Streams | Ghi chú |
+| A5.9 | 📊 **Vẽ HOL blocking diagram** | So sánh trực quan TCP HOL vs QUIC no-HOL | **HOL comparison diagram** |
+| A5.10 | 📊 **Vẽ Stream state diagram** | State machine cho QUIC streams | **State machine diagram** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV2 (QUAN TRỌNG!)</b></summary>
+
+#### A5.5: HOL Blocking Problem (QUAN TRỌNG - phải hiểu rõ!)
+**Head-of-Line Blocking là gì?**
+
+Trong **TCP**, tất cả data được coi là 1 byte stream duy nhất. Khi một packet bị mất:
+```
+TCP Scenario (HTTP/2 over TCP):
+┌─────────────────────────────────────────────────────────────┐
+│ TCP Byte Stream (single ordered sequence)                   │
+│                                                             │
+│  Packet 1     Packet 2     Packet 3     Packet 4            │
+│  [Stream A]   [Stream B]   [Stream A]   [Stream C]          │
+│     ✓           ✗ LOST        ✓            ✓                │
+│                                                             │
+│  Application Layer nhận được:                               │
+│  Stream A: chờ... (blocked vì Packet 2 chưa tới)           │
+│  Stream B: chờ... (data bị mất)                            │
+│  Stream C: chờ... (blocked vì phải đợi Stream A, B)        │
+│                                                             │
+│  Tất cả streams đều BLOCKED vì 1 packet mất!               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Tại sao HTTP/2 vẫn bị HOL blocking?**
+- HTTP/2 có multiplexing ở application layer
+- Nhưng vẫn chạy trên TCP
+- TCP đảm bảo ordered delivery → 1 packet mất = tất cả blocked
+
+#### A5.6: QUIC giải quyết HOL
+**Trong QUIC**, mỗi stream là **độc lập**:
+```
+QUIC Scenario:
+┌─────────────────────────────────────────────────────────────┐
+│ QUIC Streams (independent streams)                          │
+│                                                             │
+│  Packet 1     Packet 2     Packet 3     Packet 4            │
+│  [Stream A]   [Stream B]   [Stream A]   [Stream C]          │
+│     ✓           ✗ LOST        ✓            ✓                │
+│                                                             │
+│  Application Layer nhận được:                               │
+│  Stream A: ✓ Packet 1 + ✓ Packet 3 → có thể xử lý ngay!    │
+│  Stream B: chờ retransmit (CHỈ Stream B bị blocked)         │
+│  Stream C: ✓ Packet 4 → có thể xử lý ngay!                 │
+│                                                             │
+│  Chỉ Stream B bị blocked, A và C không bị ảnh hưởng!       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key insight:**
+- QUIC streams là **độc lập** (independent)
+- Packet loss trên 1 stream **không ảnh hưởng** streams khác
+- Đây là lý do QUIC tốt hơn HTTP/2 over TCP trong điều kiện lossy networks
+
+#### A5.1: Stream Types
+**4 loại streams:**
+
+| Stream Type | Bit 0 | Bit 1 | Initiated by | Direction |
+|-------------|-------|-------|--------------|-----------|
+| 0x0 | 0 | 0 | Client | Bidirectional |
+| 0x1 | 1 | 0 | Server | Bidirectional |
+| 0x2 | 0 | 1 | Client | Unidirectional |
+| 0x3 | 1 | 1 | Server | Unidirectional |
+
+**Ví dụ Stream IDs:**
+- 0, 4, 8, 12, ... : Client-initiated bidirectional
+- 1, 5, 9, 13, ... : Server-initiated bidirectional
+- 2, 6, 10, 14, ... : Client-initiated unidirectional
+- 3, 7, 11, 15, ... : Server-initiated unidirectional
+
+#### A5.3: Stream States
+**Vẽ State Diagram cho QUIC Stream:**
+
+```
+          ┌───────────┐
+          │   Idle    │
+          └─────┬─────┘
+                │ open (send/receive)
+                ▼
+          ┌───────────┐
+          │   Open    │
+          └─────┬─────┘
+                │
+    ┌───────────┼───────────┐
+    │           │           │
+    ▼           ▼           ▼
+┌───────┐  ┌────────┐  ┌───────────┐
+│ Send  │  │  Both  │  │  Receive  │
+│  ↓    │  │   ↓    │  │     ↓     │
+│ Data  │  │  Data  │  │   Data    │
+│ Sent  │  │  Both  │  │  Received │
+└───┬───┘  └────┬───┘  └─────┬─────┘
+    │           │            │
+    └───────────┼────────────┘
+                │ FIN
+                ▼
+          ┌───────────┐
+          │  Closed   │
+          └───────────┘
+```
+
+#### A5.9: Vẽ HOL Blocking Diagram
+**Cần vẽ 2 diagrams so sánh:**
+1. **TCP + HTTP/2**: Tất cả streams blocked khi 1 packet mất
+2. **QUIC**: Chỉ affected stream bị blocked
+
+**Tips:**
+- Dùng màu khác nhau cho mỗi stream
+- Dùng X đỏ để mark packet loss
+- Dùng mũi tên để show data flow
+- Highlight sự khác biệt quan trọng
+
+</details>
 
 ### 📋 Deliverables A5:
 - [ ] Stream types document (TV2)
 - [ ] Stream state diagram (TV2)
 - [ ] HOL blocking explanation (TV2)
+- [ ] 📊 **HOL blocking comparison diagram (TV2)**
+- [ ] 📊 **Stream state machine diagram (TV2)**
 
 ---
 
 ## A6. Connection Migration
+
+### 🎯 Mục tiêu phần này:
+> Hiểu **Connection Migration** - **đặc điểm độc đáo (unique feature)** mà TCP không có. Cho phép connection tồn tại khi đổi network.
 
 ### Công việc của Thành viên 1:
 
@@ -363,11 +988,88 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A6.6 | Passive Migration | Server detects address change | Document |
 | A6.7 | Migration Security | Off-path attack prevention | Security analysis |
 | A6.8 | Đọc RFC 9000 Section 9 | Connection Migration | Ghi chú |
+| A6.9 | 📊 **Vẽ migration sequence** | Sequence diagram cho connection migration process | **Migration sequence diagram** |
+
+<details>
+<summary><b>📖 Hướng dẫn chi tiết cho TV1</b></summary>
+
+#### Tại sao Connection Migration quan trọng?
+**Vấn đề với TCP:**
+- TCP connection được identify bằng **4-tuple**: (src IP, src port, dst IP, dst port)
+- Khi thay đổi network (WiFi → 4G, hoặc đổi WiFi network) → IP thay đổi
+- 4-tuple thay đổi → **Connection bị drop** → phải reconnect
+
+**QUIC giải quyết:**
+- Connection được identify bằng **Connection ID (CID)**, không phải IP/port
+- Khi IP thay đổi, CID giữ nguyên → **Connection vẫn tồn tại**
+- Data transfer tiếp tục không bị gián đoạn
+
+#### A6.1: Connection ID
+**Cần làm gì:**
+- Giải thích Connection ID:
+  - CID là opaque byte string (max 20 bytes)
+  - Client và Server có CID riêng (Source CID, Destination CID)
+  - Mỗi endpoint có thể có **nhiều CIDs** active cùng lúc
+
+```
+TCP Identification:
+┌────────────────────────────────────────────────────┐
+│  (192.168.1.100, 54321, 10.0.0.1, 443)            │
+│  Change IP → Different 4-tuple → Connection lost! │
+└────────────────────────────────────────────────────┘
+
+QUIC Identification:
+┌────────────────────────────────────────────────────┐
+│  Connection ID: 0x1234567890abcdef                │
+│  Change IP → CID unchanged → Connection survives!  │
+└────────────────────────────────────────────────────┘
+```
+
+#### A6.3: Path Validation
+**Cần làm gì:**
+- Vẽ sequence diagram cho path validation:
+
+```
+Client (new IP)                           Server
+       |                                     |
+       |  Packet from new address            |
+       |  [Application data]                 |
+       |------------------------------------>|
+       |                                     | (Server detects address change)
+       |                                     |
+       |  PATH_CHALLENGE(random_data)        |
+       |<------------------------------------|
+       |                                     |
+       |  PATH_RESPONSE(same_random_data)    |
+       |------------------------------------>|
+       |                                     | (Server validates new path)
+       |                                     |
+       |  Continue communication             |
+       |<----------------------------------->|
+```
+
+**Tại sao cần Path Validation:**
+- Tránh **off-path attacks**: Attacker không thể redirect traffic
+- Xác nhận client thực sự ở địa chỉ mới
+
+#### A6.5 & A6.6: Active vs Passive Migration
+**Active Migration (Client-initiated):**
+- Client chủ động migrate (ví dụ: app biết sẽ đổi network)
+- Client gửi data từ new address
+- Server responds với PATH_CHALLENGE
+
+**Passive Migration (Server detects):**
+- Server nhận được packet từ new address
+- Server trigger path validation
+- Ví dụ: NAT rebinding (NAT gán port mới)
+
+</details>
 
 ### 📋 Deliverables A6:
 - [ ] Connection ID document (TV1)
 - [ ] Path Validation sequence (TV1)
 - [ ] Migration types comparison (TV1)
+- [ ] 📊 **Migration sequence diagram (TV1)**
 
 ---
 
@@ -384,10 +1086,12 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A7.5 | Initial Limits | Transport parameters | Document |
 | A7.6 | Flow Control Tuning | Performance implications | Analysis |
 | A7.7 | Đọc RFC 9000 Section 4 | Flow Control | Ghi chú |
+| A7.8 | 📊 **Vẽ flow control diagram** | Diagram credit-based flow control mechanism | **Flow control visual diagram** |
 
 ### 📋 Deliverables A7:
 - [ ] Flow Control mechanism document (TV2)
 - [ ] Connection vs Stream flow control diagram (TV2)
+- [ ] 📊 **Flow control visual diagram (TV2)**
 
 ---
 
@@ -406,11 +1110,15 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A8.7 | BBR Support | Optional, better for some cases | Document |
 | A8.8 | ECN Support | Explicit Congestion Notification | Document |
 | A8.9 | Đọc RFC 9002 | Loss Detection and Congestion Control | Ghi chú |
+| A8.10 | 📊 **Vẽ congestion window graph** | Graph cwnd theo thời gian (CUBIC vs NewReno) | **Congestion control chart** |
+| A8.11 | 📊 **Vẽ RTT estimation diagram** | Diagram RTT calculation | **RTT estimation diagram** |
 
 ### 📋 Deliverables A8:
 - [ ] ACK mechanism document (TV1)
 - [ ] Loss detection algorithm (TV1)
 - [ ] Congestion control overview (TV1)
+- [ ] 📊 **Congestion window graph (TV1)**
+- [ ] 📊 **RTT estimation diagram (TV1)**
 
 ---
 
@@ -469,6 +1177,8 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 | A11.6 | Deployment comparison | TV2 | Pros/Cons analysis |
 | A11.7 | Tạo bảng so sánh tổng hợp | Cả 2 | Final comparison table |
 | A11.8 | Vẽ infographic | TV2 | Visual comparison |
+| A11.9 | 📊 **Vẽ bar chart so sánh** | Bar chart so sánh latency, throughput các protocol | **Performance comparison bar chart** |
+| A11.10 | 📊 **Vẽ radar chart** | Radar chart so sánh features | **Feature radar chart** |
 
 ### 📊 Bảng So sánh Tổng hợp:
 
@@ -486,6 +1196,8 @@ PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
 ### 📋 Deliverables A11:
 - [ ] Complete comparison table (Cả 2)
 - [ ] Infographic (TV2)
+- [ ] 📊 **Performance comparison bar chart (TV1)**
+- [ ] 📊 **Feature radar chart (TV2)**
 
 ---
 
@@ -802,6 +1514,7 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 - [ ] Comparison table (TV1)
 - [ ] Wireshark captures (TV2)
 - [ ] Screenshots (TV1 + TV2)
+- [ ] 📊 **Bar chart so sánh handshake timing (TV1)**
 
 ---
 
@@ -819,6 +1532,8 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 | B3.4 | Run TCP comparison | Sequential downloads | Timing results |
 | B3.5 | Capture stream interleaving | Wireshark | Captures |
 | B3.6 | Analyze results | HOL blocking evidence | Analysis document |
+| B3.7 | 📊 **Vẽ stream timeline** | Timeline diagram các streams xen kẽ | **Stream interleaving diagram** |
+| B3.8 | 📊 **Vẽ so sánh completion time** | Bar chart so sánh TCP vs QUIC với packet loss | **Completion time comparison chart** |
 
 ### Kịch bản Demo:
 
@@ -859,6 +1574,8 @@ ls -la ~/quic-demo/downloads/
 - [ ] Wireshark captures showing interleaving (TV2)
 - [ ] Timing comparison data (TV2)
 - [ ] Screenshots (TV2)
+- [ ] 📊 **Stream interleaving diagram (TV2)**
+- [ ] 📊 **Completion time comparison chart: QUIC vs TCP (TV2)**
 
 ---
 
@@ -876,6 +1593,7 @@ ls -la ~/quic-demo/downloads/
 | B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | Wireshark capture |
 | B4.5 | Measure downtime | Time to resume after switch | Measurements |
 | B4.6 | Compare with TCP | TCP connection drops | Comparison |
+| B4.7 | 📊 **Vẽ migration timeline** | Timeline diagram showing migration process | **Migration timeline diagram** |
 
 ### Yêu cầu Network:
 - PC2 cần có cả WiFi và Ethernet kết nối được tới PC1
@@ -935,6 +1653,7 @@ sudo ip link set eth0 up
 - [ ] PATH_CHALLENGE/RESPONSE captures (TV1)
 - [ ] Downtime measurement (TV1)
 - [ ] TCP comparison showing dropped connection (TV1)
+- [ ] 📊 **Migration timeline diagram (TV1)**
 
 ---
 
@@ -952,6 +1671,8 @@ sudo ip link set eth0 up
 | B5.4 | Capture ACK frames | ACK ranges analysis | Wireshark captures |
 | B5.5 | Compare recovery | QUIC vs TCP | Comparison table |
 | B5.6 | Document findings | Analysis | Report |
+| B5.7 | 📊 **Vẽ line chart packet loss** | Line chart: Packet loss % vs Download time | **Packet loss impact chart** |
+| B5.8 | 📊 **Vẽ recovery comparison** | Bar chart so sánh QUIC vs TCP recovery | **Recovery comparison chart** |
 
 ### Kịch bản Demo:
 
@@ -996,6 +1717,8 @@ sudo tc qdisc del dev eth0 root
 - [ ] Packet loss test results (TV2)
 - [ ] ACK frame captures (TV2)
 - [ ] Recovery comparison table (TV2)
+- [ ] 📊 **Packet loss impact line chart (TV2)**
+- [ ] 📊 **Recovery comparison bar chart (TV2)**
 
 ---
 
@@ -1012,6 +1735,7 @@ sudo tc qdisc del dev eth0 root
 | B6.3 | Run stress test | Cả 2 | Test results |
 | B6.4 | Analyze throughput | TV1 | Performance data |
 | B6.5 | Document results | TV2 | Test report |
+| B6.6 | 📊 **Vẽ throughput chart** | Chart số clients vs throughput | **Scalability chart** |
 
 ### Kịch bản Demo:
 
@@ -1043,6 +1767,7 @@ wait
 - [ ] Multi-client test completed (Cả 2)
 - [ ] Server metrics captured (TV1)
 - [ ] Test report (TV2)
+- [ ] 📊 **Scalability chart: Clients vs Throughput (TV1)**
 
 ---
 
@@ -1084,11 +1809,15 @@ wait
 | C1.4 | Migration performance | Downtime measurement | Analysis |
 | C1.5 | Create performance charts | Graphs, tables | Visualizations |
 | C1.6 | Write performance report | Complete analysis | Document |
+| C1.7 | 📊 **Vẽ tổng hợp performance** | Bar/Line charts tổng hợp từ tất cả demos | **Comprehensive performance charts** |
+| C1.8 | 📊 **Vẽ summary dashboard** | Dashboard tổng kết metrics | **Performance dashboard** |
 
 ### 📋 Deliverables C1:
 - [ ] Performance data compiled (TV1)
 - [ ] Charts và visualizations (TV1)
 - [ ] Performance analysis report (TV1)
+- [ ] 📊 **Comprehensive performance charts (TV1)**
+- [ ] 📊 **Performance summary dashboard (TV1)**
 
 ---
 
@@ -1104,12 +1833,16 @@ wait
 | C2.4 | Akamai QUIC | CDN implementation | Case study |
 | C2.5 | Adoption statistics | Global QUIC adoption | Data summary |
 | C2.6 | Write case studies report | All cases combined | Document |
+| C2.7 | 📊 **Vẽ adoption statistics** | Pie/Bar chart QUIC adoption theo company/platform | **Adoption statistics charts** |
+| C2.8 | 📊 **Vẽ performance comparison** | Charts so sánh hiệu năng từ case studies | **Case study performance charts** |
 
 ### 📋 Deliverables C2:
 - [ ] Google case study (TV2)
 - [ ] Cloudflare case study (TV2)
 - [ ] Meta case study (TV2)
 - [ ] Case studies report (TV2)
+- [ ] 📊 **QUIC adoption statistics charts (TV2)**
+- [ ] 📊 **Case study performance comparison charts (TV2)**
 
 ---
 
@@ -1266,7 +1999,7 @@ wait
 |----------|---------|---|
 | **Nội dung toàn diện** | Bao quát TẤT CẢ đặc điểm QUIC (11 chủ đề lý thuyết) | |
 | **Demo thực tế** | 5 kịch bản demo với video và captures | |
-| **Topology rõ ràng** | 2 Ubuntu PCs, các scenario cụ thể | |
+| **Topology rõ ràng** | 2 Ubuntu PCs + Cloud, các scenario cụ thể | |
 | **So sánh data thực** | QUIC vs TCP+TLS với số liệu từ demo | |
 | **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
 | **Báo cáo chất lượng** | 40-50 trang, diagrams chuyên nghiệp | |
@@ -1274,6 +2007,71 @@ wait
 | **Demo live** | Có thể demo trực tiếp + video backup | |
 | **Phân tích case studies** | Google, Cloudflare, Meta | |
 | **Hướng phát triển** | QUIC v2, Future extensions | |
+| **📊 Biểu đồ chuyên nghiệp** | Charts, diagrams minh họa rõ ràng | |
+
+---
+
+## 📊 DANH SÁCH BIỂU ĐỒ CẦN VẼ
+
+> **Lưu ý**: Biểu đồ là phần QUAN TRỌNG để báo cáo và slides đạt điểm cao. Sử dụng các công cụ như **draw.io**, **Excel/Google Sheets**, **Matplotlib/Python**, hoặc **Canva**.
+
+### Biểu đồ Lý thuyết (PHẦN A):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 1 | Timeline | Lịch sử phát triển QUIC (2012-2021) | TV1 | A1 |
+| 2 | Pie/Bar Chart | QUIC adoption statistics theo platform | TV2 | A1 |
+| 3 | Diagram | QUIC vs TCP/TLS Protocol Stack | TV1 | A2 |
+| 4 | Diagram | Packet và Frame Structure | TV2 | A3 |
+| 5 | Timing Diagram | Handshake comparison: TCP vs QUIC | TV1 | A4 |
+| 6 | Sequence Diagram | 1-RTT và 0-RTT handshake flows | TV1 | A4 |
+| 7 | Diagram | HOL blocking: TCP vs QUIC | TV2 | A5 |
+| 8 | State Diagram | Stream state machine | TV2 | A5 |
+| 9 | Sequence Diagram | Connection Migration process | TV1 | A6 |
+| 10 | Diagram | Flow Control mechanism | TV2 | A7 |
+| 11 | Line Graph | Congestion window over time | TV1 | A8 |
+| 12 | Diagram | RTT estimation | TV1 | A8 |
+| 13 | Bar Chart | Performance comparison (latency, throughput) | TV1 | A11 |
+| 14 | Radar Chart | Feature comparison QUIC vs TCP | TV2 | A11 |
+
+### Biểu đồ Demo (PHẦN B):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 15 | Bar Chart | Handshake timing: Local vs Cloud | TV1 | B2 |
+| 16 | Timeline | Stream interleaving during download | TV2 | B3 |
+| 17 | Bar Chart | Completion time: QUIC vs TCP with loss | TV2 | B3 |
+| 18 | Timeline | Migration process with timestamps | TV1 | B4 |
+| 19 | Line Chart | Packet loss % vs Download time | TV2 | B5 |
+| 20 | Bar Chart | Recovery comparison: QUIC vs TCP | TV2 | B5 |
+| 21 | Line Chart | Scalability: Clients vs Throughput | TV1 | B6 |
+
+### Biểu đồ Phân tích (PHẦN C):
+
+| STT | Loại | Nội dung | Người vẽ | Phần |
+|-----|------|----------|----------|------|
+| 22 | Dashboard | Performance summary từ tất cả demos | TV1 | C1 |
+| 23 | Mixed Charts | Comprehensive performance comparison | TV1 | C1 |
+| 24 | Pie Chart | QUIC adoption by company | TV2 | C2 |
+| 25 | Bar Chart | Case study performance improvements | TV2 | C2 |
+
+### Tổng hợp phân bổ biểu đồ:
+
+| Thành viên | Số biểu đồ | Loại chính |
+|------------|------------|------------|
+| **TV1** | 13 biểu đồ | Timing, Sequence, Performance, Dashboard |
+| **TV2** | 12 biểu đồ | Diagrams, Charts, State machines, Adoption |
+
+### Công cụ vẽ biểu đồ khuyến nghị:
+
+| Loại biểu đồ | Công cụ |
+|--------------|---------|
+| Diagrams, Flowcharts | draw.io, Lucidchart |
+| Sequence Diagrams | draw.io, PlantUML, Mermaid |
+| Bar/Line/Pie Charts | Excel, Google Sheets, Matplotlib |
+| Infographics | Canva, Figma |
+| Network Topology | draw.io, Packet Tracer |
+| State Diagrams | draw.io, PlantUML |
 
 ---
 

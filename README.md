@@ -1,8 +1,8 @@
-# 🚀 ĐỒ ÁN: NGHIÊN CỨU TOÀN DIỆN GIAO THỨC QUIC
+# 🚀 ĐỒ ÁN: NGHIÊN CỨU TOÀN DIỆN GIAO THỨC QUIC (QUIC PROTOCOL)
 
 ## Đề tài: Nghiên cứu và Demo các Đặc điểm Nổi bật của Giao thức QUIC
 
-### Môn học: NT531.Q21 - Mạng máy tính nâng cao
+### Môn học: NT531.Q21 - Đánh giá hiệu năng mạng máy tính
 
 ---
 
@@ -10,8 +10,8 @@
 
 | STT | Họ và tên | MSSV | Vai trò | Thiết bị |
 |-----|-----------|------|---------|----------|
-| 1 | Thành viên 1 | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
-| 2 | Thành viên 2 | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
+| 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
+| 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
 | - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM (Remote testing) |
 
 ---

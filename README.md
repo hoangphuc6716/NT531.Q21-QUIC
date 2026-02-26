@@ -12,7 +12,7 @@
 |-----|-----------|------|---------|----------|
 | 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
 | 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
-| - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM (Remote testing) |
+| - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM - Region xa (US/EU) cho remote testing |
 
 ---
 
@@ -53,8 +53,8 @@
 | **C1** | [Performance Analysis](#c1-performance-analysis) | TV1 | [↓](#c1-performance-analysis) |
 | **C2** | [Case Studies](#c2-case-studies) | TV2 | [↓](#c2-case-studies) |
 | **C3** | [QUIC v2 và Future](#c3-quic-v2-và-future) | TV1 | [↓](#c3-quic-v2-và-future) |
-| **C4** | [Viết báo cáo](#c4-viết-báo-cáo) | TV1 | [↓](#c4-viết-báo-cáo) |
-| **C5** | [Làm slides thuyết trình](#c5-làm-slides-thuyết-trình) | TV2 | [↓](#c5-làm-slides-thuyết-trình) |
+| **C4** | [Viết báo cáo](#c4-viết-báo-cáo) | TV1 + TV2 | [↓](#c4-viết-báo-cáo) |
+| **C5** | [Làm slides thuyết trình](#c5-làm-slides-thuyết-trình) | TV1 + TV2 | [↓](#c5-làm-slides-thuyết-trình) |
 | **C6** | [Quay video demo](#c6-quay-video-demo) | TV1 + TV2 | [↓](#c6-quay-video-demo) |
 
 ---
@@ -84,23 +84,24 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                    QUIC DEMO TOPOLOGY                                                │
-│                        (2 Ubuntu PCs + Cloud - Hybrid Network)                                       │
+│                (2 Ubuntu PCs ở Việt Nam + Cloud xa ở US/EU - Hybrid Network)                         │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                                      │
-│                                    ☁️ ORACLE CLOUD (Free Tier)                                       │
+│                          ☁️ ORACLE CLOUD (Free Tier) - REGION XA (US/EU)                             │
 │                              ┌──────────────────────────────────────┐                                │
 │                              │     QUIC SERVER / CLIENT (Remote)    │                                │
 │                              │     (quiche-server / quiche-client)  │                                │
 │                              │     Public IP: x.x.x.x               │                                │
 │                              │     Port: 4433/UDP                   │                                │
-│                              │                                      │                                │
+│                              │     Region: US East (Ashburn) hoặc   │                                │
+│                              │             EU (Frankfurt)            │                                │
 │                              │     OS: Ubuntu 22.04 LTS             │                                │
 │                              │     VM.Standard.E2.1.Micro (Free)    │                                │
 │                              │     1 OCPU, 1GB RAM                  │                                │
 │                              └──────────────┬───────────────────────┘                                │
 │                                             │                                                        │
-│                                             │ INTERNET                                               │
-│                                             │ (Real latency testing)                                 │
+│                                             │ INTERNET (khoảng cách xa,                              │
+│                                             │  RTT ~200-300ms VN↔US)                                 │
 │                                             │                                                        │
 │   ┌─────────────────────────────────────────┴─────────────────────────────────────────┐              │
 │   │                                      ROUTER                                        │              │
@@ -140,9 +141,9 @@
 │   │      ├── PC1 ↔ PC2: Connection migration (WiFi ↔ Ethernet)                                  │   │
 │   │      └── PC1 ↔ PC2: Packet loss simulation với tc netem                                     │   │
 │   │                                                                                               │   │
-│   │   🔹 CLOUD DEMOS (Real-world latency, 0-RTT benefits):                                       │   │
-│   │      ├── PC1/PC2 → Cloud Server: 0-RTT vs 1-RTT handshake (thấy rõ latency)                 │   │
-│   │      ├── Cloud Server → PC1/PC2: Cross-network QUIC connection                              │   │
+│   │   🔹 CLOUD DEMOS (High latency VN↔US/EU, 0-RTT benefits rõ rệt):                              │   │
+│   │      ├── PC1/PC2 → Cloud Server (xa): 0-RTT vs 1-RTT (RTT ~200-300ms, thấy rõ latency)     │   │
+│   │      ├── Cloud Server → PC1/PC2: Cross-network QUIC connection qua khoảng cách xa           │   │
 │   │      └── Multi-path: Local + Cloud simultaneous testing                                     │   │
 │   │                                                                                               │   │
 │   │   🔹 HYBRID DEMOS:                                                                           │   │
@@ -185,48 +186,49 @@
 |------------|----------|
 | **Provider** | Oracle Cloud Infrastructure - **Always Free Tier** |
 | **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **Region** | **US East (Ashburn)** hoặc **EU (Frankfurt)** — chọn region **xa** Việt Nam để có RTT cao (~200-300ms), giúp demo thấy rõ lợi ích 0-RTT |
 | **OS** | Ubuntu 22.04 LTS |
 | **Network** | Public IP (x.x.x.x), Security List allow UDP 4433 |
 | **Software** | quiche (server+client) |
-| **Vai trò** | Remote QUIC Server/Client cho real-world latency testing |
+| **Vai trò** | Remote QUIC Server/Client cho real-world high-latency testing |
 | **Người phụ trách** | **Cả 2 thành viên cùng quản lý** |
 
 ### Network Setup Options
 
-#### Option 1: LAN + Cloud (Recommended)
+#### Option 1: LAN + Cloud xa (Recommended)
 
 ```
 PC1 (192.168.1.100) ─┬── LAN ──┬─ PC2 (192.168.1.101)
                      │         │
-                     └── Router ─── Internet ─── Cloud VM (x.x.x.x)
+                     └── Router ─── Internet ─── Cloud VM (x.x.x.x) [US/EU, RTT ~200-300ms]
 ```
 
 - **Local demos**: PC1 ↔ PC2 qua LAN (fast, controlled)
-- **Cloud demos**: PC1/PC2 ↔ Cloud qua Internet (real latency)
+- **Cloud demos**: PC1/PC2 ↔ Cloud qua Internet (high latency do khoảng cách xa, thấy rõ 0-RTT benefit)
 
-#### Option 2: Direct Cable + Cloud
+#### Option 2: Direct Cable + Cloud xa
 
 ```
 PC1 (10.0.0.1) ──── Crossover Cable ──── PC2 (10.0.0.2)
        │                                        │
-       └─────────── WiFi/LTE ───────────────────┴─── Cloud VM
+       └─────────── WiFi/LTE ───────────────────┴─── Cloud VM [US/EU]
 ```
 
 - **Direct demos**: PC1 ↔ PC2 qua Ethernet (lowest latency)
-- **Cloud demos**: Cả 2 PC connect Cloud qua WiFi/LTE
+- **Cloud demos**: Cả 2 PC connect Cloud ở US/EU qua WiFi/LTE (high latency)
 
-#### Option 3: WiFi Hotspot + Cloud (for Migration Demo)
+#### Option 3: WiFi Hotspot + Cloud xa (for Migration Demo)
 
 ```
 PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
        │                                          │
-       └─ Ethernet ─┬─ Router ─── Internet ─── Cloud VM
+       └─ Ethernet ─┬─ Router ─── Internet ─── Cloud VM [US/EU]
                     │
                     └─ PC2 Ethernet (192.168.1.101)
 ```
 
 - **Migration demo**: PC2 switch giữa WiFi và Ethernet
-- **Cloud involved**: Cloud VM observe connection migration
+- **Cloud involved**: Cloud VM (xa) observe connection migration qua khoảng cách lớn
 
 ---
 
@@ -1385,7 +1387,9 @@ echo "./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html"
 #### Bước 1: Tạo Oracle Cloud Account (Free Tier)
 1. Truy cập https://www.oracle.com/cloud/free/
 2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
-3. Chọn region gần nhất (e.g., Singapore, Tokyo)
+3. Chọn region **xa** vị trí test (e.g., **US East - Ashburn**, **US West - Phoenix**, hoặc **EU - Frankfurt**)
+
+> ⚠️ **Lưu ý quan trọng**: Chọn region **xa** máy test (ở Việt Nam) để có RTT cao (~200-300ms). Điều này giúp demo thấy rõ lợi ích của 0-RTT handshake so với 1-RTT. Nếu chọn region gần (Singapore, Tokyo), RTT chỉ ~30-50ms, sự khác biệt sẽ không đáng kể.
 
 #### Bước 2: Tạo VM Instance
 1. Go to Compute → Instances → Create Instance
@@ -1470,7 +1474,7 @@ tshark -i eth0 -f "udp port 4433" -c 20 -Y "quic" -T fields \
   -e frame.number -e frame.time_relative -e quic.packet_type
 ```
 
-#### Kịch bản B: Cloud Testing (PC1/PC2 ↔ Cloud) - Thấy rõ latency benefit
+#### Kịch bản B: Cloud Testing (PC1/PC2 ↔ Cloud xa US/EU) - Thấy rõ latency benefit nhờ khoảng cách xa
 ```bash
 # === TRÊN CLOUD VM (Server) ===
 cd ~/quiche
@@ -1493,7 +1497,7 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 echo "=== CLOUD: QUIC 0-RTT (Resumed Connection) ==="
 time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 
-# So sánh: Với Cloud latency ~50-100ms, 0-RTT tiết kiệm đáng kể!
+# So sánh: Với Cloud xa (US/EU) latency ~200-300ms, 0-RTT tiết kiệm rất đáng kể!
 ```
 
 ### Kết quả mong đợi:
@@ -1503,10 +1507,10 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 | Scenario | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings |
 |----------|---------------------|--------------------|--------------------|---------|
 | **Local (LAN ~1ms RTT)** | ~2-3ms | ~1-2ms | ~1ms | Nhỏ |
-| **Cloud (~50ms RTT)** | ~100ms | ~50ms | ~0ms + data | **50-100ms!** |
-| **Cloud (~100ms RTT)** | ~200ms | ~100ms | ~0ms + data | **100-200ms!** |
+| **Cloud xa (~200ms RTT)** | ~400ms | ~200ms | ~0ms + data | **200-400ms!** |
+| **Cloud xa (~300ms RTT)** | ~600ms | ~300ms | ~0ms + data | **300-600ms!** |
 
-> 💡 **Key insight**: Với network có latency cao (Cloud/Internet), 0-RTT tiết kiệm đáng kể thời gian!
+> 💡 **Key insight**: Với Cloud VM ở xa (US/EU, RTT ~200-300ms), sự khác biệt giữa 0-RTT và TCP+TLS là rất lớn và dễ đo lường!
 
 ### 📋 Deliverables B2:
 - [ ] Handshake timing measurements - Local (TV1)
@@ -1870,47 +1874,72 @@ wait
 
 ## C4. Viết Báo cáo
 
-### Công việc của Thành viên 1:
+### Công việc chia đều cả 2 thành viên:
 
-| Chương | Nội dung | Trang |
-|--------|----------|-------|
-| 1 | Giới thiệu (Đặt vấn đề, Mục tiêu, Phạm vi) | 2-3 |
-| 2 | Kiến trúc QUIC (Stack, Connection, Stream, Packet, Frame) | 8-10 |
-| 3 | Đặc điểm nổi bật (Handshake, Multiplexing, Migration, Security, Flow/Congestion Control) | 12-15 |
-| 4 | Demo thực hành (Topology, 5 Demos, Kết quả) | 8-10 |
-| 5 | Case Studies (Google, Cloudflare, Meta) | 4-5 |
-| 6 | QUIC v2 và Future | 3-4 |
-| 7 | Kết luận (Tổng kết, Hạn chế, Hướng phát triển) | 2-3 |
-| | **TỔNG** | **40-50** |
+| Chương | Nội dung | Trang | Người viết |
+|--------|----------|-------|------------|
+| 1 | Giới thiệu (Đặt vấn đề, Mục tiêu, Phạm vi) | 2-3 | TV1 |
+| 2 | Kiến trúc QUIC (Stack, Connection, Stream, Packet, Frame) | 8-10 | TV1 (phần A2) + TV2 (phần A3) |
+| 3 | Đặc điểm nổi bật (Handshake, Multiplexing, Migration, Security, Flow/Congestion Control) | 12-15 | TV1 (Handshake A4, Migration A6, Loss/Congestion A8) + TV2 (Multiplexing A5, Flow Control A7, Security A9) |
+| 4 | Demo thực hành (Topology, 5 Demos, Kết quả) | 8-10 | TV1 (Demo 1,3,5) + TV2 (Demo 2,4, Wireshark) |
+| 5 | Case Studies (Google, Cloudflare, Meta) | 4-5 | TV2 |
+| 6 | QUIC v2 và Future | 3-4 | TV1 |
+| 7 | Kết luận (Tổng kết, Hạn chế, Hướng phát triển) | 2-3 | TV1 + TV2 cùng viết |
+| | **TỔNG** | **40-50** | |
+
+### Chi tiết phân chia viết báo cáo:
+
+| Thành viên | Chương phụ trách | Số trang ước tính |
+|------------|-----------------|-------------------|
+| **TV1** | Chương 1 (2-3tr), Chương 2 phần kiến trúc (5tr), Chương 3 phần Handshake+Migration+Loss (7tr), Chương 4 phần Demo 1,3,5 (4tr), Chương 6 (3-4tr), Chương 7 phần tổng kết (1tr) | ~22-24 trang |
+| **TV2** | Chương 2 phần Packet/Frame (4tr), Chương 3 phần Multiplexing+FlowControl+Security (7tr), Chương 4 phần Demo 2,4,Wireshark (4tr), Chương 5 (4-5tr), Chương 7 phần hạn chế+hướng phát triển (1tr) | ~20-21 trang |
+| **Cả 2** | Review chéo toàn bộ, chỉnh sửa, format thống nhất | - |
 
 ### 📋 Deliverables C4:
-- [ ] Chương 1-3 (TV1)
-- [ ] Chương 4 (TV1 + TV2)
-- [ ] Chương 5-7 (TV1)
-- [ ] Complete report 40-50 pages (TV1)
+- [ ] Chương 1: Giới thiệu (TV1)
+- [ ] Chương 2: Kiến trúc - phần Stack, Connection, Stream (TV1) + phần Packet, Frame (TV2)
+- [ ] Chương 3: Đặc điểm - phần Handshake, Migration, Loss/Congestion (TV1) + phần Multiplexing, Flow Control, Security (TV2)
+- [ ] Chương 4: Demo - phần Demo 1, 3, 5 (TV1) + phần Demo 2, 4, Wireshark (TV2)
+- [ ] Chương 5: Case Studies (TV2)
+- [ ] Chương 6: QUIC v2 và Future (TV1)
+- [ ] Chương 7: Kết luận (TV1 + TV2)
+- [ ] Review chéo và chỉnh sửa (Cả 2)
+- [ ] Complete report 40-50 pages (Cả 2 cùng hoàn thiện)
 
 ---
 
 ## C5. Làm Slides Thuyết trình
 
-### Công việc của Thành viên 2:
+### Công việc chia cả 2 thành viên:
 
-| Section | Số slides | Nội dung |
-|---------|-----------|----------|
-| Introduction | 3 | Đặt vấn đề, Mục tiêu |
-| QUIC Overview | 5 | History, Why QUIC |
-| Architecture | 8 | Stack, Connection, Stream, Packets |
-| Key Features | 12 | Handshake, Multiplexing, Migration, Security |
-| Demo | 8 | Topology, 5 Demos với screenshots |
-| Case Studies | 4 | Google, Cloudflare, Meta |
-| Future | 3 | QUIC v2, Extensions |
-| Conclusion | 2 | Summary, Q&A |
-| **TỔNG** | **45** | |
+| Section | Số slides | Nội dung | Người làm |
+|---------|-----------|----------|-----------|
+| Introduction | 3 | Đặt vấn đề, Mục tiêu | TV1 |
+| QUIC Overview | 5 | History, Why QUIC | TV1 |
+| Architecture | 8 | Stack, Connection, Stream, Packets | TV1 (Stack, Connection) + TV2 (Packets, Frame) |
+| Key Features | 12 | Handshake, Multiplexing, Migration, Security | TV1 (Handshake, Migration) + TV2 (Multiplexing, Security, Flow Control) |
+| Demo | 8 | Topology, 5 Demos với screenshots | TV1 (Demo 1, 3, 5) + TV2 (Demo 2, 4, Wireshark) |
+| Case Studies | 4 | Google, Cloudflare, Meta | TV2 |
+| Future | 3 | QUIC v2, Extensions | TV1 |
+| Conclusion | 2 | Summary, Q&A | TV2 |
+| **TỔNG** | **45** | | |
+
+### Chi tiết phân chia slides:
+
+| Thành viên | Slides phụ trách | Số slides ước tính |
+|------------|-----------------|---------------------|
+| **TV1** | Introduction (3), QUIC Overview (5), Architecture phần Stack (4), Key Features phần Handshake+Migration (5), Demo phần Demo 1,3,5 (4), Future (3) | ~24 slides |
+| **TV2** | Architecture phần Packets (4), Key Features phần Multiplexing+Security+FlowControl (7), Demo phần Demo 2,4,Wireshark (4), Case Studies (4), Conclusion (2) | ~21 slides |
+| **Cả 2** | Review, chỉnh format thống nhất, thêm animation/transition | - |
 
 ### 📋 Deliverables C5:
-- [ ] Complete slides 45 slides (TV2)
+- [ ] Slides phần Introduction + Overview + Future (TV1)
+- [ ] Slides phần Architecture + Key Features (TV1 + TV2)
+- [ ] Slides phần Demo (TV1 + TV2)
+- [ ] Slides phần Case Studies + Conclusion (TV2)
 - [ ] Demo video embedded (TV2)
-- [ ] Speaker notes (TV2)
+- [ ] Speaker notes (Cả 2, mỗi người viết notes cho slides mình làm)
+- [ ] Review chéo và format thống nhất (Cả 2)
 
 ---
 
@@ -1963,8 +1992,8 @@ wait
 - [ ] C1: Performance Analysis (TV1)
 - [ ] C2: Case Studies (TV2)
 - [ ] C3: QUIC v2 & Future (TV1)
-- [ ] C4: Báo cáo 40-50 trang (TV1)
-- [ ] C5: Slides 45 slides (TV2)
+- [ ] C4: Báo cáo 40-50 trang (TV1 + TV2 cùng viết, mỗi người viết phần phụ trách)
+- [ ] C5: Slides 45 slides (TV1 + TV2 cùng làm, mỗi người làm slides phần mình)
 - [ ] C6: Video Demo 10-15 phút (TV1 + TV2)
 
 ---
@@ -2077,20 +2106,98 @@ wait
 
 ## 📊 Phân bổ công việc
 
-### Thành viên 1 (TV1):
-- A2, A4, A6, A8, A10: Kiến trúc, Handshake, Migration, Loss/Congestion, HTTP/3
-- B2, B4: Demo Handshake, Demo Migration
-- C1, C3, C4: Performance Analysis, QUIC v2, Báo cáo chính
+### Thành viên 1 - TV1 (Đỗ Hoàng Phúc - Trưởng nhóm):
 
-### Thành viên 2 (TV2):
-- A3, A5, A7, A9: Packet/Frame, Multiplexing, Flow Control, Security
-- B3, B5, B7: Demo Multiplexing, Demo Packet Loss, Wireshark Analysis
-- C2, C5: Case Studies, Slides thuyết trình
+#### Phần A - Lý thuyết:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| A1 | Tổng quan QUIC (cùng TV2) | A1.1 Lịch sử, A1.2 Động lực, A1.3 Adoption stats, A1.4 Vẽ timeline |
+| A2 | Kiến trúc QUIC Protocol | Protocol stack, Connection, Stream concepts, Connection ID |
+| A4 | Connection Establishment | 1-RTT/0-RTT handshake, TLS 1.3 integration, so sánh TCP |
+| A6 | Connection Migration | Cơ chế migration, Path validation, demo scenario |
+| A8 | Loss Detection & Congestion Control | ACK ranges, CUBIC/BBR, RTT estimation |
+| A10 | HTTP/3 over QUIC | HTTP/3 features, so sánh HTTP/2, QPACK |
+| A11 | So sánh QUIC vs TCP+TLS (cùng TV2) | Bảng so sánh tổng hợp, biểu đồ performance |
 
-### Cả 2:
-- A1, A11: Tổng quan, So sánh QUIC vs TCP
-- B1, B6: Setup Topology, Multi-client Test
-- C6: Quay Video Demo
+#### Phần B - Thực hành:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| B1 | Setup Topology (cùng TV2) | Setup Server trên PC1 (B1.1-B1.9), Setup Cloud VM |
+| B2 | Demo 1: Handshake Comparison | Đo TCP+TLS vs QUIC handshake, local + cloud xa |
+| B4 | Demo 3: Connection Migration | Demo đổi WiFi↔Ethernet, capture migration process |
+| B6 | Demo 5: Multi-client (cùng TV2) | Stress test nhiều clients, đo scalability |
+
+#### Phần C - Phân tích & Báo cáo:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| C1 | Performance Analysis | Tổng hợp metrics từ 5 demos, vẽ charts, viết phân tích |
+| C3 | QUIC v2 và Future | RFC 9369, Multipath QUIC, WebTransport, DNS over QUIC |
+| C4 | Viết báo cáo (cùng TV2) | Chương 1, 2 (phần kiến trúc), 3 (phần Handshake/Migration/Loss), 4 (Demo 1,3,5), 6, 7 (phần tổng kết) ≈ 22-24 trang |
+| C5 | Slides (cùng TV2) | ~24 slides: Intro, Overview, Architecture (Stack), Features (Handshake/Migration), Demo 1,3,5, Future |
+| C6 | Video Demo (cùng TV2) | Quay Demo 1 (Handshake), Demo 3 (Migration), Demo 5 (Multi-client), thêm narration |
+
+#### Biểu đồ TV1: 13 biểu đồ
+- Timeline, Protocol Stack, Timing diagrams, Sequence diagrams, Congestion graphs, Performance charts, Dashboard
+
+---
+
+### Thành viên 2 - TV2 (Bùi Lê Huy Phước):
+
+#### Phần A - Lý thuyết:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| A1 | Tổng quan QUIC (cùng TV1) | A1.5 Các RFC, A1.6 Implementations, A1.7 Browser support, A1.8 Vẽ adoption chart |
+| A3 | Packet và Frame Structure | Long/Short header, Frame types, encoding |
+| A5 | Stream Multiplexing | Stream types, HOL blocking solution, interleaving |
+| A7 | Flow Control | Connection + Stream level, WINDOW_UPDATE |
+| A9 | Security (TLS 1.3) | TLS 1.3 integration, encryption levels, key updates |
+| A11 | So sánh QUIC vs TCP+TLS (cùng TV1) | Bảng so sánh tổng hợp, feature radar chart |
+
+#### Phần B - Thực hành:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| B1 | Setup Topology (cùng TV1) | Setup Client trên PC2 (B1.10-B1.18), Setup Cloud VM |
+| B3 | Demo 2: Stream Multiplexing | Demo nhiều streams đồng thời, so sánh với TCP HOL blocking |
+| B5 | Demo 4: Packet Loss Recovery | Mô phỏng packet loss với tc netem, đo recovery |
+| B6 | Demo 5: Multi-client (cùng TV1) | Stress test nhiều clients, capture & analysis |
+| B7 | Wireshark Analysis | Capture và phân tích QUIC packets từ tất cả demos |
+
+#### Phần C - Phân tích & Báo cáo:
+| Mã | Nội dung | Công việc cụ thể |
+|----|----------|-------------------|
+| C2 | Case Studies | Google, Cloudflare, Meta, Akamai - nghiên cứu triển khai thực tế |
+| C4 | Viết báo cáo (cùng TV1) | Chương 2 (phần Packet/Frame), 3 (phần Multiplexing/FlowControl/Security), 4 (Demo 2,4,Wireshark), 5, 7 (phần hạn chế+hướng phát triển) ≈ 20-21 trang |
+| C5 | Slides (cùng TV1) | ~21 slides: Architecture (Packets), Features (Multiplexing/Security/FlowControl), Demo 2,4,Wireshark, Case Studies, Conclusion |
+| C6 | Video Demo (cùng TV1) | Quay Demo 2 (Multiplexing), Demo 4 (Packet Loss), edit video tổng hợp |
+
+#### Biểu đồ TV2: 12 biểu đồ
+- Adoption charts, Packet/Frame diagrams, HOL blocking, State machines, Flow control, Line/Bar charts
+
+---
+
+### Cả 2 cùng làm:
+| Mã | Nội dung | Chi tiết |
+|----|----------|----------|
+| A1 | Tổng quan QUIC | TV1: Lịch sử + Động lực + Stats, TV2: RFCs + Implementations + Browser support |
+| A11 | So sánh QUIC vs TCP+TLS | TV1: Performance comparison, TV2: Feature comparison |
+| B1 | Setup Topology | TV1: Setup Server PC1, TV2: Setup Client PC2, Cả 2: Setup Cloud VM xa (US/EU) |
+| B6 | Multi-client Stress Test | TV1: Setup server + scripts, TV2: Client scripts + analysis |
+| C4 | Viết báo cáo | Mỗi người viết chương phụ trách (~20-24 trang/người), review chéo |
+| C5 | Slides thuyết trình | Mỗi người làm slides phần mình (~21-24 slides/người), format thống nhất |
+| C6 | Quay Video Demo | TV1: Demo 1,3 + narration, TV2: Demo 2,4 + edit, Cả 2: Demo 5 |
+
+### Tổng hợp khối lượng:
+
+| Tiêu chí | TV1 | TV2 |
+|----------|-----|-----|
+| Chủ đề lý thuyết (riêng) | 5 (A2, A4, A6, A8, A10) | 4 (A3, A5, A7, A9) |
+| Chủ đề lý thuyết (chung) | 2 (A1, A11) | 2 (A1, A11) |
+| Demo riêng | 2 (B2, B4) | 3 (B3, B5, B7) |
+| Demo chung | 2 (B1, B6) | 2 (B1, B6) |
+| Phân tích riêng | 2 (C1, C3) | 1 (C2) |
+| Báo cáo viết | ~22-24 trang | ~20-21 trang |
+| Slides làm | ~24 slides | ~21 slides |
+| Biểu đồ | 13 | 12 |
 
 ---
 

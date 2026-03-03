@@ -10,9 +10,9 @@
 
 | STT | Họ và tên | MSSV | Vai trò | Thiết bị |
 |-----|-----------|------|---------|----------|
-| 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
-| 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
-| - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM - Region xa (US/EU) cho remote testing |
+| 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | ☁️ Cloud VM 1 - Server (US East) |
+| 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | ☁️ Cloud VM 2 - Client (AP Singapore) |
+| - | Cả 2 | - | Cùng quản lý | SSH từ máy cá nhân vào 2 Cloud VMs |
 
 ---
 
@@ -67,7 +67,7 @@
 |---|----------|---------------------|--------|
 | 1 | **0-RTT/1-RTT Handshake** | Giảm latency từ 2-3 RTT xuống 0-1 RTT | So sánh với TCP+TLS |
 | 2 | **Stream Multiplexing** | Không có Head-of-Line blocking | Demo nhiều streams |
-| 3 | **Connection Migration** | Duy trì kết nối khi đổi network | Demo đổi WiFi↔Ethernet |
+| 3 | **Connection Migration** | Duy trì kết nối khi đổi network | Demo đổi network path trên Cloud |
 | 4 | **Built-in Encryption** | TLS 1.3 tích hợp, always encrypted | Phân tích bảo mật |
 | 5 | **Flow Control** | Connection + Stream level | Demo flow control |
 | 6 | **Loss Detection & Recovery** | ACK ranges, improved recovery | Demo packet loss |
@@ -77,78 +77,56 @@
 
 ---
 
-## 🌐 TOPOLOGY DEMO - 2 UBUNTU PCs + CLOUD
+## 🌐 TOPOLOGY DEMO - 2 CLOUD VMs (Cross-Region End-to-End)
 
 ### Sơ đồ Topology
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                    QUIC DEMO TOPOLOGY                                                │
-│                (2 Ubuntu PCs ở Việt Nam + Cloud xa ở US/EU - Hybrid Network)                         │
+│          (2 Cloud VMs ở 2 vùng khác nhau — US East ↔ AP Singapore — End-to-End Cloud)               │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                                      │
-│                          ☁️ ORACLE CLOUD (Free Tier) - REGION XA (US/EU)                             │
-│                              ┌──────────────────────────────────────┐                                │
-│                              │     QUIC SERVER / CLIENT (Remote)    │                                │
-│                              │     (quiche-server / quiche-client)  │                                │
-│                              │     Public IP: x.x.x.x               │                                │
-│                              │     Port: 4433/UDP                   │                                │
-│                              │     Region: US East (Ashburn) hoặc   │                                │
-│                              │             EU (Frankfurt)            │                                │
-│                              │     OS: Ubuntu 22.04 LTS             │                                │
-│                              │     VM.Standard.E2.1.Micro (Free)    │                                │
-│                              │     1 OCPU, 1GB RAM                  │                                │
-│                              └──────────────┬───────────────────────┘                                │
-│                                             │                                                        │
-│                                             │ INTERNET (khoảng cách xa,                              │
-│                                             │  RTT ~200-300ms VN↔US)                                 │
-│                                             │                                                        │
-│   ┌─────────────────────────────────────────┴─────────────────────────────────────────┐              │
-│   │                                      ROUTER                                        │              │
-│   │                              (NAT / Port Forwarding)                               │              │
-│   │                              Public IP: y.y.y.y                                    │              │
-│   └───────────────────────────────────┬───────────────────────────────────────────────┘              │
-│                                       │                                                              │
-│                                       │ LAN (192.168.1.0/24)                                         │
-│                    ┌──────────────────┴──────────────────┐                                           │
-│                    │                                     │                                           │
-│   ┌────────────────┴────────────────────┐  ┌────────────┴─────────────────────────┐                 │
-│   │   🖥️ UBUNTU PC 1 (Đỗ Hoàng Phúc)      │  │   🖥️ UBUNTU PC 2 (Bùi Lê Huy Phước)      │                 │
-│   │                                      │  │                                      │                 │
-│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
-│   │   │    QUIC SERVER (Local)     │    │  │   │    QUIC CLIENT             │    │                 │
-│   │   │    (quiche-server)         │    │  │   │    (quiche-client)         │    │                 │
-│   │   │    Port: 4433/UDP          │◄───┼──┼───│                            │    │                 │
-│   │   │    IP: 192.168.1.100       │    │  │   │    IP: 192.168.1.101       │    │                 │
-│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
-│   │                                      │  │                                      │                 │
-│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
-│   │   │    QUIC CLIENT             │    │  │   │    Wireshark               │    │                 │
-│   │   │    (quiche-client)         │    │  │   │    tcpdump                 │    │                 │
-│   │   │    (Self-test + Cloud)     │    │  │   │    tc (traffic control)    │    │                 │
-│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
-│   │                                      │  │                                      │                 │
-│   │   OS: Ubuntu 22.04 LTS              │  │   OS: Ubuntu 22.04 LTS              │                 │
-│   │   RAM: 4GB+ (khuyến nghị 8GB)       │  │   RAM: 4GB+ (khuyến nghị 8GB)       │                 │
-│   │   Network: Ethernet + WiFi          │  │   Network: Ethernet + WiFi          │                 │
-│   └──────────────────────────────────────┘  └──────────────────────────────────────┘                 │
+│   ☁️ ORACLE CLOUD VM 1 — REGION: US EAST (Ashburn)       ☁️ ORACLE CLOUD VM 2 — REGION: AP (Singapore)│
+│   ┌──────────────────────────────────────┐               ┌──────────────────────────────────────┐    │
+│   │     QUIC SERVER                      │               │     QUIC CLIENT + ANALYSIS           │    │
+│   │     (quiche-server)                  │               │     (quiche-client)                  │    │
+│   │     Public IP: <SERVER_IP>           │               │     Public IP: <CLIENT_IP>           │    │
+│   │     Port: 4433/UDP                   │◄─── INTERNET ─┤     Wireshark / tshark               │    │
+│   │     OS: Ubuntu 22.04 LTS             │  RTT ~200-300ms│     tcpdump, tc (traffic control)    │    │
+│   │     VM.Standard.E2.1.Micro (Free)    │               │     OS: Ubuntu 22.04 LTS             │    │
+│   │     1 OCPU, 1GB RAM                  │               │     VM.Standard.E2.1.Micro (Free)    │    │
+│   │     nginx (TCP+TLS baseline)         │               │     1 OCPU, 1GB RAM                  │    │
+│   │     tcpdump, test files              │               │     curl (TCP+TLS baseline)          │    │
+│   └──────────────────────────────────────┘               └──────────────────────────────────────┘    │
+│              ▲                                                         ▲                              │
+│              │ SSH                                                     │ SSH                          │
+│              │                                                         │                              │
+│   ┌──────────┴────────────────────┐                       ┌───────────┴───────────────────┐          │
+│   │  💻 Laptop TV1 (Việt Nam)     │                       │  💻 Laptop TV2 (Việt Nam)     │          │
+│   │  (Đỗ Hoàng Phúc)             │                       │  (Bùi Lê Huy Phước)          │          │
+│   │  SSH → Cloud VM 1 (Server)    │                       │  SSH → Cloud VM 2 (Client)    │          │
+│   └───────────────────────────────┘                       └───────────────────────────────┘          │
 │                                                                                                      │
 │   ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │
 │   │                                    DEMO SCENARIOS                                             │   │
 │   │                                                                                               │   │
-│   │   🔹 LOCAL DEMOS (Low latency, controlled environment):                                      │   │
-│   │      ├── PC1 (Server) ↔ PC2 (Client): Stream multiplexing, HOL blocking                     │   │
-│   │      ├── PC1 ↔ PC2: Connection migration (WiFi ↔ Ethernet)                                  │   │
-│   │      └── PC1 ↔ PC2: Packet loss simulation với tc netem                                     │   │
+│   │   🔹 CLOUD END-TO-END (High latency US↔Asia, thấy rõ lợi ích QUIC):                         │   │
+│   │      ├── VM1 (Server US) ↔ VM2 (Client Asia): 0-RTT vs 1-RTT handshake                      │   │
+│   │      ├── VM1 ↔ VM2: Stream multiplexing, HOL blocking comparison                             │   │
+│   │      ├── VM1 ↔ VM2: Packet loss simulation với tc netem                                      │   │
+│   │      ├── VM1 ↔ VM2: Connection migration (đổi network interface trên VM2)                    │   │
+│   │      └── VM1 ↔ VM2: Multi-client stress test                                                 │   │
 │   │                                                                                               │   │
-│   │   🔹 CLOUD DEMOS (High latency VN↔US/EU, 0-RTT benefits rõ rệt):                              │   │
-│   │      ├── PC1/PC2 → Cloud Server (xa): 0-RTT vs 1-RTT (RTT ~200-300ms, thấy rõ latency)     │   │
-│   │      ├── Cloud Server → PC1/PC2: Cross-network QUIC connection qua khoảng cách xa           │   │
-│   │      └── Multi-path: Local + Cloud simultaneous testing                                     │   │
+│   │   🔹 WIRESHARK ANALYSIS (trên VM2):                                                          │   │
+│   │      ├── Capture QUIC handshake packets                                                       │   │
+│   │      ├── Analyze STREAM, ACK, PATH frames                                                     │   │
+│   │      └── So sánh QUIC vs TCP+TLS packets                                                      │   │
 │   │                                                                                               │   │
-│   │   🔹 HYBRID DEMOS:                                                                           │   │
-│   │      ├── PC1 as Server: Cloud VM + PC2 connect cùng lúc (multi-client)                      │   │
-│   │      └── Failover testing: Local ↔ Cloud switching                                          │   │
+│   │   💡 Lợi thế End-to-End Cloud:                                                                │   │
+│   │      ├── RTT thực tế ~200-300ms (US ↔ Asia) — thấy rõ lợi ích 0-RTT                          │   │
+│   │      ├── Không phụ thuộc mạng LAN local — ổn định, reproducible                               │   │
+│   │      └── Dễ demo từ bất kỳ đâu — chỉ cần SSH                                                 │   │
 │   └──────────────────────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -156,79 +134,52 @@
 
 ### Chi tiết các thành phần
 
-#### 🖥️ Ubuntu PC 1 (Thành viên 1 - Server + Client)
+#### ☁️ Cloud VM 1 — Server (TV1: Đỗ Hoàng Phúc quản lý)
 
 | Thành phần | Chi tiết |
 |------------|----------|
-| **Hardware** | PC/Laptop với Ubuntu 22.04 |
-| **RAM** | 4GB+ (khuyến nghị 8GB) |
-| **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.100 (LAN) |
-| **Software** | quiche (server+client), Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Server local + Client để test với Cloud |
-| **Người phụ trách** | **Thành viên 1** |
-
-#### 🖥️ Ubuntu PC 2 (Thành viên 2 - Client + Analysis)
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| **Hardware** | PC/Laptop với Ubuntu 22.04 |
-| **RAM** | 4GB+ |
-| **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.101 (LAN) |
-| **Software** | quiche-client, Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Client + Packet analysis + Test với Cloud |
-| **Người phụ trách** | **Thành viên 2** |
-
-#### ☁️ Oracle Cloud VM (Free Tier - Cả 2 cùng quản lý)
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| **Provider** | Oracle Cloud Infrastructure - **Always Free Tier** |
+| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
 | **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
-| **Region** | **US East (Ashburn)** hoặc **EU (Frankfurt)** — chọn region **xa** Việt Nam để có RTT cao (~200-300ms), giúp demo thấy rõ lợi ích 0-RTT |
+| **Region** | **US East (Ashburn)** — xa Việt Nam, RTT cao (~200-300ms tới Asia) |
 | **OS** | Ubuntu 22.04 LTS |
-| **Network** | Public IP (x.x.x.x), Security List allow UDP 4433 |
-| **Software** | quiche (server+client) |
-| **Vai trò** | Remote QUIC Server/Client cho real-world high-latency testing |
-| **Người phụ trách** | **Cả 2 thành viên cùng quản lý** |
+| **Network** | Public IP (<SERVER_IP>), Security List allow UDP 4433, TCP 443 |
+| **Software** | quiche (server+client), nginx (TCP+TLS baseline), tcpdump |
+| **Vai trò** | QUIC Server + TCP+TLS baseline server |
+| **Người phụ trách** | **Thành viên 1 (TV1)** — SSH từ laptop cá nhân |
 
-### Network Setup Options
+#### ☁️ Cloud VM 2 — Client + Analysis (TV2: Bùi Lê Huy Phước quản lý)
 
-#### Option 1: LAN + Cloud xa (Recommended)
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
+| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **Region** | **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)** — gần Việt Nam hơn so với US East, tạo khoảng cách cross-continent |
+| **OS** | Ubuntu 22.04 LTS |
+| **Network** | Public IP (<CLIENT_IP>), Security List allow UDP outbound |
+| **Software** | quiche-client, tshark, tcpdump, tc (iproute2), curl |
+| **Vai trò** | QUIC Client + Packet analysis + TCP comparison |
+| **Người phụ trách** | **Thành viên 2 (TV2)** — SSH từ laptop cá nhân |
 
-```
-PC1 (192.168.1.100) ─┬── LAN ──┬─ PC2 (192.168.1.101)
-                     │         │
-                     └── Router ─── Internet ─── Cloud VM (x.x.x.x) [US/EU, RTT ~200-300ms]
-```
-
-- **Local demos**: PC1 ↔ PC2 qua LAN (fast, controlled)
-- **Cloud demos**: PC1/PC2 ↔ Cloud qua Internet (high latency do khoảng cách xa, thấy rõ 0-RTT benefit)
-
-#### Option 2: Direct Cable + Cloud xa
-
-```
-PC1 (10.0.0.1) ──── Crossover Cable ──── PC2 (10.0.0.2)
-       │                                        │
-       └─────────── WiFi/LTE ───────────────────┴─── Cloud VM [US/EU]
-```
-
-- **Direct demos**: PC1 ↔ PC2 qua Ethernet (lowest latency)
-- **Cloud demos**: Cả 2 PC connect Cloud ở US/EU qua WiFi/LTE (high latency)
-
-#### Option 3: WiFi Hotspot + Cloud xa (for Migration Demo)
+### Network Architecture: Cloud End-to-End
 
 ```
-PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
-       │                                          │
-       └─ Ethernet ─┬─ Router ─── Internet ─── Cloud VM [US/EU]
-                    │
-                    └─ PC2 Ethernet (192.168.1.101)
+☁️ Cloud VM 1 (US East - Ashburn)          ☁️ Cloud VM 2 (AP - Singapore)
+   QUIC Server: 0.0.0.0:4433/UDP              QUIC Client
+   nginx: 0.0.0.0:443/TCP                     tshark, tcpdump, tc
+   Public IP: <SERVER_IP>                      Public IP: <CLIENT_IP>
+          │                                            │
+          └────────── INTERNET (RTT ~200-300ms) ───────┘
+                    (Cross-continent: US ↔ Asia)
+
+💻 Laptop TV1 (Việt Nam) ── SSH ──→ Cloud VM 1 (Server)
+💻 Laptop TV2 (Việt Nam) ── SSH ──→ Cloud VM 2 (Client)
 ```
 
-- **Migration demo**: PC2 switch giữa WiFi và Ethernet
-- **Cloud involved**: Cloud VM (xa) observe connection migration qua khoảng cách lớn
+> 💡 **Tại sao chọn 2 region xa nhau?**
+> - RTT ~200-300ms giữa US và Asia → thấy rõ lợi ích 0-RTT (tiết kiệm 200-600ms)
+> - Mô phỏng thực tế: user ở châu Á truy cập server ở Mỹ (rất phổ biến)
+> - QUIC được thiết kế để giải quyết vấn đề high-latency networks → demo đúng use case
+> - Không phụ thuộc mạng LAN local → kết quả ổn định, reproducible
 
 ---
 
@@ -1209,136 +1160,50 @@ Client (new IP)                           Server
 
 ## B1. Setup Topology
 
-### Công việc của Thành viên 1 (Setup Server):
+### Công việc của Thành viên 1 (Setup Cloud VM 1 — Server, US East):
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.1 | Install Ubuntu 22.04 | Clean install hoặc existing | Working OS |
-| B1.2 | Install dependencies | build-essential, cmake, openssl, etc. | Script |
-| B1.3 | Install Rust | rustup | Working Rust |
-| B1.4 | Clone và build quiche | Cloudflare QUIC implementation | Working quiche |
-| B1.5 | Generate certificates | Self-signed SSL certs | cert.pem, key.pem |
-| B1.6 | Create test files | index.html, small/medium/large files | Test content |
-| B1.7 | Configure firewall | UFW allow 4433/udp | Open port |
-| B1.8 | Test server locally | quiche-server running | Working server |
-| B1.9 | Document setup | Step-by-step guide | Setup guide |
+| B1.1 | Tạo Oracle Cloud VM 1 | Region: US East (Ashburn), Ubuntu 22.04 | Working VM |
+| B1.2 | Configure Security List | Allow UDP 4433, TCP 443, TCP 22 inbound | Open ports |
+| B1.3 | SSH vào VM và install dependencies | build-essential, cmake, openssl, nginx, etc. | Script |
+| B1.4 | Install Rust | rustup | Working Rust |
+| B1.5 | Clone và build quiche | Cloudflare QUIC implementation | Working quiche |
+| B1.6 | Generate certificates | Self-signed SSL certs | cert.pem, key.pem |
+| B1.7 | Create test files | index.html, small/medium/large files | Test content |
+| B1.8 | Setup nginx (TCP+TLS baseline) | HTTPS server để so sánh với QUIC | Working nginx |
+| B1.9 | Test server | quiche-server running, nginx running | Working servers |
+| B1.10 | Document setup | Step-by-step guide | Setup guide |
 
-### Công việc của Thành viên 2 (Setup Client):
+### Công việc của Thành viên 2 (Setup Cloud VM 2 — Client, AP Singapore):
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.10 | Install Ubuntu 22.04 | Clean install hoặc existing | Working OS |
-| B1.11 | Install dependencies | build-essential, cmake, openssl, etc. | Script |
-| B1.12 | Install Rust | rustup | Working Rust |
-| B1.13 | Clone và build quiche | quiche-client | Working client |
-| B1.14 | Install Wireshark | Packet capture tool | Working Wireshark |
-| B1.15 | Install tc (iproute2) | Traffic control for demos | Working tc |
-| B1.16 | Configure network | Connect to PC1 | Network ready |
-| B1.17 | Test connectivity | Ping, basic QUIC connection | Connection verified |
-| B1.18 | Document setup | Step-by-step guide | Setup guide |
+| B1.11 | Tạo Oracle Cloud VM 2 | Region: AP Southeast (Singapore), Ubuntu 22.04 | Working VM |
+| B1.12 | Configure Security List | Allow outbound UDP/TCP, SSH inbound | Open ports |
+| B1.13 | SSH vào VM và install dependencies | build-essential, cmake, openssl, etc. | Script |
+| B1.14 | Install Rust | rustup | Working Rust |
+| B1.15 | Clone và build quiche | quiche-client | Working client |
+| B1.16 | Install tshark + tcpdump | Packet capture tools (headless, no GUI) | Working tshark |
+| B1.17 | Install tc (iproute2) | Traffic control for demos | Working tc |
+| B1.18 | Test connectivity tới VM1 | Ping, basic QUIC connection tới Server VM | Connection verified |
+| B1.19 | Đo RTT baseline | ping <SERVER_IP> — expected ~200-300ms | RTT measurement |
+| B1.20 | Document setup | Step-by-step guide | Setup guide |
 
 ### 📋 Setup Scripts:
 
-#### setup_server.sh (PC1)
+#### setup_server.sh (Cloud VM 1 — US East)
 ```bash
 #!/bin/bash
-echo "=== Setting up QUIC Server on Ubuntu PC1 ==="
+echo "=== Setting up QUIC Server on Cloud VM 1 (US East) ==="
 
 # Update system
 sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
 sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    wireshark tshark tcpdump curl git iproute2 net-tools
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source $HOME/.cargo/env
-
-# Clone and build quiche
-git clone --recursive https://github.com/cloudflare/quiche.git
-cd quiche
-cargo build --release --examples
-
-# Create directories
-mkdir -p ~/quic-demo/{certs,www,captures,logs}
-
-# Generate certificates
-openssl req -x509 -newkey rsa:2048 \
-  -keyout ~/quic-demo/certs/key.pem \
-  -out ~/quic-demo/certs/cert.pem \
-  -days 365 -nodes \
-  -subj "/CN=quic-demo-server"
-
-# Create test files
-echo "<h1>QUIC Demo Server</h1><p>Hello from PC1!</p>" > ~/quic-demo/www/index.html
-dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1     # 100KB
-dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10     # 10MB
-dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100     # 100MB
-
-# Multiple files for multiplexing test
-for i in {1..5}; do
-  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=5
-done
-
-# Configure firewall
-sudo ufw allow 4433/udp
-sudo ufw reload
-
-echo "=== Server Setup Complete ==="
-echo ""
-echo "Start server with:"
-echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
-echo "  --cert ~/quic-demo/certs/cert.pem \\"
-echo "  --key ~/quic-demo/certs/key.pem \\"
-echo "  --root ~/quic-demo/www \\"
-echo "  --listen 0.0.0.0:4433"
-```
-
-#### setup_client.sh (PC2)
-```bash
-#!/bin/bash
-echo "=== Setting up QUIC Client on Ubuntu PC2 ==="
-
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install dependencies
-sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    wireshark tshark tcpdump curl git iproute2 net-tools
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source $HOME/.cargo/env
-
-# Clone and build quiche
-git clone --recursive https://github.com/cloudflare/quiche.git
-cd quiche
-cargo build --release --examples
-
-# Create directories
-mkdir -p ~/quic-demo/{captures,logs,downloads}
-
-echo "=== Client Setup Complete ==="
-echo ""
-echo "Test connection with:"
-echo "cd ~/quiche && ./target/release/examples/quiche-client \\"
-echo "  --no-verify https://SERVER_IP:4433/index.html"
-echo ""
-echo "Replace SERVER_IP with PC1's IP address (e.g., 192.168.1.100)"
-```
-
-#### setup_cloud.sh (Oracle Cloud VM - Cả 2 cùng setup)
-```bash
-#!/bin/bash
-echo "=== Setting up QUIC Server/Client on Oracle Cloud VM ==="
-
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install dependencies
-sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    curl git iproute2 net-tools
+                    tshark tcpdump curl git iproute2 net-tools \
+                    nginx netfilter-persistent  # netfilter-persistent: lưu iptables rules qua reboot
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -1360,73 +1225,146 @@ openssl req -x509 -newkey rsa:2048 \
   -subj "/CN=quic-cloud-server"
 
 # Create test files
-echo "<h1>QUIC Cloud Server</h1><p>Hello from Oracle Cloud!</p>" > ~/quic-demo/www/index.html
-dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1
-dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10
+echo "<h1>QUIC Cloud Server</h1><p>Hello from Cloud VM 1 (US East)!</p>" > ~/quic-demo/www/index.html
+dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1     # 100KB
+dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10     # 10MB
+dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100     # 100MB
 
-# Note: Configure Oracle Cloud Security List to allow UDP 4433 inbound
+# Multiple files for multiplexing test
+for i in {1..5}; do
+  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=5
+done
 
-echo "=== Cloud Setup Complete ==="
+# Setup nginx for TCP+TLS baseline comparison
+sudo mkdir -p /etc/nginx/ssl
+sudo cp ~/quic-demo/certs/cert.pem /etc/nginx/ssl/cert.pem
+sudo cp ~/quic-demo/certs/key.pem /etc/nginx/ssl/key.pem
+sudo tee /etc/nginx/sites-available/quic-baseline > /dev/null <<'EOF'
+server {
+    listen 443 ssl;
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    root /home/ubuntu/quic-demo/www;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+EOF
+sudo ln -sf /etc/nginx/sites-available/quic-baseline /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
+# Configure iptables (Oracle Cloud uses iptables, not ufw)
+sudo iptables -I INPUT -p udp --dport 4433 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+sudo netfilter-persistent save
+
+echo "=== Server Setup Complete ==="
 echo ""
-echo "IMPORTANT: Configure Oracle Cloud Security List:"
-echo "  - Allow Ingress UDP port 4433 from 0.0.0.0/0 (hoặc giới hạn IP nếu cần bảo mật)"
-echo ""
-echo "Start server with:"
+echo "Start QUIC server with:"
 echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
 echo "  --cert ~/quic-demo/certs/cert.pem \\"
 echo "  --key ~/quic-demo/certs/key.pem \\"
 echo "  --root ~/quic-demo/www \\"
 echo "  --listen 0.0.0.0:4433"
 echo ""
-echo "Test from local PCs with:"
-echo "./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html"
+echo "nginx (TCP+TLS baseline) is already running on port 443"
 ```
 
-### Oracle Cloud Setup Guide (Cả 2 cùng làm)
+#### setup_client.sh (Cloud VM 2 — AP Singapore)
+```bash
+#!/bin/bash
+echo "=== Setting up QUIC Client on Cloud VM 2 (AP Singapore) ==="
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    tshark tcpdump curl git iproute2 net-tools
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
+
+# Create directories
+mkdir -p ~/quic-demo/{captures,logs,downloads}
+
+echo "=== Client Setup Complete ==="
+echo ""
+echo "Đo RTT tới Server VM (US East):"
+echo "ping -c 10 <SERVER_IP>"
+echo ""
+echo "Test QUIC connection:"
+echo "cd ~/quiche && ./target/release/examples/quiche-client \\"
+echo "  --no-verify https://<SERVER_IP>:4433/index.html"
+echo ""
+echo "Test TCP+TLS connection (baseline):"
+echo "curl -k -o /dev/null -w 'Total: %{time_total}s\n' https://<SERVER_IP>/index.html"
+```
+
+### Oracle Cloud Setup Guide
 
 #### Bước 1: Tạo Oracle Cloud Account (Free Tier)
 1. Truy cập https://www.oracle.com/cloud/free/
 2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
-3. Chọn region **xa** vị trí test (e.g., **US East - Ashburn**, **US West - Phoenix**, hoặc **EU - Frankfurt**)
+3. Chọn **Home Region** — lưu ý: mỗi account chỉ có 1 Home Region, nhưng có thể tạo VM ở region khác
 
-> ⚠️ **Lưu ý quan trọng**: Chọn region **xa** máy test (ở Việt Nam) để có RTT cao (~200-300ms). Điều này giúp demo thấy rõ lợi ích của 0-RTT handshake so với 1-RTT. Nếu chọn region gần (Singapore, Tokyo), RTT chỉ ~30-50ms, sự khác biệt sẽ không đáng kể.
+> ⚠️ **Quan trọng**: Cần tạo 2 VMs ở 2 regions khác nhau:
+> - **VM 1 (Server)**: US East (Ashburn) — xa Việt Nam
+> - **VM 2 (Client)**: AP Southeast (Singapore) hoặc AP Northeast (Tokyo) — gần Việt Nam hơn
+> - RTT giữa US East ↔ AP Singapore: ~200-300ms → thấy rõ lợi ích QUIC
 
-#### Bước 2: Tạo VM Instance
+#### Bước 2: Tạo VM 1 — Server (US East)
 1. Go to Compute → Instances → Create Instance
-2. Chọn **VM.Standard.E2.1.Micro** (Always Free)
-3. Chọn **Ubuntu 22.04** image
-4. Chọn **Assign public IP address**
-5. Download SSH key pair
-6. Create instance
+2. Chọn Region: **US East (Ashburn)**
+3. Chọn **VM.Standard.E2.1.Micro** (Always Free)
+4. Chọn **Ubuntu 22.04** image
+5. Chọn **Assign public IP address**
+6. Download SSH key pair
+7. Create instance
 
-#### Bước 3: Configure Security List
+#### Bước 3: Configure Security List cho VM 1
 1. Go to Networking → Virtual Cloud Networks
 2. Click VCN → Security Lists → Default Security List
-3. Add Ingress Rule:
-   - Source: `0.0.0.0/0` (hoặc giới hạn theo IP của bạn để bảo mật hơn)
-   - Protocol: `UDP`
-   - Destination Port: `4433`
+3. Add Ingress Rules:
+   - UDP port `4433` from `0.0.0.0/0` (QUIC)
+   - TCP port `443` from `0.0.0.0/0` (HTTPS baseline)
+   - TCP port `22` from `0.0.0.0/0` (SSH) — đã có sẵn
 4. Save
 
-> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP thay vì 0.0.0.0/0
+#### Bước 4: Tạo VM 2 — Client (AP Singapore)
+1. Chuyển Region sang **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)**
+2. Tạo VM tương tự như VM 1
+3. Security List: chỉ cần SSH inbound (port 22) — VM 2 là client, không cần open thêm port
 
-#### Bước 4: SSH và Setup
+#### Bước 5: SSH và Setup
 ```bash
-# Đảm bảo SSH key có quyền đúng
-chmod 600 ~/oracle_key.pem
+# === Setup VM 1 (Server) ===
+chmod 600 ~/oracle_vm1_key.pem
+ssh -i ~/oracle_vm1_key.pem ubuntu@<SERVER_IP>
+# Chạy setup_server.sh
 
-# SSH từ PC1 hoặc PC2
-ssh -i ~/oracle_key.pem ubuntu@CLOUD_PUBLIC_IP
+# === Setup VM 2 (Client) ===
+chmod 600 ~/oracle_vm2_key.pem
+ssh -i ~/oracle_vm2_key.pem ubuntu@<CLIENT_IP>
+# Chạy setup_client.sh
 
-# Chạy setup script
-./setup_cloud.sh
+# === Verify connectivity (trên VM 2) ===
+ping -c 10 <SERVER_IP>
+# Expected RTT: ~200-300ms (US East ↔ AP Singapore)
 ```
 
+> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP trong Security List thay vì 0.0.0.0/0
+
 ### 📋 Deliverables B1:
-- [ ] Working QUIC Server on PC1 (TV1)
-- [ ] Working QUIC Client on PC2 (TV2)
-- [ ] Working QUIC Server/Client on Cloud VM (Cả 2)
-- [ ] Network connectivity verified: PC1↔PC2, PC1↔Cloud, PC2↔Cloud (Cả 2)
+- [ ] Working Cloud VM 1 — QUIC Server + nginx (US East) (TV1)
+- [ ] Working Cloud VM 2 — QUIC Client + tshark (AP Singapore) (TV2)
+- [ ] Network connectivity verified: VM1 ↔ VM2, RTT ~200-300ms (Cả 2)
 - [ ] Setup scripts documented (Cả 2)
 
 ---
@@ -1446,11 +1384,10 @@ ssh -i ~/oracle_key.pem ubuntu@CLOUD_PUBLIC_IP
 | B2.5 | Đo QUIC 0-RTT handshake | Resumed connection | Time measurements |
 | B2.6 | Tổng hợp kết quả | Table comparison | Results document |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US East ↔ VM2 AP Singapore)
 
-#### Kịch bản A: Local Network (PC1 ↔ PC2)
 ```bash
-# === TRÊN PC1 (Server) ===
+# === TRÊN CLOUD VM 1 (Server — US East) ===
 # Start QUIC server
 cd ~/quiche
 ./target/release/examples/quiche-server \
@@ -1459,66 +1396,53 @@ cd ~/quiche
   --root ~/quic-demo/www \
   --listen 0.0.0.0:4433
 
-# === TRÊN PC2 (Client) ===
+# nginx (TCP+TLS baseline) đã chạy sẵn trên port 443
 
-# Test 1: QUIC 1-RTT (First connection - clear any cached session)
-echo "=== LOCAL: QUIC 1-RTT (First Connection) ==="
-time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
 
-# Test 2: QUIC 0-RTT (Resumed connection)
-echo "=== LOCAL: QUIC 0-RTT (Resumed Connection) ==="
-time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
+# Bước 1: Đo RTT thực tế
+ping -c 10 <SERVER_IP>
+# Expected: ~200-300ms
 
-# Capture handshake with Wireshark
-tshark -i eth0 -f "udp port 4433" -c 20 -Y "quic" -T fields \
-  -e frame.number -e frame.time_relative -e quic.packet_type
-```
+# Bước 2: TCP+TLS Handshake (Baseline - qua nginx)
+echo "=== TCP+TLS 1.3 Handshake (2 RTT) ==="
+curl -k -o /dev/null -w "TCP Connect: %{time_connect}s\nTLS Handshake: %{time_appconnect}s\nTotal: %{time_total}s\n" \
+  https://<SERVER_IP>/index.html
 
-#### Kịch bản B: Cloud Testing (PC1/PC2 ↔ Cloud xa US/EU) - Thấy rõ latency benefit nhờ khoảng cách xa
-```bash
-# === TRÊN CLOUD VM (Server) ===
-cd ~/quiche
-./target/release/examples/quiche-server \
-  --cert ~/quic-demo/certs/cert.pem \
-  --key ~/quic-demo/certs/key.pem \
-  --root ~/quic-demo/www \
-  --listen 0.0.0.0:4433
+# Bước 3: QUIC 1-RTT (First connection)
+echo "=== QUIC 1-RTT (First Connection — 1 RTT) ==="
+time ./target/release/examples/quiche-client --no-verify \
+  https://<SERVER_IP>:4433/index.html
 
-# === TRÊN PC1 hoặc PC2 (Client) ===
+# Bước 4: QUIC 0-RTT (Resumed connection — ngay sau lần đầu)
+echo "=== QUIC 0-RTT (Resumed Connection — ~0 RTT) ==="
+time ./target/release/examples/quiche-client --no-verify \
+  https://<SERVER_IP>:4433/index.html
 
-# Đo ping để biết RTT thực tế
-ping -c 5 CLOUD_PUBLIC_IP
-
-# Test 1: QUIC 1-RTT to Cloud (thấy rõ latency)
-echo "=== CLOUD: QUIC 1-RTT (First Connection) ==="
-time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
-
-# Test 2: QUIC 0-RTT to Cloud (latency giảm đáng kể!)
-echo "=== CLOUD: QUIC 0-RTT (Resumed Connection) ==="
-time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
-
-# So sánh: Với Cloud xa (US/EU) latency ~200-300ms, 0-RTT tiết kiệm rất đáng kể!
+# Bước 5: Capture handshake packets
+tshark -i ens3 -f "udp port 4433" -c 20 -Y "quic" -T fields \
+  -e frame.number -e frame.time_relative -e quic.packet_type \
+  > ~/quic-demo/captures/handshake_capture.txt
 ```
 
 ### Kết quả mong đợi:
 
-> **Giải thích**: TCP+TLS 1.3 cần 2 RTT (TCP handshake + TLS), QUIC 1-RTT cần 1 RTT, QUIC 0-RTT cần ~0 RTT (data gửi cùng Initial packet)
+> **Giải thích**: TCP+TLS 1.3 cần 2 RTT (TCP handshake + TLS handshake), QUIC 1-RTT cần 1 RTT, QUIC 0-RTT cần ~0 RTT (data gửi cùng Initial packet). Với RTT ~200-300ms giữa US và Asia, sự khác biệt rất lớn!
 
-| Scenario | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings |
-|----------|---------------------|--------------------|--------------------|---------|
-| **Local (LAN ~1ms RTT)** | ~2-3ms | ~1-2ms | ~1ms | Nhỏ |
-| **Cloud xa (~200ms RTT)** | ~400ms | ~200ms | ~0ms + data | **200-400ms!** |
-| **Cloud xa (~300ms RTT)** | ~600ms | ~300ms | ~0ms + data | **300-600ms!** |
+| Scenario (VM1 US ↔ VM2 Asia) | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings vs TCP |
+|-------------------------------|---------------------|--------------------|--------------------|----------------|
+| **RTT ~200ms** | ~400ms | ~200ms | ~0ms + data | **200-400ms!** |
+| **RTT ~250ms** | ~500ms | ~250ms | ~0ms + data | **250-500ms!** |
+| **RTT ~300ms** | ~600ms | ~300ms | ~0ms + data | **300-600ms!** |
 
-> 💡 **Key insight**: Với Cloud VM ở xa (US/EU, RTT ~200-300ms), sự khác biệt giữa 0-RTT và TCP+TLS là rất lớn và dễ đo lường!
+> 💡 **Key insight**: Với 2 Cloud VMs ở 2 vùng xa nhau (US East ↔ AP Singapore, RTT ~200-300ms), sự khác biệt giữa 0-RTT và TCP+TLS **rất rõ ràng** và dễ đo lường — đây là lợi thế lớn nhất của QUIC!
 
 ### 📋 Deliverables B2:
-- [ ] Handshake timing measurements - Local (TV1)
-- [ ] Handshake timing measurements - Cloud (TV1)
-- [ ] Comparison table (TV1)
-- [ ] Wireshark captures (TV2)
+- [ ] Handshake timing measurements — Cloud end-to-end (TV1)
+- [ ] TCP+TLS vs QUIC comparison table (TV1)
+- [ ] tshark captures from VM2 (TV2)
 - [ ] Screenshots (TV1 + TV2)
-- [ ] 📊 **Bar chart so sánh handshake timing (TV1)**
+- [ ] 📊 **Bar chart so sánh handshake timing: TCP+TLS vs QUIC 1-RTT vs QUIC 0-RTT (TV1)**
 
 ---
 
@@ -1539,22 +1463,23 @@ time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
 | B3.7 | 📊 **Vẽ stream timeline** | Timeline diagram các streams xen kẽ | **Stream interleaving diagram** |
 | B3.8 | 📊 **Vẽ so sánh completion time** | Bar chart so sánh TCP vs QUIC với packet loss | **Completion time comparison chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC1 (Server) ===
-# Server đã chạy từ Demo 1
+# === TRÊN CLOUD VM 1 (Server — US East) ===
+# Server đã chạy từ Demo 1 (quiche-server trên port 4433)
 
-# === TRÊN PC2 (Client) ===
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
 
-# Terminal 1: Simulate 5% packet loss
-sudo tc qdisc add dev eth0 root netem loss 5% delay 20ms
+# Terminal 1: Simulate thêm 5% packet loss (bên cạnh latency thực tế ~200-300ms)
+sudo tc qdisc add dev ens3 root netem loss 5%
 
 # Terminal 2: Download 5 files concurrently with QUIC
-echo "=== QUIC Concurrent Downloads (5% loss) ==="
+echo "=== QUIC Concurrent Downloads (5% loss + real latency ~200-300ms) ==="
 time (
   for i in {1..5}; do
-    ./quiche-client --no-verify https://192.168.1.100:4433/file$i.bin \
+    ./target/release/examples/quiche-client --no-verify \
+      https://<SERVER_IP>:4433/file$i.bin \
       > ~/quic-demo/downloads/file$i.bin &
   done
   wait
@@ -1562,14 +1487,25 @@ time (
 echo "All files downloaded!"
 
 # Terminal 3: Capture stream interleaving
-tshark -i eth0 -f "udp port 4433" -Y "quic.stream" -T fields \
+tshark -i ens3 -f "udp port 4433" -Y "quic.stream" -T fields \
   -e frame.time_relative -e quic.stream.stream_id -e quic.stream.length \
   > ~/quic-demo/captures/stream_interleaving.txt
 
 # Clear packet loss
-sudo tc qdisc del dev eth0 root
+sudo tc qdisc del dev ens3 root
 
-# Verify all files downloaded completely
+# So sánh: TCP concurrent downloads (qua nginx)
+echo "=== TCP Concurrent Downloads (5% loss) ==="
+sudo tc qdisc add dev ens3 root netem loss 5%
+time (
+  for i in {1..5}; do
+    curl -k https://<SERVER_IP>/file$i.bin > ~/quic-demo/downloads/tcp_file$i.bin &
+  done
+  wait
+)
+sudo tc qdisc del dev ens3 root
+
+# Verify all files downloaded
 ls -la ~/quic-demo/downloads/
 ```
 
@@ -1591,55 +1527,89 @@ ls -la ~/quic-demo/downloads/
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B4.1 | Setup dual network | WiFi + Ethernet on PC2 | Network config |
-| B4.2 | Create migration script | Switch interface during download | Script |
-| B4.3 | Run migration demo | Download large file, switch network | Demo results |
-| B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | Wireshark capture |
-| B4.5 | Measure downtime | Time to resume after switch | Measurements |
-| B4.6 | Compare with TCP | TCP connection drops | Comparison |
+| B4.1 | Chuẩn bị secondary VNIC trên VM2 | Thêm VNIC thứ 2 trên Oracle Cloud | Network config |
+| B4.2 | Create migration script | Đổi IP source trong khi download | Script |
+| B4.3 | Run migration demo | Download large file, đổi network path | Demo results |
+| B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | tshark capture |
+| B4.5 | Measure downtime | Time to resume after migration | Measurements |
+| B4.6 | Compare with TCP | TCP connection drops khi đổi IP | Comparison |
 | B4.7 | 📊 **Vẽ migration timeline** | Timeline diagram showing migration process | **Migration timeline diagram** |
 
-### Yêu cầu Network:
-- PC2 cần có cả WiFi và Ethernet kết nối được tới PC1
-- Hoặc: PC1 tạo WiFi hotspot, PC2 connect qua WiFi + Ethernet
+### Cách thực hiện Connection Migration trên Cloud:
 
-### Kịch bản Demo:
+> **Lưu ý**: Trên Cloud VM không có WiFi/Ethernet vật lý. Thay vào đó, sử dụng **Secondary VNIC** trên Oracle Cloud để mô phỏng migration — VM2 sẽ có 2 IP addresses, và ta sẽ đổi source IP trong khi download.
+
+**Cách setup Secondary VNIC trên Oracle Cloud:**
+1. Go to Compute → VM2 Instance → Attached VNICs
+2. Click "Create VNIC" → attach thêm 1 VNIC mới (cùng VCN, chọn subnet khác hoặc cùng subnet)
+3. SSH vào VM2 và configure interface mới:
+```bash
+# Kiểm tra interface mới (thường là ens4 hoặc ens5)
+ip link show
+
+# Nếu interface chưa được tự động cấu hình, dùng dhclient:
+sudo dhclient ens4
+
+# Ghi lại gateway của từng interface (cần cho migration script)
+# Primary gateway:
+ip route show default
+# → default via <PRIMARY_GATEWAY> dev ens3 (ghi lại giá trị này)
+
+# Secondary gateway (xem trong Oracle Cloud Console → VNIC details → Subnet → Route Table)
+# Hoặc dùng: ip route show dev ens4
+```
+4. VM2 sẽ có 2 interfaces: `ens3` (primary) và `ens4` (secondary), mỗi interface có IP và gateway riêng
+
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === CHUẨN BỊ PC2 ===
-# Đảm bảo cả wlan0 và eth0 đều có thể reach tới PC1
-ip route show
-# Nếu cần thêm route:
-# sudo ip route add 192.168.1.100/32 dev wlan0 metric 100
-# sudo ip route add 192.168.1.100/32 dev eth0 metric 200
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
+
+# Kiểm tra 2 interfaces
+ip addr show
+# ens3: <PRIMARY_IP> (primary VNIC)
+# ens4: <SECONDARY_IP> (secondary VNIC)
+
+# Ghi lại gateways trước khi bắt đầu (xem ở bước setup VNIC ở trên)
+PRIMARY_GW="<PRIMARY_GATEWAY>"    # e.g., 10.0.0.1 (từ ip route show default)
+SECONDARY_GW="<SECONDARY_GATEWAY>"  # e.g., 10.0.1.1 (từ VNIC details)
+
+# Cả 2 IP đều có thể reach tới VM1 Server
+ping -c 3 -I ens3 <SERVER_IP>
+ping -c 3 -I ens4 <SERVER_IP>
 
 # === THỰC HIỆN ===
 
-# Terminal 1 (PC2): Start Wireshark capture
-sudo tshark -i any -f "udp port 4433" -w ~/quic-demo/captures/migration.pcap
+# Terminal 1 (VM2): Start capture
+sudo tshark -i any -f "udp port 4433" -w ~/quic-demo/captures/migration.pcap &
+TSHARK_PID=$!
 
-# Terminal 2 (PC2): Start download large file qua Ethernet (lower metric)
+# Terminal 2 (VM2): Start download large file qua ens3 (primary)
 cd ~/quiche
 ./target/release/examples/quiche-client --no-verify \
-  https://192.168.1.100:4433/large.bin > ~/quic-demo/downloads/migration_test.bin &
-PID=$!
+  https://<SERVER_IP>:4433/large.bin > ~/quic-demo/downloads/migration_test.bin &
+DOWNLOAD_PID=$!
 
-# Terminal 3 (PC2): Trong khi download - switch to WiFi
+# Terminal 3 (VM2): Trong khi download — mô phỏng migration bằng cách đổi default route
 sleep 5  # Wait for download to start
-echo "=== Switching from Ethernet to WiFi ==="
+echo "=== Migrating from ens3 to ens4 ==="
 
-# Bring down Ethernet, QUIC should migrate to WiFi
-sudo ip link set eth0 down
+# Thay đổi route — QUIC sẽ tự động migration sang path mới
+sudo ip route del default
+sudo ip route add default via $SECONDARY_GW dev ens4
 
 # Wait a moment, then check download still running
 sleep 2
-ps -p $PID && echo "Download still running after migration!"
+ps -p $DOWNLOAD_PID && echo "Download still running after migration!"
 
 # Wait for download to complete
-wait $PID
+wait $DOWNLOAD_PID
 echo "Download completed!"
 
-# Verify file integrity
+# Stop capture
+kill $TSHARK_PID
+
+# Verify file
 ls -la ~/quic-demo/downloads/migration_test.bin
 
 # Analyze capture for PATH frames
@@ -1648,12 +1618,23 @@ tshark -r ~/quic-demo/captures/migration.pcap -Y "quic.frame_type == 0x1a"
 echo "=== PATH_RESPONSE frames ==="
 tshark -r ~/quic-demo/captures/migration.pcap -Y "quic.frame_type == 0x1b"
 
-# Restore Ethernet
-sudo ip link set eth0 up
+# So sánh: TCP bị disconnect khi đổi route
+echo "=== TCP Migration Test (sẽ fail) ==="
+curl -k https://<SERVER_IP>/large.bin > /dev/null &
+TCP_PID=$!
+sleep 3
+sudo ip route del default
+sudo ip route add default via $PRIMARY_GW dev ens3
+sleep 2
+ps -p $TCP_PID && echo "TCP still running" || echo "TCP connection DROPPED!"
+
+# Restore default route
+sudo ip route del default
+sudo ip route add default via $PRIMARY_GW dev ens3
 ```
 
 ### 📋 Deliverables B4:
-- [ ] Connection migration demo completed (TV1)
+- [ ] Connection migration demo trên Cloud completed (TV1)
 - [ ] PATH_CHALLENGE/RESPONSE captures (TV1)
 - [ ] Downtime measurement (TV1)
 - [ ] TCP comparison showing dropped connection (TV1)
@@ -1678,43 +1659,45 @@ sudo ip link set eth0 up
 | B5.7 | 📊 **Vẽ line chart packet loss** | Line chart: Packet loss % vs Download time | **Packet loss impact chart** |
 | B5.8 | 📊 **Vẽ recovery comparison** | Bar chart so sánh QUIC vs TCP recovery | **Recovery comparison chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC2 (Client) ===
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
+# Server đã chạy trên VM1 (quiche-server + nginx)
 
 # Function để test với packet loss
 test_with_loss() {
   LOSS=$1
-  echo "=== Testing with $LOSS% packet loss ==="
+  echo "=== Testing with $LOSS% packet loss (+ real latency ~200-300ms) ==="
   
   # Apply packet loss
-  sudo tc qdisc add dev eth0 root netem loss $LOSS%
+  sudo tc qdisc add dev ens3 root netem loss $LOSS%
   
   # Test QUIC
   echo "QUIC download:"
-  time ./quiche-client --no-verify https://192.168.1.100:4433/medium.bin > /dev/null
+  time ./target/release/examples/quiche-client --no-verify \
+    https://<SERVER_IP>:4433/medium.bin > /dev/null
   
-  # Test TCP (if nginx setup on PC1)
-  # echo "TCP download:"
-  # time curl -k https://192.168.1.100/medium.bin > /dev/null
+  # Test TCP (qua nginx trên VM1)
+  echo "TCP download:"
+  time curl -k -o /dev/null https://<SERVER_IP>/medium.bin
   
   # Clear
-  sudo tc qdisc del dev eth0 root
+  sudo tc qdisc del dev ens3 root
   echo ""
 }
 
-# Run tests
-test_with_loss 0   # Baseline
+# Run tests — latency thực tế ~200-300ms + thêm packet loss
+test_with_loss 0   # Baseline (chỉ có real latency)
 test_with_loss 1
 test_with_loss 5
 test_with_loss 10
 
 # Capture ACK frames
-sudo tc qdisc add dev eth0 root netem loss 5%
-tshark -i eth0 -f "udp port 4433" -Y "quic.ack" -c 50 -T fields \
+sudo tc qdisc add dev ens3 root netem loss 5%
+tshark -i ens3 -f "udp port 4433" -Y "quic.ack" -c 50 -T fields \
   -e frame.number -e quic.ack.largest_acknowledged -e quic.ack.ack_range
-sudo tc qdisc del dev eth0 root
+sudo tc qdisc del dev ens3 root
 ```
 
 ### 📋 Deliverables B5:
@@ -1741,30 +1724,32 @@ sudo tc qdisc del dev eth0 root
 | B6.5 | Document results | TV2 | Test report |
 | B6.6 | 📊 **Vẽ throughput chart** | Chart số clients vs throughput | **Scalability chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC1 (Server - TV1) ===
+# === TRÊN CLOUD VM 1 (Server — US East, TV1 monitor) ===
 # Monitor connections
-watch -n 1 "netstat -anu | grep 4433 | wc -l"
+watch -n 1 "ss -anu | grep 4433 | wc -l"
 # Or monitor với tcpdump
-tcpdump -i eth0 udp port 4433 -c 100 | grep -E "length [0-9]+"
+tcpdump -i ens3 udp port 4433 -c 100 | grep -E "length [0-9]+"
 
-# === TRÊN PC2 (Client - TV2) ===
-# Run multiple client instances
-echo "Starting 10 concurrent QUIC connections..."
+# === TRÊN CLOUD VM 2 (Client — AP Singapore, TV2 chạy test) ===
+# Run multiple client instances qua cross-continent link
+echo "Starting 10 concurrent QUIC connections (US ↔ Asia)..."
 for i in {1..10}; do
-  ./quiche-client --no-verify https://192.168.1.100:4433/small.bin > /dev/null &
+  ./target/release/examples/quiche-client --no-verify \
+    https://<SERVER_IP>:4433/small.bin > /dev/null &
 done
 wait
-echo "All connections completed!"
+echo "All QUIC connections completed!"
 
-# === BONUS: PC1 cũng chạy client để tăng load ===
-# Trên PC1:
-for i in {1..5}; do
-  ./quiche-client --no-verify https://127.0.0.1:4433/small.bin > /dev/null &
+# So sánh: TCP concurrent connections
+echo "Starting 10 concurrent TCP connections..."
+for i in {1..10}; do
+  curl -k -o /dev/null https://<SERVER_IP>/small.bin &
 done
 wait
+echo "All TCP connections completed!"
 ```
 
 ### 📋 Deliverables B6:
@@ -2028,7 +2013,7 @@ wait
 |----------|---------|---|
 | **Nội dung toàn diện** | Bao quát TẤT CẢ đặc điểm QUIC (11 chủ đề lý thuyết) | |
 | **Demo thực tế** | 5 kịch bản demo với video và captures | |
-| **Topology rõ ràng** | 2 Ubuntu PCs + Cloud, các scenario cụ thể | |
+| **Topology rõ ràng** | 2 Cloud VMs ở 2 regions khác nhau (US ↔ Asia), end-to-end | |
 | **So sánh data thực** | QUIC vs TCP+TLS với số liệu từ demo | |
 | **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
 | **Báo cáo chất lượng** | 40-50 trang, diagrams chuyên nghiệp | |
@@ -2067,7 +2052,7 @@ wait
 
 | STT | Loại | Nội dung | Người vẽ | Phần |
 |-----|------|----------|----------|------|
-| 15 | Bar Chart | Handshake timing: Local vs Cloud | TV1 | B2 |
+| 15 | Bar Chart | Handshake timing: TCP+TLS vs QUIC 1-RTT vs 0-RTT (Cloud) | TV1 | B2 |
 | 16 | Timeline | Stream interleaving during download | TV2 | B3 |
 | 17 | Bar Chart | Completion time: QUIC vs TCP with loss | TV2 | B3 |
 | 18 | Timeline | Migration process with timestamps | TV1 | B4 |
@@ -2122,9 +2107,9 @@ wait
 #### Phần B - Thực hành:
 | Mã | Nội dung | Công việc cụ thể |
 |----|----------|-------------------|
-| B1 | Setup Topology (cùng TV2) | Setup Server trên PC1 (B1.1-B1.9), Setup Cloud VM |
-| B2 | Demo 1: Handshake Comparison | Đo TCP+TLS vs QUIC handshake, local + cloud xa |
-| B4 | Demo 3: Connection Migration | Demo đổi WiFi↔Ethernet, capture migration process |
+| B1 | Setup Topology (cùng TV2) | Setup Server trên Cloud VM 1 (B1.1-B1.10) |
+| B2 | Demo 1: Handshake Comparison | Đo TCP+TLS vs QUIC handshake, cloud end-to-end |
+| B4 | Demo 3: Connection Migration | Demo đổi network path trên Cloud VM, capture migration process |
 | B6 | Demo 5: Multi-client (cùng TV2) | Stress test nhiều clients, đo scalability |
 
 #### Phần C - Phân tích & Báo cáo:
@@ -2156,7 +2141,7 @@ wait
 #### Phần B - Thực hành:
 | Mã | Nội dung | Công việc cụ thể |
 |----|----------|-------------------|
-| B1 | Setup Topology (cùng TV1) | Setup Client trên PC2 (B1.10-B1.18), Setup Cloud VM |
+| B1 | Setup Topology (cùng TV1) | Setup Client trên Cloud VM 2 (B1.11-B1.20) |
 | B3 | Demo 2: Stream Multiplexing | Demo nhiều streams đồng thời, so sánh với TCP HOL blocking |
 | B5 | Demo 4: Packet Loss Recovery | Mô phỏng packet loss với tc netem, đo recovery |
 | B6 | Demo 5: Multi-client (cùng TV1) | Stress test nhiều clients, capture & analysis |
@@ -2180,7 +2165,7 @@ wait
 |----|----------|----------|
 | A1 | Tổng quan QUIC | TV1: Lịch sử + Động lực + Stats, TV2: RFCs + Implementations + Browser support |
 | A11 | So sánh QUIC vs TCP+TLS | TV1: Performance comparison, TV2: Feature comparison |
-| B1 | Setup Topology | TV1: Setup Server PC1, TV2: Setup Client PC2, Cả 2: Setup Cloud VM xa (US/EU) |
+| B1 | Setup Topology | TV1: Setup Cloud VM 1 (Server, US East), TV2: Setup Cloud VM 2 (Client, AP Singapore) |
 | B6 | Multi-client Stress Test | TV1: Setup server + scripts, TV2: Client scripts + analysis |
 | C4 | Viết báo cáo | Mỗi người viết chương phụ trách (~20-24 trang/người), review chéo |
 | C5 | Slides thuyết trình | Mỗi người làm slides phần mình (~21-24 slides/người), format thống nhất |
@@ -2464,14 +2449,14 @@ sequenceDiagram
     participant C as 🖥️ Client
     participant S as 🌐 Server
     
-    Note over C,S: Connection đang hoạt động<br/>Client IP: 192.168.1.100
+    Note over C,S: Connection đang hoạt động<br/>Client IP: ens3 (Primary VNIC)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: 192.168.1.100)
+    C->>S: 1-RTT [STREAM: Data] (IP: Primary VNIC)
     S->>C: 1-RTT [ACK]
     
-    Note left of C: Client đổi sang WiFi<br/>New IP: 192.168.43.50
+    Note left of C: Client đổi sang Secondary VNIC<br/>New IP: ens4 (Secondary VNIC)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: 192.168.43.50)
+    C->>S: 1-RTT [STREAM: Data] (IP: Secondary VNIC)
     
     Note right of S: Server detect IP change!<br/>Trigger Path Validation
     

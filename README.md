@@ -1463,22 +1463,23 @@ tshark -i ens3 -f "udp port 4433" -c 20 -Y "quic" -T fields \
 | B3.7 | 📊 **Vẽ stream timeline** | Timeline diagram các streams xen kẽ | **Stream interleaving diagram** |
 | B3.8 | 📊 **Vẽ so sánh completion time** | Bar chart so sánh TCP vs QUIC với packet loss | **Completion time comparison chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC1 (Server) ===
-# Server đã chạy từ Demo 1
+# === TRÊN CLOUD VM 1 (Server — US East) ===
+# Server đã chạy từ Demo 1 (quiche-server trên port 4433)
 
-# === TRÊN PC2 (Client) ===
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
 
-# Terminal 1: Simulate 5% packet loss
-sudo tc qdisc add dev eth0 root netem loss 5% delay 20ms
+# Terminal 1: Simulate thêm 5% packet loss (bên cạnh latency thực tế ~200-300ms)
+sudo tc qdisc add dev ens3 root netem loss 5%
 
 # Terminal 2: Download 5 files concurrently with QUIC
-echo "=== QUIC Concurrent Downloads (5% loss) ==="
+echo "=== QUIC Concurrent Downloads (5% loss + real latency ~200-300ms) ==="
 time (
   for i in {1..5}; do
-    ./quiche-client --no-verify https://192.168.1.100:4433/file$i.bin \
+    ./target/release/examples/quiche-client --no-verify \
+      https://<SERVER_IP>:4433/file$i.bin \
       > ~/quic-demo/downloads/file$i.bin &
   done
   wait
@@ -1486,14 +1487,25 @@ time (
 echo "All files downloaded!"
 
 # Terminal 3: Capture stream interleaving
-tshark -i eth0 -f "udp port 4433" -Y "quic.stream" -T fields \
+tshark -i ens3 -f "udp port 4433" -Y "quic.stream" -T fields \
   -e frame.time_relative -e quic.stream.stream_id -e quic.stream.length \
   > ~/quic-demo/captures/stream_interleaving.txt
 
 # Clear packet loss
-sudo tc qdisc del dev eth0 root
+sudo tc qdisc del dev ens3 root
 
-# Verify all files downloaded completely
+# So sánh: TCP concurrent downloads (qua nginx)
+echo "=== TCP Concurrent Downloads (5% loss) ==="
+sudo tc qdisc add dev ens3 root netem loss 5%
+time (
+  for i in {1..5}; do
+    curl -k https://<SERVER_IP>/file$i.bin > ~/quic-demo/downloads/tcp_file$i.bin &
+  done
+  wait
+)
+sudo tc qdisc del dev ens3 root
+
+# Verify all files downloaded
 ls -la ~/quic-demo/downloads/
 ```
 
@@ -1515,55 +1527,69 @@ ls -la ~/quic-demo/downloads/
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B4.1 | Setup dual network | WiFi + Ethernet on PC2 | Network config |
-| B4.2 | Create migration script | Switch interface during download | Script |
-| B4.3 | Run migration demo | Download large file, switch network | Demo results |
-| B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | Wireshark capture |
-| B4.5 | Measure downtime | Time to resume after switch | Measurements |
-| B4.6 | Compare with TCP | TCP connection drops | Comparison |
+| B4.1 | Chuẩn bị secondary VNIC trên VM2 | Thêm VNIC thứ 2 trên Oracle Cloud | Network config |
+| B4.2 | Create migration script | Đổi IP source trong khi download | Script |
+| B4.3 | Run migration demo | Download large file, đổi network path | Demo results |
+| B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | tshark capture |
+| B4.5 | Measure downtime | Time to resume after migration | Measurements |
+| B4.6 | Compare with TCP | TCP connection drops khi đổi IP | Comparison |
 | B4.7 | 📊 **Vẽ migration timeline** | Timeline diagram showing migration process | **Migration timeline diagram** |
 
-### Yêu cầu Network:
-- PC2 cần có cả WiFi và Ethernet kết nối được tới PC1
-- Hoặc: PC1 tạo WiFi hotspot, PC2 connect qua WiFi + Ethernet
+### Cách thực hiện Connection Migration trên Cloud:
 
-### Kịch bản Demo:
+> **Lưu ý**: Trên Cloud VM không có WiFi/Ethernet vật lý. Thay vào đó, sử dụng **Secondary VNIC** trên Oracle Cloud để mô phỏng migration — VM2 sẽ có 2 IP addresses, và ta sẽ đổi source IP trong khi download.
+
+**Cách setup Secondary VNIC trên Oracle Cloud:**
+1. Go to Compute → VM2 Instance → Attached VNICs
+2. Click "Create VNIC" → attach thêm 1 VNIC mới
+3. VM2 sẽ có 2 interfaces: `ens3` (primary) và `ens4` (secondary)
+
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === CHUẨN BỊ PC2 ===
-# Đảm bảo cả wlan0 và eth0 đều có thể reach tới PC1
-ip route show
-# Nếu cần thêm route:
-# sudo ip route add 192.168.1.100/32 dev wlan0 metric 100
-# sudo ip route add 192.168.1.100/32 dev eth0 metric 200
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
+
+# Kiểm tra 2 interfaces
+ip addr show
+# ens3: <PRIMARY_IP> (primary VNIC)
+# ens4: <SECONDARY_IP> (secondary VNIC)
+
+# Cả 2 IP đều có thể reach tới VM1 Server
+ping -c 3 -I ens3 <SERVER_IP>
+ping -c 3 -I ens4 <SERVER_IP>
 
 # === THỰC HIỆN ===
 
-# Terminal 1 (PC2): Start Wireshark capture
-sudo tshark -i any -f "udp port 4433" -w ~/quic-demo/captures/migration.pcap
+# Terminal 1 (VM2): Start capture
+sudo tshark -i any -f "udp port 4433" -w ~/quic-demo/captures/migration.pcap &
+TSHARK_PID=$!
 
-# Terminal 2 (PC2): Start download large file qua Ethernet (lower metric)
+# Terminal 2 (VM2): Start download large file qua ens3 (primary)
 cd ~/quiche
 ./target/release/examples/quiche-client --no-verify \
-  https://192.168.1.100:4433/large.bin > ~/quic-demo/downloads/migration_test.bin &
-PID=$!
+  https://<SERVER_IP>:4433/large.bin > ~/quic-demo/downloads/migration_test.bin &
+DOWNLOAD_PID=$!
 
-# Terminal 3 (PC2): Trong khi download - switch to WiFi
+# Terminal 3 (VM2): Trong khi download — mô phỏng migration bằng cách đổi default route
 sleep 5  # Wait for download to start
-echo "=== Switching from Ethernet to WiFi ==="
+echo "=== Migrating from ens3 to ens4 ==="
 
-# Bring down Ethernet, QUIC should migrate to WiFi
-sudo ip link set eth0 down
+# Thay đổi route — QUIC sẽ tự động migration sang path mới
+sudo ip route del default
+sudo ip route add default via <SECONDARY_GATEWAY> dev ens4
 
 # Wait a moment, then check download still running
 sleep 2
-ps -p $PID && echo "Download still running after migration!"
+ps -p $DOWNLOAD_PID && echo "Download still running after migration!"
 
 # Wait for download to complete
-wait $PID
+wait $DOWNLOAD_PID
 echo "Download completed!"
 
-# Verify file integrity
+# Stop capture
+kill $TSHARK_PID
+
+# Verify file
 ls -la ~/quic-demo/downloads/migration_test.bin
 
 # Analyze capture for PATH frames
@@ -1572,12 +1598,23 @@ tshark -r ~/quic-demo/captures/migration.pcap -Y "quic.frame_type == 0x1a"
 echo "=== PATH_RESPONSE frames ==="
 tshark -r ~/quic-demo/captures/migration.pcap -Y "quic.frame_type == 0x1b"
 
-# Restore Ethernet
-sudo ip link set eth0 up
+# So sánh: TCP bị disconnect khi đổi route
+echo "=== TCP Migration Test (sẽ fail) ==="
+curl -k https://<SERVER_IP>/large.bin > /dev/null &
+TCP_PID=$!
+sleep 3
+sudo ip route del default
+sudo ip route add default via <PRIMARY_GATEWAY> dev ens3
+sleep 2
+ps -p $TCP_PID && echo "TCP still running" || echo "TCP connection DROPPED!"
+
+# Restore default route
+sudo ip route del default
+sudo ip route add default via <PRIMARY_GATEWAY> dev ens3
 ```
 
 ### 📋 Deliverables B4:
-- [ ] Connection migration demo completed (TV1)
+- [ ] Connection migration demo trên Cloud completed (TV1)
 - [ ] PATH_CHALLENGE/RESPONSE captures (TV1)
 - [ ] Downtime measurement (TV1)
 - [ ] TCP comparison showing dropped connection (TV1)
@@ -1602,43 +1639,45 @@ sudo ip link set eth0 up
 | B5.7 | 📊 **Vẽ line chart packet loss** | Line chart: Packet loss % vs Download time | **Packet loss impact chart** |
 | B5.8 | 📊 **Vẽ recovery comparison** | Bar chart so sánh QUIC vs TCP recovery | **Recovery comparison chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC2 (Client) ===
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
+# Server đã chạy trên VM1 (quiche-server + nginx)
 
 # Function để test với packet loss
 test_with_loss() {
   LOSS=$1
-  echo "=== Testing with $LOSS% packet loss ==="
+  echo "=== Testing with $LOSS% packet loss (+ real latency ~200-300ms) ==="
   
   # Apply packet loss
-  sudo tc qdisc add dev eth0 root netem loss $LOSS%
+  sudo tc qdisc add dev ens3 root netem loss $LOSS%
   
   # Test QUIC
   echo "QUIC download:"
-  time ./quiche-client --no-verify https://192.168.1.100:4433/medium.bin > /dev/null
+  time ./target/release/examples/quiche-client --no-verify \
+    https://<SERVER_IP>:4433/medium.bin > /dev/null
   
-  # Test TCP (if nginx setup on PC1)
-  # echo "TCP download:"
-  # time curl -k https://192.168.1.100/medium.bin > /dev/null
+  # Test TCP (qua nginx trên VM1)
+  echo "TCP download:"
+  time curl -k -o /dev/null https://<SERVER_IP>/medium.bin
   
   # Clear
-  sudo tc qdisc del dev eth0 root
+  sudo tc qdisc del dev ens3 root
   echo ""
 }
 
-# Run tests
-test_with_loss 0   # Baseline
+# Run tests — latency thực tế ~200-300ms + thêm packet loss
+test_with_loss 0   # Baseline (chỉ có real latency)
 test_with_loss 1
 test_with_loss 5
 test_with_loss 10
 
 # Capture ACK frames
-sudo tc qdisc add dev eth0 root netem loss 5%
-tshark -i eth0 -f "udp port 4433" -Y "quic.ack" -c 50 -T fields \
+sudo tc qdisc add dev ens3 root netem loss 5%
+tshark -i ens3 -f "udp port 4433" -Y "quic.ack" -c 50 -T fields \
   -e frame.number -e quic.ack.largest_acknowledged -e quic.ack.ack_range
-sudo tc qdisc del dev eth0 root
+sudo tc qdisc del dev ens3 root
 ```
 
 ### 📋 Deliverables B5:
@@ -1665,30 +1704,32 @@ sudo tc qdisc del dev eth0 root
 | B6.5 | Document results | TV2 | Test report |
 | B6.6 | 📊 **Vẽ throughput chart** | Chart số clients vs throughput | **Scalability chart** |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
 ```bash
-# === TRÊN PC1 (Server - TV1) ===
+# === TRÊN CLOUD VM 1 (Server — US East, TV1 monitor) ===
 # Monitor connections
-watch -n 1 "netstat -anu | grep 4433 | wc -l"
+watch -n 1 "ss -anu | grep 4433 | wc -l"
 # Or monitor với tcpdump
-tcpdump -i eth0 udp port 4433 -c 100 | grep -E "length [0-9]+"
+tcpdump -i ens3 udp port 4433 -c 100 | grep -E "length [0-9]+"
 
-# === TRÊN PC2 (Client - TV2) ===
-# Run multiple client instances
-echo "Starting 10 concurrent QUIC connections..."
+# === TRÊN CLOUD VM 2 (Client — AP Singapore, TV2 chạy test) ===
+# Run multiple client instances qua cross-continent link
+echo "Starting 10 concurrent QUIC connections (US ↔ Asia)..."
 for i in {1..10}; do
-  ./quiche-client --no-verify https://192.168.1.100:4433/small.bin > /dev/null &
+  ./target/release/examples/quiche-client --no-verify \
+    https://<SERVER_IP>:4433/small.bin > /dev/null &
 done
 wait
-echo "All connections completed!"
+echo "All QUIC connections completed!"
 
-# === BONUS: PC1 cũng chạy client để tăng load ===
-# Trên PC1:
-for i in {1..5}; do
-  ./quiche-client --no-verify https://127.0.0.1:4433/small.bin > /dev/null &
+# So sánh: TCP concurrent connections
+echo "Starting 10 concurrent TCP connections..."
+for i in {1..10}; do
+  curl -k -o /dev/null https://<SERVER_IP>/small.bin &
 done
 wait
+echo "All TCP connections completed!"
 ```
 
 ### 📋 Deliverables B6:

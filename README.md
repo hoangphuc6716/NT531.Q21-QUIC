@@ -67,7 +67,7 @@
 |---|----------|---------------------|--------|
 | 1 | **0-RTT/1-RTT Handshake** | Giảm latency từ 2-3 RTT xuống 0-1 RTT | So sánh với TCP+TLS |
 | 2 | **Stream Multiplexing** | Không có Head-of-Line blocking | Demo nhiều streams |
-| 3 | **Connection Migration** | Duy trì kết nối khi đổi network | Demo đổi WiFi↔Ethernet |
+| 3 | **Connection Migration** | Duy trì kết nối khi đổi network | Demo đổi network path trên Cloud |
 | 4 | **Built-in Encryption** | TLS 1.3 tích hợp, always encrypted | Phân tích bảo mật |
 | 5 | **Flow Control** | Connection + Stream level | Demo flow control |
 | 6 | **Loss Detection & Recovery** | ACK ranges, improved recovery | Demo packet loss |
@@ -1993,7 +1993,7 @@ echo "All TCP connections completed!"
 |----------|---------|---|
 | **Nội dung toàn diện** | Bao quát TẤT CẢ đặc điểm QUIC (11 chủ đề lý thuyết) | |
 | **Demo thực tế** | 5 kịch bản demo với video và captures | |
-| **Topology rõ ràng** | 2 Ubuntu PCs + Cloud, các scenario cụ thể | |
+| **Topology rõ ràng** | 2 Cloud VMs ở 2 regions khác nhau (US ↔ Asia), end-to-end | |
 | **So sánh data thực** | QUIC vs TCP+TLS với số liệu từ demo | |
 | **Hiểu sâu** | Giải thích được WHY, không chỉ WHAT | |
 | **Báo cáo chất lượng** | 40-50 trang, diagrams chuyên nghiệp | |
@@ -2032,7 +2032,7 @@ echo "All TCP connections completed!"
 
 | STT | Loại | Nội dung | Người vẽ | Phần |
 |-----|------|----------|----------|------|
-| 15 | Bar Chart | Handshake timing: Local vs Cloud | TV1 | B2 |
+| 15 | Bar Chart | Handshake timing: TCP+TLS vs QUIC 1-RTT vs 0-RTT (Cloud) | TV1 | B2 |
 | 16 | Timeline | Stream interleaving during download | TV2 | B3 |
 | 17 | Bar Chart | Completion time: QUIC vs TCP with loss | TV2 | B3 |
 | 18 | Timeline | Migration process with timestamps | TV1 | B4 |
@@ -2087,9 +2087,9 @@ echo "All TCP connections completed!"
 #### Phần B - Thực hành:
 | Mã | Nội dung | Công việc cụ thể |
 |----|----------|-------------------|
-| B1 | Setup Topology (cùng TV2) | Setup Server trên PC1 (B1.1-B1.9), Setup Cloud VM |
-| B2 | Demo 1: Handshake Comparison | Đo TCP+TLS vs QUIC handshake, local + cloud xa |
-| B4 | Demo 3: Connection Migration | Demo đổi WiFi↔Ethernet, capture migration process |
+| B1 | Setup Topology (cùng TV2) | Setup Server trên Cloud VM 1 (B1.1-B1.10) |
+| B2 | Demo 1: Handshake Comparison | Đo TCP+TLS vs QUIC handshake, cloud end-to-end |
+| B4 | Demo 3: Connection Migration | Demo đổi network path trên Cloud VM, capture migration process |
 | B6 | Demo 5: Multi-client (cùng TV2) | Stress test nhiều clients, đo scalability |
 
 #### Phần C - Phân tích & Báo cáo:
@@ -2121,7 +2121,7 @@ echo "All TCP connections completed!"
 #### Phần B - Thực hành:
 | Mã | Nội dung | Công việc cụ thể |
 |----|----------|-------------------|
-| B1 | Setup Topology (cùng TV1) | Setup Client trên PC2 (B1.10-B1.18), Setup Cloud VM |
+| B1 | Setup Topology (cùng TV1) | Setup Client trên Cloud VM 2 (B1.11-B1.20) |
 | B3 | Demo 2: Stream Multiplexing | Demo nhiều streams đồng thời, so sánh với TCP HOL blocking |
 | B5 | Demo 4: Packet Loss Recovery | Mô phỏng packet loss với tc netem, đo recovery |
 | B6 | Demo 5: Multi-client (cùng TV1) | Stress test nhiều clients, capture & analysis |
@@ -2145,7 +2145,7 @@ echo "All TCP connections completed!"
 |----|----------|----------|
 | A1 | Tổng quan QUIC | TV1: Lịch sử + Động lực + Stats, TV2: RFCs + Implementations + Browser support |
 | A11 | So sánh QUIC vs TCP+TLS | TV1: Performance comparison, TV2: Feature comparison |
-| B1 | Setup Topology | TV1: Setup Server PC1, TV2: Setup Client PC2, Cả 2: Setup Cloud VM xa (US/EU) |
+| B1 | Setup Topology | TV1: Setup Cloud VM 1 (Server, US East), TV2: Setup Cloud VM 2 (Client, AP Singapore) |
 | B6 | Multi-client Stress Test | TV1: Setup server + scripts, TV2: Client scripts + analysis |
 | C4 | Viết báo cáo | Mỗi người viết chương phụ trách (~20-24 trang/người), review chéo |
 | C5 | Slides thuyết trình | Mỗi người làm slides phần mình (~21-24 slides/người), format thống nhất |
@@ -2429,14 +2429,14 @@ sequenceDiagram
     participant C as 🖥️ Client
     participant S as 🌐 Server
     
-    Note over C,S: Connection đang hoạt động<br/>Client IP: 192.168.1.100
+    Note over C,S: Connection đang hoạt động<br/>Client IP: ens3 (Primary VNIC)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: 192.168.1.100)
+    C->>S: 1-RTT [STREAM: Data] (IP: Primary VNIC)
     S->>C: 1-RTT [ACK]
     
-    Note left of C: Client đổi sang WiFi<br/>New IP: 192.168.43.50
+    Note left of C: Client đổi sang Secondary VNIC<br/>New IP: ens4 (Secondary VNIC)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: 192.168.43.50)
+    C->>S: 1-RTT [STREAM: Data] (IP: Secondary VNIC)
     
     Note right of S: Server detect IP change!<br/>Trigger Path Validation
     

@@ -10,9 +10,9 @@
 
 | STT | Họ và tên | MSSV | Vai trò | Thiết bị |
 |-----|-----------|------|---------|----------|
-| 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | Ubuntu PC 1 (Server + Client) |
-| 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | Ubuntu PC 2 (Client + Analysis) |
-| - | Cả 2 | - | Cùng quản lý | ☁️ Oracle Cloud VM - Region xa (US/EU) cho remote testing |
+| 1 | Đỗ Hoàng Phúc | [MSSV] | Trưởng nhóm | ☁️ Cloud VM 1 - Server (US East) |
+| 2 | Bùi Lê Huy Phước | [MSSV] | Thành viên | ☁️ Cloud VM 2 - Client (AP Singapore) |
+| - | Cả 2 | - | Cùng quản lý | SSH từ máy cá nhân vào 2 Cloud VMs |
 
 ---
 
@@ -77,78 +77,56 @@
 
 ---
 
-## 🌐 TOPOLOGY DEMO - 2 UBUNTU PCs + CLOUD
+## 🌐 TOPOLOGY DEMO - 2 CLOUD VMs (Cross-Region End-to-End)
 
 ### Sơ đồ Topology
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                    QUIC DEMO TOPOLOGY                                                │
-│                (2 Ubuntu PCs ở Việt Nam + Cloud xa ở US/EU - Hybrid Network)                         │
+│          (2 Cloud VMs ở 2 vùng khác nhau — US East ↔ AP Singapore — End-to-End Cloud)               │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                                      │
-│                          ☁️ ORACLE CLOUD (Free Tier) - REGION XA (US/EU)                             │
-│                              ┌──────────────────────────────────────┐                                │
-│                              │     QUIC SERVER / CLIENT (Remote)    │                                │
-│                              │     (quiche-server / quiche-client)  │                                │
-│                              │     Public IP: x.x.x.x               │                                │
-│                              │     Port: 4433/UDP                   │                                │
-│                              │     Region: US East (Ashburn) hoặc   │                                │
-│                              │             EU (Frankfurt)            │                                │
-│                              │     OS: Ubuntu 22.04 LTS             │                                │
-│                              │     VM.Standard.E2.1.Micro (Free)    │                                │
-│                              │     1 OCPU, 1GB RAM                  │                                │
-│                              └──────────────┬───────────────────────┘                                │
-│                                             │                                                        │
-│                                             │ INTERNET (khoảng cách xa,                              │
-│                                             │  RTT ~200-300ms VN↔US)                                 │
-│                                             │                                                        │
-│   ┌─────────────────────────────────────────┴─────────────────────────────────────────┐              │
-│   │                                      ROUTER                                        │              │
-│   │                              (NAT / Port Forwarding)                               │              │
-│   │                              Public IP: y.y.y.y                                    │              │
-│   └───────────────────────────────────┬───────────────────────────────────────────────┘              │
-│                                       │                                                              │
-│                                       │ LAN (192.168.1.0/24)                                         │
-│                    ┌──────────────────┴──────────────────┐                                           │
-│                    │                                     │                                           │
-│   ┌────────────────┴────────────────────┐  ┌────────────┴─────────────────────────┐                 │
-│   │   🖥️ UBUNTU PC 1 (Đỗ Hoàng Phúc)      │  │   🖥️ UBUNTU PC 2 (Bùi Lê Huy Phước)      │                 │
-│   │                                      │  │                                      │                 │
-│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
-│   │   │    QUIC SERVER (Local)     │    │  │   │    QUIC CLIENT             │    │                 │
-│   │   │    (quiche-server)         │    │  │   │    (quiche-client)         │    │                 │
-│   │   │    Port: 4433/UDP          │◄───┼──┼───│                            │    │                 │
-│   │   │    IP: 192.168.1.100       │    │  │   │    IP: 192.168.1.101       │    │                 │
-│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
-│   │                                      │  │                                      │                 │
-│   │   ┌────────────────────────────┐    │  │   ┌────────────────────────────┐    │                 │
-│   │   │    QUIC CLIENT             │    │  │   │    Wireshark               │    │                 │
-│   │   │    (quiche-client)         │    │  │   │    tcpdump                 │    │                 │
-│   │   │    (Self-test + Cloud)     │    │  │   │    tc (traffic control)    │    │                 │
-│   │   └────────────────────────────┘    │  │   └────────────────────────────┘    │                 │
-│   │                                      │  │                                      │                 │
-│   │   OS: Ubuntu 22.04 LTS              │  │   OS: Ubuntu 22.04 LTS              │                 │
-│   │   RAM: 4GB+ (khuyến nghị 8GB)       │  │   RAM: 4GB+ (khuyến nghị 8GB)       │                 │
-│   │   Network: Ethernet + WiFi          │  │   Network: Ethernet + WiFi          │                 │
-│   └──────────────────────────────────────┘  └──────────────────────────────────────┘                 │
+│   ☁️ ORACLE CLOUD VM 1 — REGION: US EAST (Ashburn)       ☁️ ORACLE CLOUD VM 2 — REGION: AP (Singapore)│
+│   ┌──────────────────────────────────────┐               ┌──────────────────────────────────────┐    │
+│   │     QUIC SERVER                      │               │     QUIC CLIENT + ANALYSIS           │    │
+│   │     (quiche-server)                  │               │     (quiche-client)                  │    │
+│   │     Public IP: <SERVER_IP>           │               │     Public IP: <CLIENT_IP>           │    │
+│   │     Port: 4433/UDP                   │◄─── INTERNET ─┤     Wireshark / tshark               │    │
+│   │     OS: Ubuntu 22.04 LTS             │  RTT ~200-300ms│     tcpdump, tc (traffic control)    │    │
+│   │     VM.Standard.E2.1.Micro (Free)    │               │     OS: Ubuntu 22.04 LTS             │    │
+│   │     1 OCPU, 1GB RAM                  │               │     VM.Standard.E2.1.Micro (Free)    │    │
+│   │     nginx (TCP+TLS baseline)         │               │     1 OCPU, 1GB RAM                  │    │
+│   │     tcpdump, test files              │               │     curl (TCP+TLS baseline)          │    │
+│   └──────────────────────────────────────┘               └──────────────────────────────────────┘    │
+│              ▲                                                         ▲                              │
+│              │ SSH                                                     │ SSH                          │
+│              │                                                         │                              │
+│   ┌──────────┴────────────────────┐                       ┌───────────┴───────────────────┐          │
+│   │  💻 Laptop TV1 (Việt Nam)     │                       │  💻 Laptop TV2 (Việt Nam)     │          │
+│   │  (Đỗ Hoàng Phúc)             │                       │  (Bùi Lê Huy Phước)          │          │
+│   │  SSH → Cloud VM 1 (Server)    │                       │  SSH → Cloud VM 2 (Client)    │          │
+│   └───────────────────────────────┘                       └───────────────────────────────┘          │
 │                                                                                                      │
 │   ┌──────────────────────────────────────────────────────────────────────────────────────────────┐   │
 │   │                                    DEMO SCENARIOS                                             │   │
 │   │                                                                                               │   │
-│   │   🔹 LOCAL DEMOS (Low latency, controlled environment):                                      │   │
-│   │      ├── PC1 (Server) ↔ PC2 (Client): Stream multiplexing, HOL blocking                     │   │
-│   │      ├── PC1 ↔ PC2: Connection migration (WiFi ↔ Ethernet)                                  │   │
-│   │      └── PC1 ↔ PC2: Packet loss simulation với tc netem                                     │   │
+│   │   🔹 CLOUD END-TO-END (High latency US↔Asia, thấy rõ lợi ích QUIC):                         │   │
+│   │      ├── VM1 (Server US) ↔ VM2 (Client Asia): 0-RTT vs 1-RTT handshake                      │   │
+│   │      ├── VM1 ↔ VM2: Stream multiplexing, HOL blocking comparison                             │   │
+│   │      ├── VM1 ↔ VM2: Packet loss simulation với tc netem                                      │   │
+│   │      ├── VM1 ↔ VM2: Connection migration (đổi network interface trên VM2)                    │   │
+│   │      └── VM1 ↔ VM2: Multi-client stress test                                                 │   │
 │   │                                                                                               │   │
-│   │   🔹 CLOUD DEMOS (High latency VN↔US/EU, 0-RTT benefits rõ rệt):                              │   │
-│   │      ├── PC1/PC2 → Cloud Server (xa): 0-RTT vs 1-RTT (RTT ~200-300ms, thấy rõ latency)     │   │
-│   │      ├── Cloud Server → PC1/PC2: Cross-network QUIC connection qua khoảng cách xa           │   │
-│   │      └── Multi-path: Local + Cloud simultaneous testing                                     │   │
+│   │   🔹 WIRESHARK ANALYSIS (trên VM2):                                                          │   │
+│   │      ├── Capture QUIC handshake packets                                                       │   │
+│   │      ├── Analyze STREAM, ACK, PATH frames                                                     │   │
+│   │      └── So sánh QUIC vs TCP+TLS packets                                                      │   │
 │   │                                                                                               │   │
-│   │   🔹 HYBRID DEMOS:                                                                           │   │
-│   │      ├── PC1 as Server: Cloud VM + PC2 connect cùng lúc (multi-client)                      │   │
-│   │      └── Failover testing: Local ↔ Cloud switching                                          │   │
+│   │   💡 Lợi thế End-to-End Cloud:                                                                │   │
+│   │      ├── RTT thực tế ~200-300ms (US ↔ Asia) — thấy rõ lợi ích 0-RTT                          │   │
+│   │      ├── Không phụ thuộc mạng LAN local — ổn định, reproducible                               │   │
+│   │      └── Dễ demo từ bất kỳ đâu — chỉ cần SSH                                                 │   │
 │   └──────────────────────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -156,79 +134,52 @@
 
 ### Chi tiết các thành phần
 
-#### 🖥️ Ubuntu PC 1 (Thành viên 1 - Server + Client)
+#### ☁️ Cloud VM 1 — Server (TV1: Đỗ Hoàng Phúc quản lý)
 
 | Thành phần | Chi tiết |
 |------------|----------|
-| **Hardware** | PC/Laptop với Ubuntu 22.04 |
-| **RAM** | 4GB+ (khuyến nghị 8GB) |
-| **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.100 (LAN) |
-| **Software** | quiche (server+client), Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Server local + Client để test với Cloud |
-| **Người phụ trách** | **Thành viên 1** |
-
-#### 🖥️ Ubuntu PC 2 (Thành viên 2 - Client + Analysis)
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| **Hardware** | PC/Laptop với Ubuntu 22.04 |
-| **RAM** | 4GB+ |
-| **Network** | Ethernet + WiFi (cho migration demo) |
-| **IP** | 192.168.1.101 (LAN) |
-| **Software** | quiche-client, Wireshark, tcpdump, tc |
-| **Vai trò** | QUIC Client + Packet analysis + Test với Cloud |
-| **Người phụ trách** | **Thành viên 2** |
-
-#### ☁️ Oracle Cloud VM (Free Tier - Cả 2 cùng quản lý)
-
-| Thành phần | Chi tiết |
-|------------|----------|
-| **Provider** | Oracle Cloud Infrastructure - **Always Free Tier** |
+| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
 | **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
-| **Region** | **US East (Ashburn)** hoặc **EU (Frankfurt)** — chọn region **xa** Việt Nam để có RTT cao (~200-300ms), giúp demo thấy rõ lợi ích 0-RTT |
+| **Region** | **US East (Ashburn)** — xa Việt Nam, RTT cao (~200-300ms tới Asia) |
 | **OS** | Ubuntu 22.04 LTS |
-| **Network** | Public IP (x.x.x.x), Security List allow UDP 4433 |
-| **Software** | quiche (server+client) |
-| **Vai trò** | Remote QUIC Server/Client cho real-world high-latency testing |
-| **Người phụ trách** | **Cả 2 thành viên cùng quản lý** |
+| **Network** | Public IP (<SERVER_IP>), Security List allow UDP 4433, TCP 443 |
+| **Software** | quiche (server+client), nginx (TCP+TLS baseline), tcpdump |
+| **Vai trò** | QUIC Server + TCP+TLS baseline server |
+| **Người phụ trách** | **Thành viên 1 (TV1)** — SSH từ laptop cá nhân |
 
-### Network Setup Options
+#### ☁️ Cloud VM 2 — Client + Analysis (TV2: Bùi Lê Huy Phước quản lý)
 
-#### Option 1: LAN + Cloud xa (Recommended)
+| Thành phần | Chi tiết |
+|------------|----------|
+| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
+| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **Region** | **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)** — cùng châu Á nhưng khác region với client Việt Nam |
+| **OS** | Ubuntu 22.04 LTS |
+| **Network** | Public IP (<CLIENT_IP>), Security List allow UDP outbound |
+| **Software** | quiche-client, tshark, tcpdump, tc (iproute2), curl |
+| **Vai trò** | QUIC Client + Packet analysis + TCP comparison |
+| **Người phụ trách** | **Thành viên 2 (TV2)** — SSH từ laptop cá nhân |
 
-```
-PC1 (192.168.1.100) ─┬── LAN ──┬─ PC2 (192.168.1.101)
-                     │         │
-                     └── Router ─── Internet ─── Cloud VM (x.x.x.x) [US/EU, RTT ~200-300ms]
-```
-
-- **Local demos**: PC1 ↔ PC2 qua LAN (fast, controlled)
-- **Cloud demos**: PC1/PC2 ↔ Cloud qua Internet (high latency do khoảng cách xa, thấy rõ 0-RTT benefit)
-
-#### Option 2: Direct Cable + Cloud xa
-
-```
-PC1 (10.0.0.1) ──── Crossover Cable ──── PC2 (10.0.0.2)
-       │                                        │
-       └─────────── WiFi/LTE ───────────────────┴─── Cloud VM [US/EU]
-```
-
-- **Direct demos**: PC1 ↔ PC2 qua Ethernet (lowest latency)
-- **Cloud demos**: Cả 2 PC connect Cloud ở US/EU qua WiFi/LTE (high latency)
-
-#### Option 3: WiFi Hotspot + Cloud xa (for Migration Demo)
+### Network Architecture: Cloud End-to-End
 
 ```
-PC1 (Hotspot: 192.168.43.1) ──── WiFi ──── PC2 (192.168.43.x)
-       │                                          │
-       └─ Ethernet ─┬─ Router ─── Internet ─── Cloud VM [US/EU]
-                    │
-                    └─ PC2 Ethernet (192.168.1.101)
+☁️ Cloud VM 1 (US East - Ashburn)          ☁️ Cloud VM 2 (AP - Singapore)
+   QUIC Server: 0.0.0.0:4433/UDP              QUIC Client
+   nginx: 0.0.0.0:443/TCP                     tshark, tcpdump, tc
+   Public IP: <SERVER_IP>                      Public IP: <CLIENT_IP>
+          │                                            │
+          └────────── INTERNET (RTT ~200-300ms) ───────┘
+                    (Cross-continent: US ↔ Asia)
+
+💻 Laptop TV1 (Việt Nam) ── SSH ──→ Cloud VM 1 (Server)
+💻 Laptop TV2 (Việt Nam) ── SSH ──→ Cloud VM 2 (Client)
 ```
 
-- **Migration demo**: PC2 switch giữa WiFi và Ethernet
-- **Cloud involved**: Cloud VM (xa) observe connection migration qua khoảng cách lớn
+> 💡 **Tại sao chọn 2 region xa nhau?**
+> - RTT ~200-300ms giữa US và Asia → thấy rõ lợi ích 0-RTT (tiết kiệm 200-600ms)
+> - Mô phỏng thực tế: user ở châu Á truy cập server ở Mỹ (rất phổ biến)
+> - QUIC được thiết kế để giải quyết vấn đề high-latency networks → demo đúng use case
+> - Không phụ thuộc mạng LAN local → kết quả ổn định, reproducible
 
 ---
 

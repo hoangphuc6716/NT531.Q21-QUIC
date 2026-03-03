@@ -1160,136 +1160,50 @@ Client (new IP)                           Server
 
 ## B1. Setup Topology
 
-### Công việc của Thành viên 1 (Setup Server):
+### Công việc của Thành viên 1 (Setup Cloud VM 1 — Server, US East):
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.1 | Install Ubuntu 22.04 | Clean install hoặc existing | Working OS |
-| B1.2 | Install dependencies | build-essential, cmake, openssl, etc. | Script |
-| B1.3 | Install Rust | rustup | Working Rust |
-| B1.4 | Clone và build quiche | Cloudflare QUIC implementation | Working quiche |
-| B1.5 | Generate certificates | Self-signed SSL certs | cert.pem, key.pem |
-| B1.6 | Create test files | index.html, small/medium/large files | Test content |
-| B1.7 | Configure firewall | UFW allow 4433/udp | Open port |
-| B1.8 | Test server locally | quiche-server running | Working server |
-| B1.9 | Document setup | Step-by-step guide | Setup guide |
+| B1.1 | Tạo Oracle Cloud VM 1 | Region: US East (Ashburn), Ubuntu 22.04 | Working VM |
+| B1.2 | Configure Security List | Allow UDP 4433, TCP 443, TCP 22 inbound | Open ports |
+| B1.3 | SSH vào VM và install dependencies | build-essential, cmake, openssl, nginx, etc. | Script |
+| B1.4 | Install Rust | rustup | Working Rust |
+| B1.5 | Clone và build quiche | Cloudflare QUIC implementation | Working quiche |
+| B1.6 | Generate certificates | Self-signed SSL certs | cert.pem, key.pem |
+| B1.7 | Create test files | index.html, small/medium/large files | Test content |
+| B1.8 | Setup nginx (TCP+TLS baseline) | HTTPS server để so sánh với QUIC | Working nginx |
+| B1.9 | Test server | quiche-server running, nginx running | Working servers |
+| B1.10 | Document setup | Step-by-step guide | Setup guide |
 
-### Công việc của Thành viên 2 (Setup Client):
+### Công việc của Thành viên 2 (Setup Cloud VM 2 — Client, AP Singapore):
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.10 | Install Ubuntu 22.04 | Clean install hoặc existing | Working OS |
-| B1.11 | Install dependencies | build-essential, cmake, openssl, etc. | Script |
-| B1.12 | Install Rust | rustup | Working Rust |
-| B1.13 | Clone và build quiche | quiche-client | Working client |
-| B1.14 | Install Wireshark | Packet capture tool | Working Wireshark |
-| B1.15 | Install tc (iproute2) | Traffic control for demos | Working tc |
-| B1.16 | Configure network | Connect to PC1 | Network ready |
-| B1.17 | Test connectivity | Ping, basic QUIC connection | Connection verified |
-| B1.18 | Document setup | Step-by-step guide | Setup guide |
+| B1.11 | Tạo Oracle Cloud VM 2 | Region: AP Southeast (Singapore), Ubuntu 22.04 | Working VM |
+| B1.12 | Configure Security List | Allow outbound UDP/TCP, SSH inbound | Open ports |
+| B1.13 | SSH vào VM và install dependencies | build-essential, cmake, openssl, etc. | Script |
+| B1.14 | Install Rust | rustup | Working Rust |
+| B1.15 | Clone và build quiche | quiche-client | Working client |
+| B1.16 | Install tshark + tcpdump | Packet capture tools (headless, no GUI) | Working tshark |
+| B1.17 | Install tc (iproute2) | Traffic control for demos | Working tc |
+| B1.18 | Test connectivity tới VM1 | Ping, basic QUIC connection tới Server VM | Connection verified |
+| B1.19 | Đo RTT baseline | ping <SERVER_IP> — expected ~200-300ms | RTT measurement |
+| B1.20 | Document setup | Step-by-step guide | Setup guide |
 
 ### 📋 Setup Scripts:
 
-#### setup_server.sh (PC1)
+#### setup_server.sh (Cloud VM 1 — US East)
 ```bash
 #!/bin/bash
-echo "=== Setting up QUIC Server on Ubuntu PC1 ==="
+echo "=== Setting up QUIC Server on Cloud VM 1 (US East) ==="
 
 # Update system
 sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
 sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    wireshark tshark tcpdump curl git iproute2 net-tools
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source $HOME/.cargo/env
-
-# Clone and build quiche
-git clone --recursive https://github.com/cloudflare/quiche.git
-cd quiche
-cargo build --release --examples
-
-# Create directories
-mkdir -p ~/quic-demo/{certs,www,captures,logs}
-
-# Generate certificates
-openssl req -x509 -newkey rsa:2048 \
-  -keyout ~/quic-demo/certs/key.pem \
-  -out ~/quic-demo/certs/cert.pem \
-  -days 365 -nodes \
-  -subj "/CN=quic-demo-server"
-
-# Create test files
-echo "<h1>QUIC Demo Server</h1><p>Hello from PC1!</p>" > ~/quic-demo/www/index.html
-dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1     # 100KB
-dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10     # 10MB
-dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100     # 100MB
-
-# Multiple files for multiplexing test
-for i in {1..5}; do
-  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=5
-done
-
-# Configure firewall
-sudo ufw allow 4433/udp
-sudo ufw reload
-
-echo "=== Server Setup Complete ==="
-echo ""
-echo "Start server with:"
-echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
-echo "  --cert ~/quic-demo/certs/cert.pem \\"
-echo "  --key ~/quic-demo/certs/key.pem \\"
-echo "  --root ~/quic-demo/www \\"
-echo "  --listen 0.0.0.0:4433"
-```
-
-#### setup_client.sh (PC2)
-```bash
-#!/bin/bash
-echo "=== Setting up QUIC Client on Ubuntu PC2 ==="
-
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install dependencies
-sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    wireshark tshark tcpdump curl git iproute2 net-tools
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source $HOME/.cargo/env
-
-# Clone and build quiche
-git clone --recursive https://github.com/cloudflare/quiche.git
-cd quiche
-cargo build --release --examples
-
-# Create directories
-mkdir -p ~/quic-demo/{captures,logs,downloads}
-
-echo "=== Client Setup Complete ==="
-echo ""
-echo "Test connection with:"
-echo "cd ~/quiche && ./target/release/examples/quiche-client \\"
-echo "  --no-verify https://SERVER_IP:4433/index.html"
-echo ""
-echo "Replace SERVER_IP with PC1's IP address (e.g., 192.168.1.100)"
-```
-
-#### setup_cloud.sh (Oracle Cloud VM - Cả 2 cùng setup)
-```bash
-#!/bin/bash
-echo "=== Setting up QUIC Server/Client on Oracle Cloud VM ==="
-
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install dependencies
-sudo apt install -y build-essential cmake pkg-config libssl-dev \
-                    curl git iproute2 net-tools
+                    tshark tcpdump curl git iproute2 net-tools \
+                    nginx netfilter-persistent
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -1311,73 +1225,146 @@ openssl req -x509 -newkey rsa:2048 \
   -subj "/CN=quic-cloud-server"
 
 # Create test files
-echo "<h1>QUIC Cloud Server</h1><p>Hello from Oracle Cloud!</p>" > ~/quic-demo/www/index.html
-dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1
-dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10
+echo "<h1>QUIC Cloud Server</h1><p>Hello from Cloud VM 1 (US East)!</p>" > ~/quic-demo/www/index.html
+dd if=/dev/urandom of=~/quic-demo/www/small.bin bs=100K count=1     # 100KB
+dd if=/dev/urandom of=~/quic-demo/www/medium.bin bs=1M count=10     # 10MB
+dd if=/dev/urandom of=~/quic-demo/www/large.bin bs=1M count=100     # 100MB
 
-# Note: Configure Oracle Cloud Security List to allow UDP 4433 inbound
+# Multiple files for multiplexing test
+for i in {1..5}; do
+  dd if=/dev/urandom of=~/quic-demo/www/file$i.bin bs=1M count=5
+done
 
-echo "=== Cloud Setup Complete ==="
+# Setup nginx for TCP+TLS baseline comparison
+sudo mkdir -p /etc/nginx/ssl
+sudo cp ~/quic-demo/certs/cert.pem /etc/nginx/ssl/cert.pem
+sudo cp ~/quic-demo/certs/key.pem /etc/nginx/ssl/key.pem
+sudo tee /etc/nginx/sites-available/quic-baseline > /dev/null <<'EOF'
+server {
+    listen 443 ssl;
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+    root /home/ubuntu/quic-demo/www;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+EOF
+sudo ln -sf /etc/nginx/sites-available/quic-baseline /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
+# Configure iptables (Oracle Cloud uses iptables, not ufw)
+sudo iptables -I INPUT -p udp --dport 4433 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+sudo netfilter-persistent save
+
+echo "=== Server Setup Complete ==="
 echo ""
-echo "IMPORTANT: Configure Oracle Cloud Security List:"
-echo "  - Allow Ingress UDP port 4433 from 0.0.0.0/0 (hoặc giới hạn IP nếu cần bảo mật)"
-echo ""
-echo "Start server with:"
+echo "Start QUIC server with:"
 echo "cd ~/quiche && ./target/release/examples/quiche-server \\"
 echo "  --cert ~/quic-demo/certs/cert.pem \\"
 echo "  --key ~/quic-demo/certs/key.pem \\"
 echo "  --root ~/quic-demo/www \\"
 echo "  --listen 0.0.0.0:4433"
 echo ""
-echo "Test from local PCs with:"
-echo "./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html"
+echo "nginx (TCP+TLS baseline) is already running on port 443"
 ```
 
-### Oracle Cloud Setup Guide (Cả 2 cùng làm)
+#### setup_client.sh (Cloud VM 2 — AP Singapore)
+```bash
+#!/bin/bash
+echo "=== Setting up QUIC Client on Cloud VM 2 (AP Singapore) ==="
+
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install dependencies
+sudo apt install -y build-essential cmake pkg-config libssl-dev \
+                    tshark tcpdump curl git iproute2 net-tools
+
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Clone and build quiche
+git clone --recursive https://github.com/cloudflare/quiche.git
+cd quiche
+cargo build --release --examples
+
+# Create directories
+mkdir -p ~/quic-demo/{captures,logs,downloads}
+
+echo "=== Client Setup Complete ==="
+echo ""
+echo "Đo RTT tới Server VM (US East):"
+echo "ping -c 10 <SERVER_IP>"
+echo ""
+echo "Test QUIC connection:"
+echo "cd ~/quiche && ./target/release/examples/quiche-client \\"
+echo "  --no-verify https://<SERVER_IP>:4433/index.html"
+echo ""
+echo "Test TCP+TLS connection (baseline):"
+echo "curl -k -o /dev/null -w 'Total: %{time_total}s\n' https://<SERVER_IP>/index.html"
+```
+
+### Oracle Cloud Setup Guide
 
 #### Bước 1: Tạo Oracle Cloud Account (Free Tier)
 1. Truy cập https://www.oracle.com/cloud/free/
 2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
-3. Chọn region **xa** vị trí test (e.g., **US East - Ashburn**, **US West - Phoenix**, hoặc **EU - Frankfurt**)
+3. Chọn **Home Region** — lưu ý: mỗi account chỉ có 1 Home Region, nhưng có thể tạo VM ở region khác
 
-> ⚠️ **Lưu ý quan trọng**: Chọn region **xa** máy test (ở Việt Nam) để có RTT cao (~200-300ms). Điều này giúp demo thấy rõ lợi ích của 0-RTT handshake so với 1-RTT. Nếu chọn region gần (Singapore, Tokyo), RTT chỉ ~30-50ms, sự khác biệt sẽ không đáng kể.
+> ⚠️ **Quan trọng**: Cần tạo 2 VMs ở 2 regions khác nhau:
+> - **VM 1 (Server)**: US East (Ashburn) — xa Việt Nam
+> - **VM 2 (Client)**: AP Southeast (Singapore) hoặc AP Northeast (Tokyo) — gần Việt Nam hơn
+> - RTT giữa US East ↔ AP Singapore: ~200-300ms → thấy rõ lợi ích QUIC
 
-#### Bước 2: Tạo VM Instance
+#### Bước 2: Tạo VM 1 — Server (US East)
 1. Go to Compute → Instances → Create Instance
-2. Chọn **VM.Standard.E2.1.Micro** (Always Free)
-3. Chọn **Ubuntu 22.04** image
-4. Chọn **Assign public IP address**
-5. Download SSH key pair
-6. Create instance
+2. Chọn Region: **US East (Ashburn)**
+3. Chọn **VM.Standard.E2.1.Micro** (Always Free)
+4. Chọn **Ubuntu 22.04** image
+5. Chọn **Assign public IP address**
+6. Download SSH key pair
+7. Create instance
 
-#### Bước 3: Configure Security List
+#### Bước 3: Configure Security List cho VM 1
 1. Go to Networking → Virtual Cloud Networks
 2. Click VCN → Security Lists → Default Security List
-3. Add Ingress Rule:
-   - Source: `0.0.0.0/0` (hoặc giới hạn theo IP của bạn để bảo mật hơn)
-   - Protocol: `UDP`
-   - Destination Port: `4433`
+3. Add Ingress Rules:
+   - UDP port `4433` from `0.0.0.0/0` (QUIC)
+   - TCP port `443` from `0.0.0.0/0` (HTTPS baseline)
+   - TCP port `22` from `0.0.0.0/0` (SSH) — đã có sẵn
 4. Save
 
-> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP thay vì 0.0.0.0/0
+#### Bước 4: Tạo VM 2 — Client (AP Singapore)
+1. Chuyển Region sang **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)**
+2. Tạo VM tương tự như VM 1
+3. Security List: chỉ cần SSH inbound (port 22) — VM 2 là client, không cần open thêm port
 
-#### Bước 4: SSH và Setup
+#### Bước 5: SSH và Setup
 ```bash
-# Đảm bảo SSH key có quyền đúng
-chmod 600 ~/oracle_key.pem
+# === Setup VM 1 (Server) ===
+chmod 600 ~/oracle_vm1_key.pem
+ssh -i ~/oracle_vm1_key.pem ubuntu@<SERVER_IP>
+# Chạy setup_server.sh
 
-# SSH từ PC1 hoặc PC2
-ssh -i ~/oracle_key.pem ubuntu@CLOUD_PUBLIC_IP
+# === Setup VM 2 (Client) ===
+chmod 600 ~/oracle_vm2_key.pem
+ssh -i ~/oracle_vm2_key.pem ubuntu@<CLIENT_IP>
+# Chạy setup_client.sh
 
-# Chạy setup script
-./setup_cloud.sh
+# === Verify connectivity (trên VM 2) ===
+ping -c 10 <SERVER_IP>
+# Expected RTT: ~200-300ms (US East ↔ AP Singapore)
 ```
 
+> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP trong Security List thay vì 0.0.0.0/0
+
 ### 📋 Deliverables B1:
-- [ ] Working QUIC Server on PC1 (TV1)
-- [ ] Working QUIC Client on PC2 (TV2)
-- [ ] Working QUIC Server/Client on Cloud VM (Cả 2)
-- [ ] Network connectivity verified: PC1↔PC2, PC1↔Cloud, PC2↔Cloud (Cả 2)
+- [ ] Working Cloud VM 1 — QUIC Server + nginx (US East) (TV1)
+- [ ] Working Cloud VM 2 — QUIC Client + tshark (AP Singapore) (TV2)
+- [ ] Network connectivity verified: VM1 ↔ VM2, RTT ~200-300ms (Cả 2)
 - [ ] Setup scripts documented (Cả 2)
 
 ---

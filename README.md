@@ -1384,11 +1384,10 @@ ping -c 10 <SERVER_IP>
 | B2.5 | Đo QUIC 0-RTT handshake | Resumed connection | Time measurements |
 | B2.6 | Tổng hợp kết quả | Table comparison | Results document |
 
-### Kịch bản Demo:
+### Kịch bản Demo: Cloud End-to-End (VM1 US East ↔ VM2 AP Singapore)
 
-#### Kịch bản A: Local Network (PC1 ↔ PC2)
 ```bash
-# === TRÊN PC1 (Server) ===
+# === TRÊN CLOUD VM 1 (Server — US East) ===
 # Start QUIC server
 cd ~/quiche
 ./target/release/examples/quiche-server \
@@ -1397,66 +1396,53 @@ cd ~/quiche
   --root ~/quic-demo/www \
   --listen 0.0.0.0:4433
 
-# === TRÊN PC2 (Client) ===
+# nginx (TCP+TLS baseline) đã chạy sẵn trên port 443
 
-# Test 1: QUIC 1-RTT (First connection - clear any cached session)
-echo "=== LOCAL: QUIC 1-RTT (First Connection) ==="
-time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
+# === TRÊN CLOUD VM 2 (Client — AP Singapore) ===
 
-# Test 2: QUIC 0-RTT (Resumed connection)
-echo "=== LOCAL: QUIC 0-RTT (Resumed Connection) ==="
-time ./quiche-client --no-verify https://192.168.1.100:4433/index.html
+# Bước 1: Đo RTT thực tế
+ping -c 10 <SERVER_IP>
+# Expected: ~200-300ms
 
-# Capture handshake with Wireshark
-tshark -i eth0 -f "udp port 4433" -c 20 -Y "quic" -T fields \
-  -e frame.number -e frame.time_relative -e quic.packet_type
-```
+# Bước 2: TCP+TLS Handshake (Baseline - qua nginx)
+echo "=== TCP+TLS 1.3 Handshake (2 RTT) ==="
+curl -k -o /dev/null -w "TCP Connect: %{time_connect}s\nTLS Handshake: %{time_appconnect}s\nTotal: %{time_total}s\n" \
+  https://<SERVER_IP>/index.html
 
-#### Kịch bản B: Cloud Testing (PC1/PC2 ↔ Cloud xa US/EU) - Thấy rõ latency benefit nhờ khoảng cách xa
-```bash
-# === TRÊN CLOUD VM (Server) ===
-cd ~/quiche
-./target/release/examples/quiche-server \
-  --cert ~/quic-demo/certs/cert.pem \
-  --key ~/quic-demo/certs/key.pem \
-  --root ~/quic-demo/www \
-  --listen 0.0.0.0:4433
+# Bước 3: QUIC 1-RTT (First connection)
+echo "=== QUIC 1-RTT (First Connection — 1 RTT) ==="
+time ./target/release/examples/quiche-client --no-verify \
+  https://<SERVER_IP>:4433/index.html
 
-# === TRÊN PC1 hoặc PC2 (Client) ===
+# Bước 4: QUIC 0-RTT (Resumed connection — ngay sau lần đầu)
+echo "=== QUIC 0-RTT (Resumed Connection — ~0 RTT) ==="
+time ./target/release/examples/quiche-client --no-verify \
+  https://<SERVER_IP>:4433/index.html
 
-# Đo ping để biết RTT thực tế
-ping -c 5 CLOUD_PUBLIC_IP
-
-# Test 1: QUIC 1-RTT to Cloud (thấy rõ latency)
-echo "=== CLOUD: QUIC 1-RTT (First Connection) ==="
-time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
-
-# Test 2: QUIC 0-RTT to Cloud (latency giảm đáng kể!)
-echo "=== CLOUD: QUIC 0-RTT (Resumed Connection) ==="
-time ./quiche-client --no-verify https://CLOUD_PUBLIC_IP:4433/index.html
-
-# So sánh: Với Cloud xa (US/EU) latency ~200-300ms, 0-RTT tiết kiệm rất đáng kể!
+# Bước 5: Capture handshake packets
+tshark -i ens3 -f "udp port 4433" -c 20 -Y "quic" -T fields \
+  -e frame.number -e frame.time_relative -e quic.packet_type \
+  > ~/quic-demo/captures/handshake_capture.txt
 ```
 
 ### Kết quả mong đợi:
 
-> **Giải thích**: TCP+TLS 1.3 cần 2 RTT (TCP handshake + TLS), QUIC 1-RTT cần 1 RTT, QUIC 0-RTT cần ~0 RTT (data gửi cùng Initial packet)
+> **Giải thích**: TCP+TLS 1.3 cần 2 RTT (TCP handshake + TLS handshake), QUIC 1-RTT cần 1 RTT, QUIC 0-RTT cần ~0 RTT (data gửi cùng Initial packet). Với RTT ~200-300ms giữa US và Asia, sự khác biệt rất lớn!
 
-| Scenario | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings |
-|----------|---------------------|--------------------|--------------------|---------|
-| **Local (LAN ~1ms RTT)** | ~2-3ms | ~1-2ms | ~1ms | Nhỏ |
-| **Cloud xa (~200ms RTT)** | ~400ms | ~200ms | ~0ms + data | **200-400ms!** |
-| **Cloud xa (~300ms RTT)** | ~600ms | ~300ms | ~0ms + data | **300-600ms!** |
+| Scenario (VM1 US ↔ VM2 Asia) | TCP+TLS 1.3 (2 RTT) | QUIC 1-RTT (1 RTT) | QUIC 0-RTT (~0 RTT) | Savings vs TCP |
+|-------------------------------|---------------------|--------------------|--------------------|----------------|
+| **RTT ~200ms** | ~400ms | ~200ms | ~0ms + data | **200-400ms!** |
+| **RTT ~250ms** | ~500ms | ~250ms | ~0ms + data | **250-500ms!** |
+| **RTT ~300ms** | ~600ms | ~300ms | ~0ms + data | **300-600ms!** |
 
-> 💡 **Key insight**: Với Cloud VM ở xa (US/EU, RTT ~200-300ms), sự khác biệt giữa 0-RTT và TCP+TLS là rất lớn và dễ đo lường!
+> 💡 **Key insight**: Với 2 Cloud VMs ở 2 vùng xa nhau (US East ↔ AP Singapore, RTT ~200-300ms), sự khác biệt giữa 0-RTT và TCP+TLS **rất rõ ràng** và dễ đo lường — đây là lợi thế lớn nhất của QUIC!
 
 ### 📋 Deliverables B2:
-- [ ] Handshake timing measurements - Local (TV1)
-- [ ] Handshake timing measurements - Cloud (TV1)
-- [ ] Comparison table (TV1)
-- [ ] Wireshark captures (TV2)
+- [ ] Handshake timing measurements — Cloud end-to-end (TV1)
+- [ ] TCP+TLS vs QUIC comparison table (TV1)
+- [ ] tshark captures from VM2 (TV2)
 - [ ] Screenshots (TV1 + TV2)
-- [ ] 📊 **Bar chart so sánh handshake timing (TV1)**
+- [ ] 📊 **Bar chart so sánh handshake timing: TCP+TLS vs QUIC 1-RTT vs QUIC 0-RTT (TV1)**
 
 ---
 

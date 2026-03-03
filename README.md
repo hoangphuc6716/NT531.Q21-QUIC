@@ -153,7 +153,7 @@
 |------------|----------|
 | **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
 | **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
-| **Region** | **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)** — cùng châu Á nhưng khác region với client Việt Nam |
+| **Region** | **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)** — gần Việt Nam hơn so với US East, tạo khoảng cách cross-continent |
 | **OS** | Ubuntu 22.04 LTS |
 | **Network** | Public IP (<CLIENT_IP>), Security List allow UDP outbound |
 | **Software** | quiche-client, tshark, tcpdump, tc (iproute2), curl |
@@ -1203,7 +1203,7 @@ sudo apt update && sudo apt upgrade -y
 # Install dependencies
 sudo apt install -y build-essential cmake pkg-config libssl-dev \
                     tshark tcpdump curl git iproute2 net-tools \
-                    nginx netfilter-persistent
+                    nginx netfilter-persistent  # netfilter-persistent: lưu iptables rules qua reboot
 
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -1541,8 +1541,24 @@ ls -la ~/quic-demo/downloads/
 
 **Cách setup Secondary VNIC trên Oracle Cloud:**
 1. Go to Compute → VM2 Instance → Attached VNICs
-2. Click "Create VNIC" → attach thêm 1 VNIC mới
-3. VM2 sẽ có 2 interfaces: `ens3` (primary) và `ens4` (secondary)
+2. Click "Create VNIC" → attach thêm 1 VNIC mới (cùng VCN, chọn subnet khác hoặc cùng subnet)
+3. SSH vào VM2 và configure interface mới:
+```bash
+# Kiểm tra interface mới (thường là ens4 hoặc ens5)
+ip link show
+
+# Nếu interface chưa được tự động cấu hình, dùng dhclient:
+sudo dhclient ens4
+
+# Ghi lại gateway của từng interface (cần cho migration script)
+# Primary gateway:
+ip route show default
+# → default via <PRIMARY_GATEWAY> dev ens3 (ghi lại giá trị này)
+
+# Secondary gateway (xem trong Oracle Cloud Console → VNIC details → Subnet → Route Table)
+# Hoặc dùng: ip route show dev ens4
+```
+4. VM2 sẽ có 2 interfaces: `ens3` (primary) và `ens4` (secondary), mỗi interface có IP và gateway riêng
 
 ### Kịch bản Demo: Cloud End-to-End (VM1 US ↔ VM2 Asia)
 
@@ -1553,6 +1569,10 @@ ls -la ~/quic-demo/downloads/
 ip addr show
 # ens3: <PRIMARY_IP> (primary VNIC)
 # ens4: <SECONDARY_IP> (secondary VNIC)
+
+# Ghi lại gateways trước khi bắt đầu (xem ở bước setup VNIC ở trên)
+PRIMARY_GW="<PRIMARY_GATEWAY>"    # e.g., 10.0.0.1 (từ ip route show default)
+SECONDARY_GW="<SECONDARY_GATEWAY>"  # e.g., 10.0.1.1 (từ VNIC details)
 
 # Cả 2 IP đều có thể reach tới VM1 Server
 ping -c 3 -I ens3 <SERVER_IP>
@@ -1576,7 +1596,7 @@ echo "=== Migrating from ens3 to ens4 ==="
 
 # Thay đổi route — QUIC sẽ tự động migration sang path mới
 sudo ip route del default
-sudo ip route add default via <SECONDARY_GATEWAY> dev ens4
+sudo ip route add default via $SECONDARY_GW dev ens4
 
 # Wait a moment, then check download still running
 sleep 2
@@ -1604,13 +1624,13 @@ curl -k https://<SERVER_IP>/large.bin > /dev/null &
 TCP_PID=$!
 sleep 3
 sudo ip route del default
-sudo ip route add default via <PRIMARY_GATEWAY> dev ens3
+sudo ip route add default via $PRIMARY_GW dev ens3
 sleep 2
 ps -p $TCP_PID && echo "TCP still running" || echo "TCP connection DROPPED!"
 
 # Restore default route
 sudo ip route del default
-sudo ip route add default via <PRIMARY_GATEWAY> dev ens3
+sudo ip route add default via $PRIMARY_GW dev ens3
 ```
 
 ### 📋 Deliverables B4:

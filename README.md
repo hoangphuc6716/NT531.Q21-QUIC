@@ -94,8 +94,8 @@
 │   │     Public IP: <SERVER_IP>           │               │     Public IP: <CLIENT_IP>           │    │
 │   │     Port: 4433/UDP                   │◄─── INTERNET ─┤     Wireshark / tshark               │    │
 │   │     OS: Ubuntu 22.04 LTS             │  RTT ~200-300ms│     tcpdump, tc (traffic control)    │    │
-│   │     t2.micro (Free Tier)              │               │     OS: Ubuntu 22.04 LTS             │    │
-│   │     1 vCPU, 1GB RAM                  │               │     t2.micro (Free Tier)             │    │
+│   │     t2.micro (Free Tier)             │               │     OS: Ubuntu 22.04 LTS             │    │
+│   │     1 vCPU, 1GB RAM                 │               │     t2.micro (Free Tier)             │    │
 │   │     nginx (TCP+TLS baseline)         │               │     1 vCPU, 1GB RAM                  │    │
 │   │     tcpdump, test files              │               │     curl (TCP+TLS baseline)          │    │
 │   └──────────────────────────────────────┘               └──────────────────────────────────────┘    │

@@ -87,16 +87,16 @@
 │          (2 Cloud VMs ở 2 vùng khác nhau — US East ↔ AP Singapore — End-to-End Cloud)               │
 ├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                                      │
-│   ☁️ ORACLE CLOUD VM 1 — REGION: US EAST (Ashburn)       ☁️ ORACLE CLOUD VM 2 — REGION: AP (Singapore)│
+│   ☁️ AWS EC2 VM 1 — REGION: US EAST (N. Virginia)        ☁️ AWS EC2 VM 2 — REGION: AP (Singapore)     │
 │   ┌──────────────────────────────────────┐               ┌──────────────────────────────────────┐    │
 │   │     QUIC SERVER                      │               │     QUIC CLIENT + ANALYSIS           │    │
 │   │     (quiche-server)                  │               │     (quiche-client)                  │    │
 │   │     Public IP: <SERVER_IP>           │               │     Public IP: <CLIENT_IP>           │    │
 │   │     Port: 4433/UDP                   │◄─── INTERNET ─┤     Wireshark / tshark               │    │
 │   │     OS: Ubuntu 22.04 LTS             │  RTT ~200-300ms│     tcpdump, tc (traffic control)    │    │
-│   │     VM.Standard.E2.1.Micro (Free)    │               │     OS: Ubuntu 22.04 LTS             │    │
-│   │     1 OCPU, 1GB RAM                  │               │     VM.Standard.E2.1.Micro (Free)    │    │
-│   │     nginx (TCP+TLS baseline)         │               │     1 OCPU, 1GB RAM                  │    │
+│   │     t2.micro (Free Tier)             │               │     OS: Ubuntu 22.04 LTS             │    │
+│   │     1 vCPU, 1GB RAM                 │               │     t2.micro (Free Tier)             │    │
+│   │     nginx (TCP+TLS baseline)         │               │     1 vCPU, 1GB RAM                  │    │
 │   │     tcpdump, test files              │               │     curl (TCP+TLS baseline)          │    │
 │   └──────────────────────────────────────┘               └──────────────────────────────────────┘    │
 │              ▲                                                         ▲                              │
@@ -138,11 +138,11 @@
 
 | Thành phần | Chi tiết |
 |------------|----------|
-| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
-| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
-| **Region** | **US East (Ashburn)** — xa Việt Nam, RTT cao (~200-300ms tới Asia) |
+| **Provider** | Amazon Web Services (AWS) — **Free Tier (12 tháng)** |
+| **Instance** | t2.micro (1 vCPU, 1GB RAM) |
+| **Region** | **US East (N. Virginia)** — xa Việt Nam, RTT cao (~200-300ms tới Asia) |
 | **OS** | Ubuntu 22.04 LTS |
-| **Network** | Public IP (<SERVER_IP>), Security List allow UDP 4433, TCP 443 |
+| **Network** | Public IP (<SERVER_IP>), Security Group allow UDP 4433, TCP 443 |
 | **Software** | quiche (server+client), nginx (TCP+TLS baseline), tcpdump |
 | **Vai trò** | QUIC Server + TCP+TLS baseline server |
 | **Người phụ trách** | **Thành viên 1 (TV1)** — SSH từ laptop cá nhân |
@@ -151,11 +151,11 @@
 
 | Thành phần | Chi tiết |
 |------------|----------|
-| **Provider** | Oracle Cloud Infrastructure — **Always Free Tier** |
-| **Instance** | VM.Standard.E2.1.Micro (1 OCPU, 1GB RAM) |
+| **Provider** | Amazon Web Services (AWS) — **Free Tier (12 tháng)** |
+| **Instance** | t2.micro (1 vCPU, 1GB RAM) |
 | **Region** | **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)** — gần Việt Nam hơn so với US East, tạo khoảng cách cross-continent |
 | **OS** | Ubuntu 22.04 LTS |
-| **Network** | Public IP (<CLIENT_IP>), Security List allow UDP outbound |
+| **Network** | Public IP (<CLIENT_IP>), Security Group allow UDP outbound |
 | **Software** | quiche-client, tshark, tcpdump, tc (iproute2), curl |
 | **Vai trò** | QUIC Client + Packet analysis + TCP comparison |
 | **Người phụ trách** | **Thành viên 2 (TV2)** — SSH từ laptop cá nhân |
@@ -163,7 +163,7 @@
 ### Network Architecture: Cloud End-to-End
 
 ```
-☁️ Cloud VM 1 (US East - Ashburn)          ☁️ Cloud VM 2 (AP - Singapore)
+☁️ Cloud VM 1 (US East - N. Virginia)      ☁️ Cloud VM 2 (AP - Singapore)
    QUIC Server: 0.0.0.0:4433/UDP              QUIC Client
    nginx: 0.0.0.0:443/TCP                     tshark, tcpdump, tc
    Public IP: <SERVER_IP>                      Public IP: <CLIENT_IP>
@@ -1164,8 +1164,8 @@ Client (new IP)                           Server
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.1 | Tạo Oracle Cloud VM 1 | Region: US East (Ashburn), Ubuntu 22.04 | Working VM |
-| B1.2 | Configure Security List | Allow UDP 4433, TCP 443, TCP 22 inbound | Open ports |
+| B1.1 | Tạo AWS EC2 VM 1 | Region: US East (N. Virginia), Ubuntu 22.04 | Working VM |
+| B1.2 | Configure Security Group | Allow UDP 4433, TCP 443, TCP 22 inbound | Open ports |
 | B1.3 | SSH vào VM và install dependencies | build-essential, cmake, openssl, nginx, etc. | Script |
 | B1.4 | Install Rust | rustup | Working Rust |
 | B1.5 | Clone và build quiche | Cloudflare QUIC implementation | Working quiche |
@@ -1179,8 +1179,8 @@ Client (new IP)                           Server
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B1.11 | Tạo Oracle Cloud VM 2 | Region: AP Southeast (Singapore), Ubuntu 22.04 | Working VM |
-| B1.12 | Configure Security List | Allow outbound UDP/TCP, SSH inbound | Open ports |
+| B1.11 | Tạo AWS EC2 VM 2 | Region: AP Southeast (Singapore), Ubuntu 22.04 | Working VM |
+| B1.12 | Configure Security Group | Allow outbound UDP/TCP, SSH inbound | Open ports |
 | B1.13 | SSH vào VM và install dependencies | build-essential, cmake, openssl, etc. | Script |
 | B1.14 | Install Rust | rustup | Working Rust |
 | B1.15 | Clone và build quiche | quiche-client | Working client |
@@ -1253,7 +1253,7 @@ EOF
 sudo ln -sf /etc/nginx/sites-available/quic-baseline /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl restart nginx
 
-# Configure iptables (Oracle Cloud uses iptables, not ufw)
+# Configure iptables (AWS EC2 Ubuntu uses iptables)
 sudo iptables -I INPUT -p udp --dport 4433 -j ACCEPT
 sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
 sudo netfilter-persistent save
@@ -1307,31 +1307,31 @@ echo "Test TCP+TLS connection (baseline):"
 echo "curl -k -o /dev/null -w 'Total: %{time_total}s\n' https://<SERVER_IP>/index.html"
 ```
 
-### Oracle Cloud Setup Guide
+### AWS Setup Guide
 
-#### Bước 1: Tạo Oracle Cloud Account (Free Tier)
-1. Truy cập https://www.oracle.com/cloud/free/
+#### Bước 1: Tạo AWS Account (Free Tier)
+1. Truy cập https://aws.amazon.com/free/
 2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
-3. Chọn **Home Region** — lưu ý: mỗi account chỉ có 1 Home Region, nhưng có thể tạo VM ở region khác
+3. Chọn region mong muốn từ Console — lưu ý: có thể tạo EC2 instances ở bất kỳ region nào
 
 > ⚠️ **Quan trọng**: Cần tạo 2 VMs ở 2 regions khác nhau:
-> - **VM 1 (Server)**: US East (Ashburn) — xa Việt Nam
+> - **VM 1 (Server)**: US East (N. Virginia) — xa Việt Nam
 > - **VM 2 (Client)**: AP Southeast (Singapore) hoặc AP Northeast (Tokyo) — gần Việt Nam hơn
 > - RTT giữa US East ↔ AP Singapore: ~200-300ms → thấy rõ lợi ích QUIC
 
 #### Bước 2: Tạo VM 1 — Server (US East)
-1. Go to Compute → Instances → Create Instance
-2. Chọn Region: **US East (Ashburn)**
-3. Chọn **VM.Standard.E2.1.Micro** (Always Free)
+1. Go to EC2 → Instances → Launch Instance
+2. Chọn Region: **US East (N. Virginia)**
+3. Chọn **t2.micro** (Free Tier)
 4. Chọn **Ubuntu 22.04** image
-5. Chọn **Assign public IP address**
+5. Chọn **Auto-assign public IP: Enable**
 6. Download SSH key pair
-7. Create instance
+7. Launch instance
 
-#### Bước 3: Configure Security List cho VM 1
-1. Go to Networking → Virtual Cloud Networks
-2. Click VCN → Security Lists → Default Security List
-3. Add Ingress Rules:
+#### Bước 3: Configure Security Group cho VM 1
+1. Go to EC2 → Security Groups
+2. Click Security Group của VM 1 → Edit Inbound Rules
+3. Add Inbound Rules:
    - UDP port `4433` from `0.0.0.0/0` (QUIC)
    - TCP port `443` from `0.0.0.0/0` (HTTPS baseline)
    - TCP port `22` from `0.0.0.0/0` (SSH) — đã có sẵn
@@ -1340,18 +1340,18 @@ echo "curl -k -o /dev/null -w 'Total: %{time_total}s\n' https://<SERVER_IP>/inde
 #### Bước 4: Tạo VM 2 — Client (AP Singapore)
 1. Chuyển Region sang **AP Southeast (Singapore)** hoặc **AP Northeast (Tokyo)**
 2. Tạo VM tương tự như VM 1
-3. Security List: chỉ cần SSH inbound (port 22) — VM 2 là client, không cần open thêm port
+3. Security Group: chỉ cần SSH inbound (port 22) — VM 2 là client, không cần open thêm port
 
 #### Bước 5: SSH và Setup
 ```bash
 # === Setup VM 1 (Server) ===
-chmod 600 ~/oracle_vm1_key.pem
-ssh -i ~/oracle_vm1_key.pem ubuntu@<SERVER_IP>
+chmod 600 ~/aws_vm1_key.pem
+ssh -i ~/aws_vm1_key.pem ubuntu@<SERVER_IP>
 # Chạy setup_server.sh
 
 # === Setup VM 2 (Client) ===
-chmod 600 ~/oracle_vm2_key.pem
-ssh -i ~/oracle_vm2_key.pem ubuntu@<CLIENT_IP>
+chmod 600 ~/aws_vm2_key.pem
+ssh -i ~/aws_vm2_key.pem ubuntu@<CLIENT_IP>
 # Chạy setup_client.sh
 
 # === Verify connectivity (trên VM 2) ===
@@ -1359,7 +1359,7 @@ ping -c 10 <SERVER_IP>
 # Expected RTT: ~200-300ms (US East ↔ AP Singapore)
 ```
 
-> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP trong Security List thay vì 0.0.0.0/0
+> ⚠️ **Lưu ý bảo mật**: Để an toàn hơn, có thể giới hạn Source IP trong Security Group thay vì 0.0.0.0/0
 
 ### 📋 Deliverables B1:
 - [ ] Working Cloud VM 1 — QUIC Server + nginx (US East) (TV1)
@@ -1527,7 +1527,7 @@ ls -la ~/quic-demo/downloads/
 
 | STT | Công việc | Chi tiết | Output |
 |-----|-----------|----------|--------|
-| B4.1 | Chuẩn bị secondary VNIC trên VM2 | Thêm VNIC thứ 2 trên Oracle Cloud | Network config |
+| B4.1 | Chuẩn bị secondary ENI trên VM2 | Thêm ENI thứ 2 trên AWS | Network config |
 | B4.2 | Create migration script | Đổi IP source trong khi download | Script |
 | B4.3 | Run migration demo | Download large file, đổi network path | Demo results |
 | B4.4 | Capture PATH frames | PATH_CHALLENGE/RESPONSE | tshark capture |
@@ -1537,11 +1537,11 @@ ls -la ~/quic-demo/downloads/
 
 ### Cách thực hiện Connection Migration trên Cloud:
 
-> **Lưu ý**: Trên Cloud VM không có WiFi/Ethernet vật lý. Thay vào đó, sử dụng **Secondary VNIC** trên Oracle Cloud để mô phỏng migration — VM2 sẽ có 2 IP addresses, và ta sẽ đổi source IP trong khi download.
+> **Lưu ý**: Trên Cloud VM không có WiFi/Ethernet vật lý. Thay vào đó, sử dụng **Secondary ENI (Elastic Network Interface)** trên AWS để mô phỏng migration — VM2 sẽ có 2 IP addresses, và ta sẽ đổi source IP trong khi download.
 
-**Cách setup Secondary VNIC trên Oracle Cloud:**
-1. Go to Compute → VM2 Instance → Attached VNICs
-2. Click "Create VNIC" → attach thêm 1 VNIC mới (cùng VCN, chọn subnet khác hoặc cùng subnet)
+**Cách setup Secondary ENI trên AWS:**
+1. Go to EC2 → Network Interfaces → Create Network Interface
+2. Attach ENI mới vào VM2 instance (cùng VPC, chọn subnet khác hoặc cùng subnet)
 3. SSH vào VM2 và configure interface mới:
 ```bash
 # Kiểm tra interface mới (thường là ens4 hoặc ens5)
@@ -1555,7 +1555,7 @@ sudo dhclient ens4
 ip route show default
 # → default via <PRIMARY_GATEWAY> dev ens3 (ghi lại giá trị này)
 
-# Secondary gateway (xem trong Oracle Cloud Console → VNIC details → Subnet → Route Table)
+# Secondary gateway (xem trong AWS Console → ENI details → Subnet → Route Table)
 # Hoặc dùng: ip route show dev ens4
 ```
 4. VM2 sẽ có 2 interfaces: `ens3` (primary) và `ens4` (secondary), mỗi interface có IP và gateway riêng
@@ -1567,12 +1567,12 @@ ip route show default
 
 # Kiểm tra 2 interfaces
 ip addr show
-# ens3: <PRIMARY_IP> (primary VNIC)
-# ens4: <SECONDARY_IP> (secondary VNIC)
+# ens3: <PRIMARY_IP> (primary ENI)
+# ens4: <SECONDARY_IP> (secondary ENI)
 
-# Ghi lại gateways trước khi bắt đầu (xem ở bước setup VNIC ở trên)
+# Ghi lại gateways trước khi bắt đầu (xem ở bước setup ENI ở trên)
 PRIMARY_GW="<PRIMARY_GATEWAY>"    # e.g., 10.0.0.1 (từ ip route show default)
-SECONDARY_GW="<SECONDARY_GATEWAY>"  # e.g., 10.0.1.1 (từ VNIC details)
+SECONDARY_GW="<SECONDARY_GATEWAY>"  # e.g., 10.0.1.1 (từ ENI details)
 
 # Cả 2 IP đều có thể reach tới VM1 Server
 ping -c 3 -I ens3 <SERVER_IP>
@@ -2449,14 +2449,14 @@ sequenceDiagram
     participant C as 🖥️ Client
     participant S as 🌐 Server
     
-    Note over C,S: Connection đang hoạt động<br/>Client IP: ens3 (Primary VNIC)
+    Note over C,S: Connection đang hoạt động<br/>Client IP: ens3 (Primary ENI)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: Primary VNIC)
+    C->>S: 1-RTT [STREAM: Data] (IP: Primary ENI)
     S->>C: 1-RTT [ACK]
     
-    Note left of C: Client đổi sang Secondary VNIC<br/>New IP: ens4 (Secondary VNIC)
+    Note left of C: Client đổi sang Secondary ENI<br/>New IP: ens4 (Secondary ENI)
     
-    C->>S: 1-RTT [STREAM: Data] (IP: Secondary VNIC)
+    C->>S: 1-RTT [STREAM: Data] (IP: Secondary ENI)
     
     Note right of S: Server detect IP change!<br/>Trigger Path Validation
     

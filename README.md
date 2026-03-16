@@ -1312,7 +1312,7 @@ echo "curl -k -o /dev/null -w 'Total: %{time_total}s\n' https://<SERVER_IP>/inde
 #### Bước 1: Tạo AWS Account (Free Tier)
 1. Truy cập https://aws.amazon.com/free/
 2. Đăng ký tài khoản (cần credit card để xác minh, sẽ có authorization hold nhỏ ~$1 và được hoàn lại)
-3. Chọn **Default Region** — lưu ý: có thể tạo EC2 instances ở bất kỳ region nào
+3. Chọn region mong muốn từ Console — lưu ý: có thể tạo EC2 instances ở bất kỳ region nào
 
 > ⚠️ **Quan trọng**: Cần tạo 2 VMs ở 2 regions khác nhau:
 > - **VM 1 (Server)**: US East (N. Virginia) — xa Việt Nam

@@ -330,6 +330,57 @@
 - Chart đẹp, có legend rõ ràng
 - File PNG chất lượng cao
 
+**Code Jupyter -- QUIC Implementations & Browser Support:**
+
+```python
+# === [A1.6-A1.7] QUIC Implementations & Browser Support (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+
+# === QUIC Implementations Comparison ===
+impls = ['quiche\n(Cloudflare)', 'ngtcp2\n(curl)', 'quinn\n(Rust)', 'quic-go\n(Caddy)',
+         'msquic\n(Microsoft)', 'lsquic\n(LiteSpeed)']
+languages = ['Rust', 'C', 'Rust', 'Go', 'C', 'C']
+maturity = [95, 90, 85, 88, 92, 80]
+colors_impl = ['#e67e22', '#3498db', '#9b59b6', '#00d2d3', '#00a4ef', '#27ae60']
+
+bars = ax1.barh(impls, maturity, color=colors_impl, edgecolor='white', linewidth=2, height=0.6)
+ax1.set_xlabel('Maturity Score (%)', fontsize=12)
+ax1.set_title('QUIC Implementations Comparison', fontsize=14, fontweight='bold')
+ax1.set_xlim(0, 110)
+ax1.grid(axis='x', alpha=0.3)
+
+for bar, val, lang in zip(bars, maturity, languages):
+    ax1.text(val + 1, bar.get_y() + bar.get_height()/2, f'{val}% ({lang})',
+             va='center', fontsize=10, fontweight='bold')
+
+# === Browser HTTP/3 Support Timeline ===
+browsers = ['Chrome', 'Firefox', 'Edge', 'Safari', 'Opera']
+support_year = [2020, 2021, 2020, 2021, 2020]
+versions = ['v87+', 'v88+', 'v87+', 'v15+', 'v73+']
+colors_br = ['#4285F4', '#FF7139', '#0078D7', '#007AFF', '#FF1B2D']
+
+y_pos = np.arange(len(browsers))
+bars2 = ax2.barh(y_pos, [2024 - y for y in support_year], left=support_year,
+                  color=colors_br, edgecolor='white', linewidth=2, height=0.5)
+ax2.set_yticks(y_pos)
+ax2.set_yticklabels(browsers, fontsize=11)
+ax2.set_xlabel('Year', fontsize=12)
+ax2.set_title('Browser HTTP/3 (QUIC) Support', fontsize=14, fontweight='bold')
+ax2.set_xlim(2019, 2025)
+ax2.grid(axis='x', alpha=0.3)
+
+for i, (bar, ver) in enumerate(zip(bars2, versions)):
+    ax2.text(2024.1, i, ver, va='center', fontsize=10, fontweight='bold', color=colors_br[i])
+
+plt.tight_layout()
+plt.savefig('a1_implementations_browsers.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 </details>
 
 ### 📋 Deliverables A1:
@@ -523,6 +574,58 @@ plt.show()
   - **Connected**: Đã kết nối, có thể transfer data
   - **Draining**: Đang đóng connection
   - **Closed**: Đã đóng
+
+**Code Jupyter -- Connection State Machine:**
+
+```python
+# === [A2.3] QUIC Connection State Machine (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(14, 8))
+ax.set_xlim(0, 14)
+ax.set_ylim(0, 10)
+ax.axis('off')
+ax.set_title('QUIC Connection State Machine (RFC 9000)', fontsize=15, fontweight='bold', pad=15)
+
+# States
+states = [
+    ('Idle', 7, 9, '#95a5a6', 'No connection'),
+    ('Handshaking', 3, 6.5, '#e67e22', 'Initial + Handshake\npackets exchanged'),
+    ('Connected', 7, 4, '#27ae60', 'Data transfer active\n(1-RTT packets)'),
+    ('Draining', 11, 6.5, '#3498db', 'CONNECTION_CLOSE sent\nWaiting 3x PTO'),
+    ('Closed', 7, 1, '#e74c3c', 'Connection terminated'),
+]
+
+for name, x, y, color, desc in states:
+    circle = plt.Circle((x, y), 1.0, facecolor=color, edgecolor='white',
+                         linewidth=3, alpha=0.85)
+    ax.add_patch(circle)
+    ax.text(x, y + 0.2, name, ha='center', va='center',
+            fontsize=12, fontweight='bold', color='white')
+    ax.text(x, y - 0.3, desc, ha='center', va='center',
+            fontsize=7, color='white', alpha=0.9)
+
+# Transitions (arrows)
+transitions = [
+    (7, 8, 3.8, 7.1, 'Client/Server\nsends Initial', '#e67e22'),
+    (3.8, 5.9, 6.2, 4.6, 'Handshake\ncomplete', '#27ae60'),
+    (7.8, 4.6, 10.2, 6, 'Send\nCONNECTION_CLOSE', '#3498db'),
+    (10.2, 5.9, 7.8, 1.6, 'Drain timeout\n(3x PTO)', '#e74c3c'),
+    (6.2, 3.4, 6.2, 1.8, 'Idle timeout or\nimmediate close', '#e74c3c'),
+]
+
+for x1, y1, x2, y2, label, color in transitions:
+    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle='->', color=color, lw=2))
+    mx, my = (x1+x2)/2, (y1+y2)/2
+    ax.text(mx, my, label, ha='center', va='center', fontsize=8,
+            bbox=dict(boxstyle='round,pad=0.2', facecolor='white', edgecolor=color, alpha=0.9))
+
+plt.tight_layout()
+plt.savefig('a2_connection_state_machine.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 #### A2.4: Stream Concept
 **Cần làm gì:**
@@ -1113,6 +1216,98 @@ Client                                    Server
 
 - Viết 1-2 trang phân tích security
 
+**Code Jupyter -- 0-RTT Replay Attack Diagram:**
+
+```python
+# === [A4.9] 0-RTT Replay Attack Visualization (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 9))
+
+# === Normal 0-RTT Flow ===
+ax1.set_xlim(0, 12)
+ax1.set_ylim(0, 10)
+ax1.axis('off')
+ax1.set_title('Normal 0-RTT Flow (Legitimate)', fontsize=14, fontweight='bold', color='#27ae60')
+
+for x, y, label, color in [(2, 9, 'Client', '#3498db'), (10, 9, 'Server', '#27ae60')]:
+    rect = mpatches.FancyBboxPatch((x-1, y-0.4), 2, 0.8, boxstyle='round,pad=0.1',
+                                    facecolor=color, edgecolor='white', linewidth=2)
+    ax1.add_patch(rect)
+    ax1.text(x, y, label, ha='center', va='center', fontsize=11, fontweight='bold', color='white')
+
+# Vertical lines
+ax1.plot([2, 2], [1, 8.5], color='#3498db', linewidth=2, alpha=0.5)
+ax1.plot([10, 10], [1, 8.5], color='#27ae60', linewidth=2, alpha=0.5)
+
+# Messages
+msgs = [
+    (7, 'Initial[ClientHello] + 0-RTT[GET /page]', '#3498db', '-->'),
+    (5, 'Initial + Handshake + 1-RTT[Response 200 OK]', '#27ae60', '<--'),
+    (3, '0-RTT data delivered immediately!', '#27ae60', None),
+]
+for y, text, color, direction in msgs:
+    if direction == '-->':
+        ax1.annotate('', xy=(9.5, y), xytext=(2.5, y),
+                     arrowprops=dict(arrowstyle='->', color=color, lw=2))
+    elif direction == '<--':
+        ax1.annotate('', xy=(2.5, y), xytext=(9.5, y),
+                     arrowprops=dict(arrowstyle='->', color=color, lw=2))
+    ax1.text(6, y + 0.3, text, ha='center', fontsize=9,
+             bbox=dict(boxstyle='round', facecolor=color, alpha=0.1, edgecolor=color))
+
+ax1.text(6, 1.5, '[OK] Safe: GET is idempotent', ha='center', fontsize=11,
+         fontweight='bold', color='#27ae60',
+         bbox=dict(boxstyle='round', facecolor='#d5f5e3', edgecolor='#27ae60'))
+
+# === Replay Attack ===
+ax2.set_xlim(0, 16)
+ax2.set_ylim(0, 10)
+ax2.axis('off')
+ax2.set_title('0-RTT Replay Attack (Danger!)', fontsize=14, fontweight='bold', color='#e74c3c')
+
+for x, y, label, color in [(2, 9, 'Client', '#3498db'), (14, 9, 'Server', '#27ae60'),
+                             (8, 9, 'Attacker', '#e74c3c')]:
+    rect = mpatches.FancyBboxPatch((x-1, y-0.4), 2, 0.8, boxstyle='round,pad=0.1',
+                                    facecolor=color, edgecolor='white', linewidth=2)
+    ax2.add_patch(rect)
+    ax2.text(x, y, label, ha='center', va='center', fontsize=11, fontweight='bold', color='white')
+
+# Vertical lines
+ax2.plot([2, 2], [2, 8.5], color='#3498db', linewidth=2, alpha=0.5)
+ax2.plot([8, 8], [2, 8.5], color='#e74c3c', linewidth=2, alpha=0.5)
+ax2.plot([14, 14], [2, 8.5], color='#27ae60', linewidth=2, alpha=0.5)
+
+# Step 1: Normal flow
+ax2.annotate('', xy=(7.5, 7), xytext=(2.5, 7),
+             arrowprops=dict(arrowstyle='->', color='#3498db', lw=2))
+ax2.text(5, 7.3, '1. Client sends 0-RTT data', ha='center', fontsize=9, color='#3498db')
+
+# Step 2: Attacker captures
+ax2.text(8, 6.5, 'CAPTURES!', ha='center', fontsize=10, fontweight='bold', color='#e74c3c',
+         bbox=dict(boxstyle='round', facecolor='#fadbd8'))
+
+# Step 3: Attacker replays later
+ax2.annotate('', xy=(13.5, 4.5), xytext=(8.5, 4.5),
+             arrowprops=dict(arrowstyle='->', color='#e74c3c', lw=2.5, linestyle='dashed'))
+ax2.text(11, 4.8, '2. Replay same 0-RTT!', ha='center', fontsize=9, color='#e74c3c', fontweight='bold')
+ax2.text(11, 3.8, '"POST /transfer?amount=1000"', ha='center', fontsize=9, color='#e74c3c',
+         style='italic', bbox=dict(boxstyle='round', facecolor='#fadbd8'))
+
+# Step 4: Server accepts
+ax2.text(14, 3, 'Server accepts!\nDuplicate transaction!', ha='center', fontsize=9, color='#e74c3c',
+         fontweight='bold')
+
+ax2.text(8, 1.5, '[!!] Solution: Only allow idempotent requests\n(GET, HEAD) in 0-RTT data',
+         ha='center', fontsize=10, fontweight='bold', color='#e67e22',
+         bbox=dict(boxstyle='round', facecolor='#fef9e7', edgecolor='#f1c40f'))
+
+plt.tight_layout()
+plt.savefig('a4_replay_attack.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 #### A4.11 & A4.12: Vẽ Diagrams
 **Timing Comparison Diagram:**
 ```
@@ -1385,6 +1580,68 @@ QUIC Scenario:
           └───────────┘
 ```
 
+**Code Jupyter -- Stream State Machine Diagram:**
+
+```python
+# === [A5.3] QUIC Stream State Machine (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(14, 10))
+ax.set_xlim(0, 14)
+ax.set_ylim(0, 12)
+ax.axis('off')
+ax.set_title('QUIC Stream States (RFC 9000 Section 3)', fontsize=15, fontweight='bold', pad=15)
+
+# Define states with positions
+states = [
+    ('Idle', 7, 11, '#95a5a6', 1.0),
+    ('Open', 7, 8.5, '#3498db', 1.0),
+    ('Half-Closed\n(Local)', 3, 6, '#e67e22', 1.0),
+    ('Half-Closed\n(Remote)', 11, 6, '#9b59b6', 1.0),
+    ('Data Sent', 3, 3.5, '#f1c40f', 0.9),
+    ('Data Recvd', 11, 3.5, '#2ecc71', 0.9),
+    ('Reset Sent', 1.5, 1.5, '#e74c3c', 0.8),
+    ('Reset Recvd', 12.5, 1.5, '#e74c3c', 0.8),
+    ('Closed', 7, 0.5, '#2c3e50', 1.0),
+]
+
+for name, x, y, color, radius in states:
+    circle = plt.Circle((x, y), radius, facecolor=color, edgecolor='white',
+                         linewidth=2, alpha=0.85)
+    ax.add_patch(circle)
+    ax.text(x, y, name, ha='center', va='center',
+            fontsize=9 if '\n' in name else 10, fontweight='bold', color='white')
+
+# Draw transitions
+transitions = [
+    (7, 10, 7, 9.5, 'send/recv STREAM', '#3498db'),
+    (6, 8, 4, 6.8, 'send FIN', '#e67e22'),
+    (8, 8, 10, 6.8, 'recv FIN', '#9b59b6'),
+    (3, 5, 3, 4.4, 'all data ACKed', '#f1c40f'),
+    (11, 5, 11, 4.4, 'all data read', '#2ecc71'),
+    (3, 2.6, 5.5, 1, 'FIN ACKed', '#2c3e50'),
+    (11, 2.6, 8.5, 1, 'all read', '#2c3e50'),
+    (2, 6, 1.5, 2.3, 'RESET_STREAM', '#e74c3c'),
+    (12, 6, 12.5, 2.3, 'recv RESET', '#e74c3c'),
+    (1.5, 0.7, 6, 0.5, '', '#e74c3c'),
+    (12.5, 0.7, 8, 0.5, '', '#e74c3c'),
+]
+
+for x1, y1, x2, y2, label, color in transitions:
+    ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle='->', color=color, lw=1.5))
+    if label:
+        mx, my = (x1+x2)/2, (y1+y2)/2
+        ax.text(mx, my + 0.25, label, ha='center', va='center', fontsize=7,
+                bbox=dict(boxstyle='round,pad=0.15', facecolor='white',
+                          edgecolor=color, alpha=0.9))
+
+plt.tight_layout()
+plt.savefig('a5_stream_state_machine.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 #### A5.9: Vẽ HOL Blocking Diagram
 **Cần vẽ 2 diagrams so sánh:**
 1. **TCP + HTTP/2**: Tất cả streams blocked khi 1 packet mất
@@ -1584,6 +1841,68 @@ Client (new IP)                           Server
 - Server nhận được packet từ new address
 - Server trigger path validation
 - Ví dụ: NAT rebinding (NAT gán port mới)
+
+**Code Jupyter -- Active vs Passive Migration Comparison:**
+
+```python
+# === [A6.5-A6.6] Active vs Passive Migration (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+
+# === Active Migration ===
+ax1.set_xlim(0, 12)
+ax1.set_ylim(0, 10)
+ax1.axis('off')
+ax1.set_title('Active Migration\n(Client-initiated)', fontsize=14, fontweight='bold', color='#3498db')
+
+steps_active = [
+    (8.5, 'WiFi connected\nIP: 192.168.1.100', '#3498db'),
+    (6.5, 'App detects WiFi dropping\nPrepares to switch', '#e67e22'),
+    (4.5, 'Client switches to 4G\nNew IP: 10.0.0.50', '#f39c12'),
+    (2.5, 'Sends data from new IP\n+ PATH_CHALLENGE/RESPONSE', '#9b59b6'),
+    (0.8, 'Seamless transition!\nConnection never dropped', '#27ae60'),
+]
+for y, text, color in steps_active:
+    rect = mpatches.FancyBboxPatch((1, y), 10, 1.5, boxstyle='round,pad=0.1',
+                                    facecolor=color, alpha=0.15, edgecolor=color, linewidth=2)
+    ax1.add_patch(rect)
+    ax1.text(6, y + 0.75, text, ha='center', va='center', fontsize=10)
+
+# Arrow down
+for y in [8, 6, 4, 2.2]:
+    ax1.annotate('', xy=(6, y - 0.15), xytext=(6, y + 0.15),
+                 arrowprops=dict(arrowstyle='->', color='#2c3e50', lw=2))
+
+# === Passive Migration ===
+ax2.set_xlim(0, 12)
+ax2.set_ylim(0, 10)
+ax2.axis('off')
+ax2.set_title('Passive Migration\n(Server detects)', fontsize=14, fontweight='bold', color='#27ae60')
+
+steps_passive = [
+    (8.5, 'Normal connection\nIP: 192.168.1.100', '#3498db'),
+    (6.5, 'NAT rebinding happens\n(timeout, port change)', '#e74c3c'),
+    (4.5, 'Server receives packet\nfrom different address', '#f39c12'),
+    (2.5, 'Server sends PATH_CHALLENGE\nto new address', '#9b59b6'),
+    (0.8, 'Path validated!\nConnection continues', '#27ae60'),
+]
+for y, text, color in steps_passive:
+    rect = mpatches.FancyBboxPatch((1, y), 10, 1.5, boxstyle='round,pad=0.1',
+                                    facecolor=color, alpha=0.15, edgecolor=color, linewidth=2)
+    ax2.add_patch(rect)
+    ax2.text(6, y + 0.75, text, ha='center', va='center', fontsize=10)
+
+for y in [8, 6, 4, 2.2]:
+    ax2.annotate('', xy=(6, y - 0.15), xytext=(6, y + 0.15),
+                 arrowprops=dict(arrowstyle='->', color='#2c3e50', lw=2))
+
+plt.tight_layout()
+plt.savefig('a6_active_passive_migration.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 </details>
 

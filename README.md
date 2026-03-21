@@ -340,6 +340,117 @@
 - [ ] 📊 **Timeline diagram (TV1)**
 - [ ] 📊 **Adoption pie/bar chart (TV2)**
 
+### 📊 Code Jupyter — Biểu đồ minh họa A1
+
+#### 🔹 A1.4: Timeline lịch sử phát triển QUIC
+
+```python
+# === [A1.4] Timeline lịch sử phát triển QUIC (Chạy trong Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(16, 7))
+
+# Dữ liệu các mốc phát triển QUIC
+events = [
+    (2012, "Google bắt đầu\nphát triển gQUIC", "#e74c3c"),
+    (2013, "Deploy trên Chrome\nvà Google servers", "#e67e22"),
+    (2016, "IETF Working Group\nthành lập chuẩn hóa", "#f1c40f"),
+    (2018, "HTTP/3 được\nđặt tên chính thức", "#2ecc71"),
+    (2021, "RFC 9000, 9001, 9002\nQUIC v1 chính thức", "#3498db"),
+    (2023, "RFC 9369\nQUIC v2", "#9b59b6"),
+]
+
+years = [e[0] for e in events]
+labels_text = [e[1] for e in events]
+colors = [e[2] for e in events]
+
+# Vẽ đường timeline
+ax.plot([2011, 2024], [0, 0], color='#2c3e50', linewidth=4, zorder=1)
+
+# Vẽ các sự kiện xen kẽ trên/dưới
+for i, (year, label, color) in enumerate(events):
+    y_pos = 0.7 if i % 2 == 0 else -0.7
+    # Marker trên timeline
+    ax.scatter(year, 0, s=250, color=color, zorder=3, edgecolors='white', linewidth=2)
+    # Box chú thích
+    ax.annotate(f"📅 {year}\n{label}",
+                xy=(year, 0),
+                xytext=(year, y_pos),
+                fontsize=10, ha='center', va='center',
+                bbox=dict(boxstyle='round,pad=0.5', facecolor=color, alpha=0.15, edgecolor=color, linewidth=2),
+                arrowprops=dict(arrowstyle='->', color=color, linewidth=2))
+
+# Giai đoạn phát triển
+ax.annotate('', xy=(2016, -1.3), xytext=(2012, -1.3),
+            arrowprops=dict(arrowstyle='<->', color='#e74c3c', lw=2))
+ax.text(2014, -1.5, 'gQUIC (Google)', ha='center', fontsize=9, color='#e74c3c', fontweight='bold')
+
+ax.annotate('', xy=(2021, -1.3), xytext=(2016, -1.3),
+            arrowprops=dict(arrowstyle='<->', color='#3498db', lw=2))
+ax.text(2018.5, -1.5, 'IETF Standardization', ha='center', fontsize=9, color='#3498db', fontweight='bold')
+
+ax.annotate('', xy=(2024, -1.3), xytext=(2021, -1.3),
+            arrowprops=dict(arrowstyle='<->', color='#9b59b6', lw=2))
+ax.text(2022.5, -1.5, 'QUIC v2+', ha='center', fontsize=9, color='#9b59b6', fontweight='bold')
+
+ax.set_xlim(2011, 2024.5)
+ax.set_ylim(-2, 1.5)
+ax.set_title('🚀 Lịch sử phát triển QUIC Protocol (2012 – 2023)', fontsize=15, fontweight='bold', pad=15)
+ax.axis('off')
+
+plt.tight_layout()
+plt.savefig('a1_quic_timeline.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A1.8: QUIC Adoption Statistics — Pie Chart + Bar Chart
+
+```python
+# === [A1.8] QUIC Adoption Statistics (Chạy trong Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+
+# --- Pie Chart: Tỷ lệ protocol trên Internet ---
+labels_pie = ['QUIC (HTTP/3)', 'HTTP/2', 'HTTP/1.1']
+sizes = [26.5, 45.3, 28.2]
+colors_pie = ['#3498db', '#2ecc71', '#e74c3c']
+explode = (0.06, 0, 0)
+
+wedges, texts, autotexts = ax1.pie(
+    sizes, explode=explode, labels=labels_pie, colors=colors_pie,
+    autopct='%1.1f%%', shadow=True, startangle=90,
+    textprops={'fontsize': 12}, pctdistance=0.75)
+
+for autotext in autotexts:
+    autotext.set_fontweight('bold')
+    autotext.set_color('white')
+
+ax1.set_title('🌐 Internet Traffic by Protocol (2024)\nNguồn: W3Techs', fontsize=13, fontweight='bold')
+
+# --- Bar Chart: Adoption theo công ty ---
+companies = ['Google\n(YouTube)', 'Cloudflare', 'Meta\n(FB, IG)', 'Akamai', 'Microsoft', 'Apple']
+adoption = [95, 85, 75, 60, 50, 45]
+colors_bar = ['#4285F4', '#F38020', '#1877F2', '#009ACD', '#00A4EF', '#A2AAAD']
+
+bars = ax2.barh(companies, adoption, color=colors_bar, edgecolor='white', linewidth=2, height=0.6)
+ax2.set_xlabel('QUIC Adoption (%)', fontsize=12)
+ax2.set_title('🏢 QUIC Adoption by Company (2024 est.)', fontsize=13, fontweight='bold')
+ax2.set_xlim(0, 110)
+ax2.grid(axis='x', alpha=0.3)
+
+for bar, val in zip(bars, adoption):
+    ax2.text(val + 1.5, bar.get_y() + bar.get_height()/2, f'{val}%',
+             va='center', fontsize=11, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('a1_quic_adoption.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A2. Kiến trúc QUIC Protocol
@@ -466,6 +577,132 @@
 - [ ] Stack comparison diagram (TV1)
 - [ ] Connection/Stream concepts document (TV1)
 - [ ] 📊 **Stack comparison visual diagram (TV1)**
+
+### 📊 Code Jupyter — Biểu đồ minh họa A2
+
+#### 🔹 A2.6: So sánh Protocol Stack — QUIC vs TCP/TLS
+
+```python
+# === [A2.6] Protocol Stack Comparison: QUIC vs TCP/TLS (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 9))
+
+def draw_stack(ax, title, layers, colors, emoji):
+    """Vẽ 1 protocol stack."""
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, len(layers) + 1)
+    ax.set_title(f'{emoji} {title}', fontsize=15, fontweight='bold', pad=15)
+    ax.axis('off')
+
+    for i, (name, desc, color) in enumerate(layers):
+        y = i + 0.5
+        rect = mpatches.FancyBboxPatch((1, y), 8, 0.85,
+                                        boxstyle="round,pad=0.05",
+                                        facecolor=color, edgecolor='white', linewidth=3, alpha=0.9)
+        ax.add_patch(rect)
+        ax.text(5, y + 0.42, name, ha='center', va='center',
+                fontsize=13, fontweight='bold', color='white')
+        ax.text(5, y + 0.15, desc, ha='center', va='center',
+                fontsize=9, color='white', alpha=0.85)
+
+# --- QUIC Stack ---
+quic_layers = [
+    ("IP", "Network Layer", "#7f8c8d"),
+    ("UDP", "Unreliable Datagram", "#95a5a6"),
+    ("TLS 1.3 (Tích hợp)", "Mã hóa tích hợp trong QUIC", "#27ae60"),
+    ("QUIC", "Connection, Stream, Flow Control, Loss Recovery", "#3498db"),
+    ("HTTP/3", "HTTP Semantics", "#2980b9"),
+    ("Application", "Browser, curl, App...", "#8e44ad"),
+]
+draw_stack(axes[0], "QUIC Stack", quic_layers, None, "🚀")
+
+# Thêm ngoặc gộp QUIC + TLS
+bracket = mpatches.FancyBboxPatch((0.1, 2.5), 0.5, 1.85,
+                                   boxstyle="round,pad=0.1",
+                                   facecolor='none', edgecolor='#e74c3c', linewidth=2, linestyle='--')
+axes[0].add_patch(bracket)
+axes[0].text(0.35, 3.45, '⬅ Gộp\nlại!', fontsize=8, color='#e74c3c', fontweight='bold', ha='center')
+
+# --- TCP/TLS Stack ---
+tcp_layers = [
+    ("IP", "Network Layer", "#7f8c8d"),
+    ("TCP", "Reliable, Ordered Byte Stream", "#e74c3c"),
+    ("TLS 1.2 / 1.3", "Separate Encryption Layer", "#f39c12"),
+    ("HTTP/1.1 hoặc HTTP/2", "HTTP Semantics", "#e67e22"),
+    ("Application", "Browser, curl, App...", "#8e44ad"),
+]
+draw_stack(axes[1], "TCP/TLS Stack", tcp_layers, None, "📦")
+
+# Thêm annotation so sánh
+fig.text(0.5, 0.02,
+         "💡 QUIC gộp TLS vào trong → giảm RTT handshake | TCP có 3 layers riêng biệt → nhiều RTT hơn",
+         ha='center', fontsize=12, style='italic',
+         bbox=dict(boxstyle='round', facecolor='#fff3cd', edgecolor='#ffc107', alpha=0.8))
+
+plt.tight_layout(rect=[0, 0.06, 1, 1])
+plt.savefig('a2_protocol_stack_comparison.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A2.3 & A2.4: Connection ID vs 4-Tuple & Stream Concept
+
+```python
+# === [A2.3-A2.4] Connection Identification & Stream Types (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+
+# --- TCP vs QUIC Connection Identification ---
+ax1.set_xlim(0, 10)
+ax1.set_ylim(0, 8)
+ax1.set_title('🔑 Connection Identification Comparison', fontsize=14, fontweight='bold')
+ax1.axis('off')
+
+# TCP box
+rect_tcp = mpatches.FancyBboxPatch((0.5, 4.5), 9, 3, boxstyle="round,pad=0.1",
+                                     facecolor='#fadbd8', edgecolor='#e74c3c', linewidth=2)
+ax1.add_patch(rect_tcp)
+ax1.text(5, 7, '❌ TCP: 4-Tuple Identification', ha='center', fontsize=12, fontweight='bold', color='#c0392b')
+ax1.text(5, 6.2, '(Src IP, Src Port, Dst IP, Dst Port)', ha='center', fontsize=10)
+ax1.text(5, 5.4, '⚠️ Đổi IP → 4-tuple thay đổi → Connection LOST!', ha='center', fontsize=10, color='#e74c3c')
+ax1.text(5, 4.8, 'WiFi → 4G = Mất kết nối, phải reconnect', ha='center', fontsize=9, style='italic')
+
+# QUIC box
+rect_quic = mpatches.FancyBboxPatch((0.5, 0.5), 9, 3, boxstyle="round,pad=0.1",
+                                      facecolor='#d4efdf', edgecolor='#27ae60', linewidth=2)
+ax1.add_patch(rect_quic)
+ax1.text(5, 3, '✅ QUIC: Connection ID', ha='center', fontsize=12, fontweight='bold', color='#27ae60')
+ax1.text(5, 2.2, 'CID: 0x1a2b3c4d5e6f (opaque, max 20 bytes)', ha='center', fontsize=10)
+ax1.text(5, 1.4, '✅ Đổi IP → CID giữ nguyên → Connection SURVIVES!', ha='center', fontsize=10, color='#27ae60')
+ax1.text(5, 0.8, 'WiFi → 4G = Kết nối vẫn duy trì!', ha='center', fontsize=9, style='italic')
+
+# --- Stream Types ---
+ax2.set_xlim(0, 10)
+ax2.set_ylim(0, 8)
+ax2.set_title('🔀 QUIC Stream Types (4 loại)', fontsize=14, fontweight='bold')
+ax2.axis('off')
+
+stream_types = [
+    ("Client → Bidi", "ID: 0, 4, 8...", "#3498db", 6.5),
+    ("Server → Bidi", "ID: 1, 5, 9...", "#2ecc71", 4.8),
+    ("Client → Unidi", "ID: 2, 6, 10...", "#e67e22", 3.1),
+    ("Server → Unidi", "ID: 3, 7, 11...", "#9b59b6", 1.4),
+]
+
+for name, ids, color, y in stream_types:
+    rect = mpatches.FancyBboxPatch((1, y), 8, 1.1, boxstyle="round,pad=0.05",
+                                    facecolor=color, alpha=0.2, edgecolor=color, linewidth=2)
+    ax2.add_patch(rect)
+    ax2.text(5, y + 0.7, name, ha='center', fontsize=12, fontweight='bold', color=color)
+    ax2.text(5, y + 0.3, ids, ha='center', fontsize=10, color=color)
+
+plt.tight_layout()
+plt.savefig('a2_connection_stream_concepts.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 ---
 
@@ -620,6 +857,136 @@ Short Header Format:
 - [ ] Complete Frame Types table (TV2)
 - [ ] STREAM/ACK Frame analysis (TV2)
 - [ ] 📊 **Packet structure diagrams (TV2)**
+
+### 📊 Code Jupyter — Biểu đồ minh họa A3
+
+#### 🔹 A3.10: Packet Structure Visualization (Long Header vs Short Header)
+
+```python
+# === [A3.10] QUIC Packet Structure Visualization (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 10))
+
+def draw_field(ax, x, y, w, h, label, sublabel, color, fontsize=10):
+    """Vẽ 1 field trong packet."""
+    rect = mpatches.FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02",
+                                    facecolor=color, edgecolor='white', linewidth=2, alpha=0.85)
+    ax.add_patch(rect)
+    ax.text(x + w/2, y + h*0.65, label, ha='center', va='center',
+            fontsize=fontsize, fontweight='bold', color='white')
+    if sublabel:
+        ax.text(x + w/2, y + h*0.25, sublabel, ha='center', va='center',
+                fontsize=7, color='white', alpha=0.8)
+
+# === Long Header Packet ===
+ax1.set_xlim(0, 16)
+ax1.set_ylim(0, 5)
+ax1.set_title('📦 QUIC Long Header Packet (Initial, Handshake, 0-RTT, Retry)', fontsize=14, fontweight='bold')
+ax1.axis('off')
+
+# Header fields
+y = 3.5
+draw_field(ax1, 0.5, y, 1.5, 1, 'Form\n(1=Long)', '1 bit', '#e74c3c')
+draw_field(ax1, 2, y, 1.5, 1, 'Fixed\nBit=1', '1 bit', '#e67e22')
+draw_field(ax1, 3.5, y, 2, 1, 'Packet\nType', '2 bits', '#f1c40f')
+draw_field(ax1, 5.5, y, 2, 1, 'Type-\nSpecific', '4 bits', '#f39c12')
+draw_field(ax1, 7.5, y, 4, 1, 'Version', '32 bits', '#3498db')
+draw_field(ax1, 11.5, y, 4, 1, 'DCID Len + DCID', '8 + 0-160 bits', '#2980b9')
+
+y = 2
+draw_field(ax1, 0.5, y, 4, 1, 'SCID Len + SCID', '8 + 0-160 bits', '#27ae60')
+draw_field(ax1, 4.5, y, 3, 1, 'Packet\nNumber', '8-32 bits', '#8e44ad')
+draw_field(ax1, 7.5, y, 8, 1, 'Payload (Frames)', 'Variable length', '#2c3e50')
+
+# Packet Types legend
+ax1.text(0.5, 0.8, '📋 Packet Types:', fontsize=10, fontweight='bold')
+types_text = '  0x00: Initial  |  0x01: 0-RTT  |  0x02: Handshake  |  0x03: Retry'
+ax1.text(0.5, 0.3, types_text, fontsize=9,
+         bbox=dict(boxstyle='round', facecolor='#eee', alpha=0.5))
+
+# === Short Header Packet (1-RTT) ===
+ax2.set_xlim(0, 16)
+ax2.set_ylim(0, 4)
+ax2.set_title('⚡ QUIC Short Header Packet (1-RTT — sau handshake)', fontsize=14, fontweight='bold')
+ax2.axis('off')
+
+y = 2
+draw_field(ax2, 0.5, y, 1.5, 1, 'Form\n(0=Short)', '1 bit', '#95a5a6')
+draw_field(ax2, 2, y, 1.5, 1, 'Fixed\nBit=1', '1 bit', '#95a5a6')
+draw_field(ax2, 3.5, y, 1.2, 1, 'Spin', '1 bit', '#16a085')
+draw_field(ax2, 4.7, y, 1.5, 1, 'Reserved', '2 bits', '#7f8c8d')
+draw_field(ax2, 6.2, y, 1.5, 1, 'Key\nPhase', '1 bit', '#e74c3c')
+draw_field(ax2, 7.7, y, 1.5, 1, 'PN Len', '2 bits', '#9b59b6')
+
+y = 0.5
+draw_field(ax2, 0.5, y, 4, 1, 'Destination CID', 'Variable (no SCID!)', '#3498db')
+draw_field(ax2, 4.5, y, 3, 1, 'Packet Number', '8-32 bits', '#8e44ad')
+draw_field(ax2, 7.5, y, 8, 1, 'Payload (Encrypted Frames)', 'Variable length', '#2c3e50')
+
+# Annotation
+ax2.text(9, 3.2, '💡 Short Header = nhỏ gọn hơn\nKhông có Version, SCID → giảm overhead',
+         fontsize=10, style='italic',
+         bbox=dict(boxstyle='round', facecolor='#d5f5e3', edgecolor='#27ae60'))
+
+plt.tight_layout()
+plt.savefig('a3_packet_structure.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A3.4: Frame Types — Phân loại và thống kê
+
+```python
+# === [A3.4] QUIC Frame Types Overview (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# Frame categories
+categories = ['Data Transfer', 'Flow Control', 'Connection Mgmt', 'Path/Migration', 'Error Handling']
+frames = {
+    'Data Transfer': ['STREAM (0x08-0x0f)', 'CRYPTO (0x06)', 'DATAGRAM'],
+    'Flow Control': ['MAX_DATA (0x10)', 'MAX_STREAM_DATA (0x11)', 'MAX_STREAMS (0x12-0x13)',
+                     'DATA_BLOCKED (0x14)', 'STREAM_DATA_BLOCKED (0x15)'],
+    'Connection Mgmt': ['ACK (0x02-0x03)', 'PING (0x01)', 'PADDING (0x00)',
+                        'NEW_TOKEN (0x07)', 'HANDSHAKE_DONE (0x1e)'],
+    'Path/Migration': ['NEW_CONNECTION_ID (0x18)', 'RETIRE_CONNECTION_ID (0x19)',
+                       'PATH_CHALLENGE (0x1a)', 'PATH_RESPONSE (0x1b)'],
+    'Error Handling': ['RESET_STREAM (0x04)', 'STOP_SENDING (0x05)',
+                       'CONNECTION_CLOSE (0x1c-0x1d)'],
+}
+
+colors_cat = ['#3498db', '#27ae60', '#e67e22', '#9b59b6', '#e74c3c']
+
+y_pos = 0
+for i, (cat, frame_list) in enumerate(frames.items()):
+    for j, frame in enumerate(frame_list):
+        rect = mpatches.FancyBboxPatch((0.5, y_pos), 12, 0.6,
+                                        boxstyle="round,pad=0.02",
+                                        facecolor=colors_cat[i], alpha=0.2,
+                                        edgecolor=colors_cat[i], linewidth=1.5)
+        ax.add_patch(rect)
+        ax.text(6.5, y_pos + 0.3, frame, ha='center', va='center',
+                fontsize=10, fontweight='bold' if j == 0 else 'normal')
+        if j == 0:
+            ax.text(14, y_pos + 0.3, f'📂 {cat}', ha='left', va='center',
+                    fontsize=11, fontweight='bold', color=colors_cat[i])
+        y_pos += 0.75
+    y_pos += 0.3  # gap between categories
+
+import matplotlib.patches as mpatches
+ax.set_xlim(0, 20)
+ax.set_ylim(-0.5, y_pos + 0.5)
+ax.invert_yaxis()
+ax.set_title('📋 QUIC Frame Types — Phân loại theo chức năng', fontsize=15, fontweight='bold')
+ax.axis('off')
+
+plt.tight_layout()
+plt.savefig('a3_frame_types.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 ---
 
@@ -778,6 +1145,124 @@ Client ──Initial,0-RTT[DATA]─────> Server
 - [ ] 📊 **Timing comparison chart: TCP vs QUIC (TV1)**
 - [ ] 📊 **Detailed handshake sequence diagrams (TV1)**
 
+### 📊 Code Jupyter — Biểu đồ minh họa A4
+
+#### 🔹 A4.11: Timing Comparison — TCP+TLS vs QUIC 1-RTT vs 0-RTT
+
+```python
+# === [A4.11] Handshake Timing Comparison (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(16, 9))
+
+# RTT = 250ms (giả lập US East ↔ AP Singapore)
+RTT = 250  # ms
+
+# Protocols data: (name, steps_list, total_rtt, color)
+protocols = [
+    ('TCP + TLS 1.2\n(3 RTT)', [
+        ('SYN', RTT*0.5), ('SYN-ACK + TLS Hello', RTT*1), ('TLS Cert+Verify', RTT*0.5),
+        ('TLS Finished', RTT*0.5), ('DATA', RTT*0.5)
+    ], 3, '#c0392b'),
+    ('TCP + TLS 1.3\n(2 RTT)', [
+        ('SYN', RTT*0.5), ('SYN-ACK', RTT*0.5), ('TLS Hello+Finished', RTT*0.5),
+        ('DATA', RTT*0.5)
+    ], 2, '#e67e22'),
+    ('QUIC 1-RTT\n(1 RTT)', [
+        ('Initial [ClientHello]', RTT*0.5), ('Initial+HS [ServerHello+Cert]', RTT*0.5),
+        ('DATA', 0)
+    ], 1, '#3498db'),
+    ('QUIC 0-RTT\n(~0 RTT)', [
+        ('Initial + 0-RTT [DATA]', 0),
+    ], 0, '#27ae60'),
+]
+
+# Vẽ bar chart ngang cho mỗi protocol
+y_positions = [6, 4.2, 2.4, 0.6]
+
+for (name, steps, total_rtt, color), y in zip(protocols, y_positions):
+    total_ms = total_rtt * RTT
+    # Main bar
+    bar = mpatches.FancyBboxPatch((0.5, y), max(total_ms / 100, 0.3), 1.2,
+                                   boxstyle="round,pad=0.05",
+                                   facecolor=color, alpha=0.3, edgecolor=color, linewidth=2)
+    ax.add_patch(bar)
+    # Label
+    ax.text(-1.5, y + 0.6, name, ha='right', va='center', fontsize=11, fontweight='bold')
+    ax.text(max(total_ms / 100, 0.3) + 0.8, y + 0.6,
+            f'{total_rtt} RTT = {total_ms}ms' if total_ms > 0 else '~0 RTT = ~0ms!',
+            ha='left', va='center', fontsize=12, fontweight='bold', color=color)
+
+# Tiết kiệm annotation
+ax.annotate('', xy=(0.5, 0.2), xytext=(7.5, 0.2),
+            arrowprops=dict(arrowstyle='<->', color='#2c3e50', lw=2))
+ax.text(4, -0.3, f'⚡ QUIC 0-RTT tiết kiệm đến {3*RTT}ms so với TCP+TLS 1.2!',
+        ha='center', fontsize=12, fontweight='bold', color='#27ae60',
+        bbox=dict(boxstyle='round', facecolor='#d5f5e3', edgecolor='#27ae60'))
+
+ax.set_xlim(-4, 10)
+ax.set_ylim(-1, 8)
+ax.set_xlabel(f'Time (×100ms, RTT = {RTT}ms US↔Asia)', fontsize=12)
+ax.set_title('⏱️ Handshake Timing Comparison: TCP+TLS vs QUIC\n(RTT = 250ms, US East ↔ AP Singapore)',
+             fontsize=15, fontweight='bold', pad=15)
+ax.axis('off')
+
+plt.tight_layout()
+plt.savefig('a4_handshake_timing.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A4.5: 4 Encryption Levels trong QUIC
+
+```python
+# === [A4.5] QUIC Encryption Levels (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(14, 7))
+ax.set_xlim(0, 14)
+ax.set_ylim(0, 10)
+ax.axis('off')
+ax.set_title('🔐 4 Encryption Levels trong QUIC', fontsize=15, fontweight='bold', pad=15)
+
+levels = [
+    ('① Initial', 'Keys từ Destination CID\n(không bí mật — chống DoS)', '#e74c3c', 'Initial Packets', 7.5),
+    ('② 0-RTT', 'Keys từ TLS early_traffic_secret\n(PSK từ session trước)', '#e67e22', '0-RTT Packets (Early Data)', 5.5),
+    ('③ Handshake', 'Keys từ TLS handshake_traffic_secret\n(sau ServerHello)', '#f1c40f', 'Handshake Packets', 3.5),
+    ('④ 1-RTT (Application)', 'Keys từ TLS traffic_secret\n(forward secrecy)', '#27ae60', '1-RTT Packets (App Data)', 1.5),
+]
+
+for name, desc, color, use, y in levels:
+    # Level box
+    rect = mpatches.FancyBboxPatch((0.5, y), 6, 1.5, boxstyle="round,pad=0.1",
+                                    facecolor=color, alpha=0.2, edgecolor=color, linewidth=2)
+    ax.add_patch(rect)
+    ax.text(3.5, y + 1.1, name, ha='center', fontsize=13, fontweight='bold', color=color)
+    ax.text(3.5, y + 0.4, desc, ha='center', fontsize=9)
+
+    # Arrow
+    ax.annotate('', xy=(7, y + 0.75), xytext=(6.7, y + 0.75),
+                arrowprops=dict(arrowstyle='->', color=color, lw=2))
+
+    # Usage box
+    rect2 = mpatches.FancyBboxPatch((7.5, y + 0.2), 5.5, 1.1, boxstyle="round,pad=0.05",
+                                     facecolor=color, alpha=0.1, edgecolor=color, linewidth=1.5, linestyle='--')
+    ax.add_patch(rect2)
+    ax.text(10.25, y + 0.75, f'📨 {use}', ha='center', fontsize=10, color=color)
+
+# Security indicator arrow
+ax.annotate('', xy=(13.5, 1.5), xytext=(13.5, 9),
+            arrowprops=dict(arrowstyle='->', color='#2c3e50', lw=3))
+ax.text(13.8, 5, '🔒 Tăng dần\nbảo mật', ha='left', fontsize=10, fontweight='bold',
+        rotation=90, va='center')
+
+plt.tight_layout()
+plt.savefig('a4_encryption_levels.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A5. Stream Multiplexing
@@ -922,6 +1407,92 @@ QUIC Scenario:
 - [ ] 📊 **HOL blocking comparison diagram (TV2)**
 - [ ] 📊 **Stream state machine diagram (TV2)**
 
+### 📊 Code Jupyter — Biểu đồ minh họa A5
+
+#### 🔹 A5.9: HOL Blocking Comparison — TCP vs QUIC (Gantt-style)
+
+```python
+# === [A5.9] HOL Blocking Comparison: TCP vs QUIC (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+
+# === TCP + HTTP/2: ALL streams blocked ===
+ax1.set_title('❌ TCP + HTTP/2: Head-of-Line Blocking', fontsize=14, fontweight='bold', color='#c0392b')
+
+# Timeline cho từng stream trong TCP
+streams_tcp = [
+    ('Stream A', [(0, 2, '#3498db', '✅'), (2, 4, '#bdc3c7', '⏳ Blocked')]),
+    ('Stream B', [(0, 1, '#e74c3c', '❌ LOST'), (5, 2, '#3498db', '✅ Retransmit')]),
+    ('Stream C', [(0, 0.5, '#3498db', '✅'), (2, 4, '#bdc3c7', '⏳ Blocked')]),
+]
+
+for i, (name, segments) in enumerate(streams_tcp):
+    y = len(streams_tcp) - i - 1
+    for start, duration, color, label in segments:
+        rect = mpatches.FancyBboxPatch((start, y + 0.1), duration, 0.8,
+                                        boxstyle="round,pad=0.02", facecolor=color, 
+                                        edgecolor='white', linewidth=2, alpha=0.85)
+        ax1.add_patch(rect)
+        ax1.text(start + duration/2, y + 0.5, label, ha='center', va='center',
+                fontsize=9, fontweight='bold', color='white')
+    ax1.text(-0.3, y + 0.5, name, ha='right', va='center', fontsize=11, fontweight='bold')
+
+# Loss marker
+ax1.axvline(x=1, color='#e74c3c', linewidth=2, linestyle='--', alpha=0.5)
+ax1.text(1, 3.3, '⚠️ Packet\nLoss!', ha='center', fontsize=10, color='#e74c3c', fontweight='bold')
+
+ax1.set_xlim(-2, 8)
+ax1.set_ylim(-0.5, 3.5)
+ax1.set_xlabel('Time →', fontsize=12)
+ax1.grid(axis='x', alpha=0.3)
+ax1.set_yticks([])
+
+# Explanation
+ax1.text(4, -0.3, 'Tất cả streams đều BLOCKED vì\nTCP yêu cầu in-order delivery!',
+         ha='center', fontsize=10, style='italic', color='#c0392b',
+         bbox=dict(boxstyle='round', facecolor='#fadbd8'))
+
+# === QUIC: Only affected stream blocked ===
+ax2.set_title('✅ QUIC: No Head-of-Line Blocking', fontsize=14, fontweight='bold', color='#27ae60')
+
+streams_quic = [
+    ('Stream A', [(0, 2, '#3498db', '✅'), (2, 2, '#3498db', '✅ Continue!')]),
+    ('Stream B', [(0, 1, '#e74c3c', '❌ LOST'), (3, 2, '#27ae60', '✅ Retransmit')]),
+    ('Stream C', [(0, 1.5, '#3498db', '✅'), (1.5, 2.5, '#3498db', '✅ Continue!')]),
+]
+
+for i, (name, segments) in enumerate(streams_quic):
+    y = len(streams_quic) - i - 1
+    for start, duration, color, label in segments:
+        rect = mpatches.FancyBboxPatch((start, y + 0.1), duration, 0.8,
+                                        boxstyle="round,pad=0.02", facecolor=color,
+                                        edgecolor='white', linewidth=2, alpha=0.85)
+        ax2.add_patch(rect)
+        ax2.text(start + duration/2, y + 0.5, label, ha='center', va='center',
+                fontsize=9, fontweight='bold', color='white')
+    ax2.text(-0.3, y + 0.5, name, ha='right', va='center', fontsize=11, fontweight='bold')
+
+ax2.axvline(x=1, color='#e74c3c', linewidth=2, linestyle='--', alpha=0.5)
+ax2.text(1, 3.3, '⚠️ Packet\nLoss!', ha='center', fontsize=10, color='#e74c3c', fontweight='bold')
+
+ax2.set_xlim(-2, 8)
+ax2.set_ylim(-0.5, 3.5)
+ax2.set_xlabel('Time →', fontsize=12)
+ax2.grid(axis='x', alpha=0.3)
+ax2.set_yticks([])
+
+ax2.text(4, -0.3, 'Chỉ Stream B bị blocked!\nStream A và C tiếp tục bình thường.',
+         ha='center', fontsize=10, style='italic', color='#27ae60',
+         bbox=dict(boxstyle='round', facecolor='#d5f5e3'))
+
+plt.tight_layout()
+plt.savefig('a5_hol_blocking_comparison.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A6. Connection Migration
@@ -1024,6 +1595,60 @@ Client (new IP)                           Server
 - [ ] Migration types comparison (TV1)
 - [ ] 📊 **Migration sequence diagram (TV1)**
 
+### 📊 Code Jupyter — Biểu đồ minh họa A6
+
+#### 🔹 A6.9: Connection Migration Timeline
+
+```python
+# === [A6.9] Connection Migration Process (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(16, 9))
+ax.set_xlim(0, 16)
+ax.set_ylim(0, 10)
+ax.axis('off')
+ax.set_title('🔄 QUIC Connection Migration Process', fontsize=16, fontweight='bold', pad=15)
+
+# Draw two endpoints
+for x, label, color in [(1.5, '📱 Client', '#3498db'), (14.5, '🌐 Server', '#27ae60')]:
+    rect = mpatches.FancyBboxPatch((x-1, 8.5), 2, 1, boxstyle="round,pad=0.1",
+                                    facecolor=color, edgecolor='white', linewidth=2)
+    ax.add_patch(rect)
+    ax.text(x, 9, label, ha='center', va='center', fontsize=12, fontweight='bold', color='white')
+
+# Timeline events
+events = [
+    (7.5, '① Đang kết nối bình thường với IP: 192.168.1.100 (WiFi)', '#3498db', 7.5,
+     'Data →', '#3498db'),
+    (6.0, '② Client đổi mạng: WiFi → 4G\nIP mới: 10.0.0.50', '#e67e22', 6.0,
+     None, None),
+    (4.5, '③ Client gửi data từ IP mới\nServer detect IP change!', '#f39c12', 4.5,
+     'Data (new IP) →', '#f39c12'),
+    (3.0, '④ PATH_CHALLENGE (Server → Client)\n⬅ PATH_RESPONSE (Client → Server)', '#9b59b6', 3.0,
+     '⬅ Challenge / Response →', '#9b59b6'),
+    (1.5, '⑤ ✅ Path validated! Connection tiếp tục\nKhông mất data, không reconnect', '#27ae60', 1.5,
+     'Data → (continue)', '#27ae60'),
+]
+
+for (y, text, color, y_pos, arrow_text, arrow_color) in events:
+    # Event box
+    rect = mpatches.FancyBboxPatch((4, y_pos - 0.3), 8, 0.8,
+                                    boxstyle="round,pad=0.05",
+                                    facecolor=color, alpha=0.15, edgecolor=color, linewidth=2)
+    ax.add_patch(rect)
+    ax.text(8, y_pos + 0.1, text, ha='center', va='center', fontsize=10)
+
+# So sánh với TCP
+ax.text(8, 0.5, '❌ TCP: Đổi IP = Connection DROPPED! Phải reconnect từ đầu (3-way handshake lại)',
+        ha='center', fontsize=11, fontweight='bold', color='#e74c3c',
+        bbox=dict(boxstyle='round', facecolor='#fadbd8', edgecolor='#e74c3c'))
+
+plt.tight_layout()
+plt.savefig('a6_connection_migration.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A7. Flow Control
@@ -1045,6 +1670,97 @@ Client (new IP)                           Server
 - [ ] Flow Control mechanism document (TV2)
 - [ ] Connection vs Stream flow control diagram (TV2)
 - [ ] 📊 **Flow control visual diagram (TV2)**
+
+### 📊 Code Jupyter — Biểu đồ minh họa A7
+
+#### 🔹 A7.8: Credit-based Flow Control Mechanism
+
+```python
+# === [A7.8] QUIC Flow Control Mechanism (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+
+# === Connection-level Flow Control ===
+ax1.set_xlim(0, 12)
+ax1.set_ylim(0, 10)
+ax1.axis('off')
+ax1.set_title('📦 Connection-level Flow Control\n(MAX_DATA frame)', fontsize=13, fontweight='bold')
+
+# Buffer visualization
+total_limit = 1024  # KB
+used = 700
+ratio = used / total_limit
+
+# Full bar
+rect_bg = mpatches.FancyBboxPatch((1, 6), 10, 2, boxstyle="round,pad=0.05",
+                                   facecolor='#ecf0f1', edgecolor='#bdc3c7', linewidth=2)
+ax1.add_patch(rect_bg)
+
+# Used portion
+rect_used = mpatches.FancyBboxPatch((1, 6), 10 * ratio, 2, boxstyle="round,pad=0.05",
+                                     facecolor='#3498db', edgecolor='white', linewidth=2, alpha=0.8)
+ax1.add_patch(rect_used)
+ax1.text(1 + 10*ratio/2, 7, f'Used: {used}KB', ha='center', va='center',
+         fontsize=12, fontweight='bold', color='white')
+ax1.text(1 + 10*ratio + (10*(1-ratio))/2, 7, f'Available: {total_limit-used}KB',
+         ha='center', va='center', fontsize=10, color='#7f8c8d')
+
+# Labels
+ax1.text(6, 8.5, f'Connection Limit (MAX_DATA): {total_limit}KB', ha='center', fontsize=11, fontweight='bold')
+ax1.text(6, 5, '⬇️ Khi gần full → Receiver gửi MAX_DATA frame mới\nđể tăng limit (window update)', ha='center', fontsize=10)
+
+# Flow diagram
+ax1.text(3, 3, '📤 Sender', ha='center', fontsize=12, fontweight='bold', color='#3498db',
+         bbox=dict(boxstyle='round', facecolor='#d6eaf8'))
+ax1.text(9, 3, '📥 Receiver', ha='center', fontsize=12, fontweight='bold', color='#27ae60',
+         bbox=dict(boxstyle='round', facecolor='#d5f5e3'))
+ax1.annotate('', xy=(7.5, 3), xytext=(4.5, 3),
+             arrowprops=dict(arrowstyle='->', color='#3498db', lw=2))
+ax1.text(6, 3.4, 'STREAM data', ha='center', fontsize=9, color='#3498db')
+ax1.annotate('', xy=(4.5, 2.2), xytext=(7.5, 2.2),
+             arrowprops=dict(arrowstyle='->', color='#27ae60', lw=2))
+ax1.text(6, 1.8, 'MAX_DATA (increase limit)', ha='center', fontsize=9, color='#27ae60')
+
+ax1.text(6, 0.5, '⚠️ Khi limit reached → Sender gửi\nDATA_BLOCKED frame (báo bị block)',
+         ha='center', fontsize=9, color='#e74c3c', style='italic')
+
+# === Stream-level Flow Control ===
+ax2.set_xlim(0, 12)
+ax2.set_ylim(0, 10)
+ax2.axis('off')
+ax2.set_title('🔀 Stream-level Flow Control\n(MAX_STREAM_DATA frame)', fontsize=13, fontweight='bold')
+
+streams_data = [
+    ('Stream 0', 180, 256, '#3498db', 7),
+    ('Stream 4', 120, 256, '#e67e22', 4.5),
+    ('Stream 8', 50, 256, '#9b59b6', 2),
+]
+
+for name, used_s, limit_s, color, y in streams_data:
+    ratio_s = used_s / limit_s
+    # Background
+    rect_bg = mpatches.FancyBboxPatch((2, y), 8, 1.5, boxstyle="round,pad=0.05",
+                                       facecolor='#ecf0f1', edgecolor='#bdc3c7', linewidth=1.5)
+    ax2.add_patch(rect_bg)
+    # Used
+    rect_u = mpatches.FancyBboxPatch((2, y), 8 * ratio_s, 1.5, boxstyle="round,pad=0.05",
+                                      facecolor=color, edgecolor='white', linewidth=1.5, alpha=0.7)
+    ax2.add_patch(rect_u)
+    ax2.text(0.5, y + 0.75, name, ha='left', va='center', fontsize=11, fontweight='bold', color=color)
+    ax2.text(6, y + 0.75, f'{used_s}/{limit_s}KB', ha='center', va='center',
+             fontsize=10, fontweight='bold', color='white')
+
+ax2.text(6, 0.5, '💡 Mỗi stream có limit riêng (MAX_STREAM_DATA)\nStream bị block không ảnh hưởng stream khác!',
+         ha='center', fontsize=10, style='italic',
+         bbox=dict(boxstyle='round', facecolor='#fef9e7', edgecolor='#f1c40f'))
+
+plt.tight_layout()
+plt.savefig('a7_flow_control.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 ---
 
@@ -1073,6 +1789,130 @@ Client (new IP)                           Server
 - [ ] 📊 **Congestion window graph (TV1)**
 - [ ] 📊 **RTT estimation diagram (TV1)**
 
+### 📊 Code Jupyter — Biểu đồ minh họa A8
+
+#### 🔹 A8.10: Congestion Window — CUBIC vs NewReno
+
+```python
+# === [A8.10] Congestion Window Evolution: CUBIC vs NewReno (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(16, 8))
+
+# Simulate congestion window over time
+time = np.linspace(0, 100, 1000)
+
+def cubic_cwnd(t):
+    cwnd = np.zeros_like(t)
+    for i, ti in enumerate(t):
+        if ti < 10:   cwnd[i] = ti * 10          # Slow start
+        elif ti < 25: cwnd[i] = 100 * (1 - np.exp(-0.3 * (ti - 10)))
+        elif ti < 35: cwnd[i] = 70 + (ti - 25) ** 1.3     # CUBIC growth
+        elif ti < 42: cwnd[i] = max(95 - (ti - 35) * 8, 35)  # Loss
+        elif ti < 60: cwnd[i] = 35 + (ti - 42) ** 1.5     # CUBIC recovery
+        elif ti < 70: cwnd[i] = min(75 + (ti - 60) ** 1.2, 110)
+        elif ti < 78: cwnd[i] = max(110 - (ti - 70) * 7, 40)  # 2nd loss
+        else:         cwnd[i] = 40 + (ti - 78) ** 1.4
+    return cwnd
+
+def newreno_cwnd(t):
+    cwnd = np.zeros_like(t)
+    for i, ti in enumerate(t):
+        if ti < 10:   cwnd[i] = ti * 10
+        elif ti < 25: cwnd[i] = 100 * (1 - np.exp(-0.2 * (ti - 10)))
+        elif ti < 35: cwnd[i] = 60 + (ti - 25) * 2        # Linear growth
+        elif ti < 42: cwnd[i] = max(80 - (ti - 35) * 6, 30)  # Loss
+        elif ti < 60: cwnd[i] = 30 + (ti - 42) * 2        # Linear recovery
+        elif ti < 70: cwnd[i] = min(66 + (ti - 60) * 1.5, 90)
+        elif ti < 78: cwnd[i] = max(90 - (ti - 70) * 5, 30)  # 2nd loss
+        else:         cwnd[i] = 30 + (ti - 78) * 1.8
+    return cwnd
+
+# Plot
+ax.plot(time, cubic_cwnd(time), label='CUBIC (QUIC default)', color='#3498db', linewidth=2.5)
+ax.plot(time, newreno_cwnd(time), label='NewReno (TCP default)', color='#e74c3c', linewidth=2.5)
+ax.fill_between(time, cubic_cwnd(time), newreno_cwnd(time), alpha=0.08, color='#3498db')
+
+# Loss event markers
+for lt, label in [(35, '1st Packet Loss'), (70, '2nd Packet Loss')]:
+    ax.axvline(x=lt, color='gray', linestyle='--', alpha=0.5)
+    ax.annotate(f'⚠️ {label}', xy=(lt, 105), fontsize=9, ha='center',
+                color='#e74c3c', fontweight='bold',
+                bbox=dict(boxstyle='round', facecolor='#fadbd8', alpha=0.8))
+
+# Phases
+ax.axvspan(0, 10, alpha=0.05, color='green')
+ax.text(5, 115, 'Slow Start', ha='center', fontsize=9, color='#27ae60')
+
+ax.set_xlabel('Time (s)', fontsize=12)
+ax.set_ylabel('Congestion Window (packets)', fontsize=12)
+ax.set_title('📈 Congestion Window Evolution: CUBIC vs NewReno\n(QUIC hỗ trợ cả CUBIC và BBR)', fontsize=15, fontweight='bold')
+ax.legend(fontsize=12, loc='upper right')
+ax.grid(True, alpha=0.3)
+ax.set_ylim(0, 125)
+
+plt.tight_layout()
+plt.savefig('a8_cwnd_comparison.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A8.11: RTT Estimation — smoothed_rtt, min_rtt, rttvar
+
+```python
+# === [A8.11] RTT Estimation Visualization (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+np.random.seed(42)
+fig, ax = plt.subplots(figsize=(16, 7))
+
+# Simulate RTT samples (ms)
+samples = 50
+base_rtt = 250  # US ↔ Asia
+rtt_samples = base_rtt + np.random.normal(0, 30, samples) + np.sin(np.arange(samples) * 0.3) * 20
+rtt_samples = np.maximum(rtt_samples, base_rtt - 50)
+
+# Calculate smoothed_rtt (EWMA)
+alpha = 0.125
+beta = 0.25
+smoothed_rtt = np.zeros(samples)
+rttvar = np.zeros(samples)
+smoothed_rtt[0] = rtt_samples[0]
+rttvar[0] = rtt_samples[0] / 2
+
+for i in range(1, samples):
+    rttvar[i] = (1 - beta) * rttvar[i-1] + beta * abs(smoothed_rtt[i-1] - rtt_samples[i])
+    smoothed_rtt[i] = (1 - alpha) * smoothed_rtt[i-1] + alpha * rtt_samples[i]
+
+min_rtt = np.minimum.accumulate(rtt_samples)
+
+# Plot
+ax.plot(range(samples), rtt_samples, 'o', label='RTT Samples', color='#bdc3c7', markersize=6, alpha=0.6)
+ax.plot(range(samples), smoothed_rtt, '-', label='smoothed_rtt (EWMA)', color='#3498db', linewidth=2.5)
+ax.plot(range(samples), min_rtt, '--', label='min_rtt', color='#27ae60', linewidth=2)
+ax.fill_between(range(samples), smoothed_rtt - rttvar, smoothed_rtt + rttvar,
+                alpha=0.15, color='#3498db', label='rttvar range')
+
+ax.set_xlabel('ACK Number', fontsize=12)
+ax.set_ylabel('RTT (ms)', fontsize=12)
+ax.set_title('📉 QUIC RTT Estimation (RFC 9002)\nsmoothed_rtt, min_rtt, rttvar', fontsize=15, fontweight='bold')
+ax.legend(fontsize=11)
+ax.grid(True, alpha=0.3)
+
+# Annotations
+ax.annotate('PTO = smoothed_rtt + max(4*rttvar, 1ms)',
+            xy=(35, smoothed_rtt[35] + rttvar[35]),
+            xytext=(38, smoothed_rtt[35] + 60),
+            fontsize=10, style='italic',
+            arrowprops=dict(arrowstyle='->', color='#8e44ad'),
+            bbox=dict(boxstyle='round', facecolor='#f5eef8', edgecolor='#8e44ad'))
+
+plt.tight_layout()
+plt.savefig('a8_rtt_estimation.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A9. Security (TLS 1.3 Integration)
@@ -1095,6 +1935,66 @@ Client (new IP)                           Server
 - [ ] Header/Payload protection document (TV2)
 - [ ] Security mechanisms overview (TV2)
 
+### 📊 Code Jupyter — Biểu đồ minh họa A9
+
+#### 🔹 A9: QUIC Security Layers — Header Protection + Payload Encryption
+
+```python
+# === [A9] QUIC Security Layers Visualization (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, ax = plt.subplots(figsize=(16, 9))
+ax.set_xlim(0, 16)
+ax.set_ylim(0, 10)
+ax.axis('off')
+ax.set_title('🔐 QUIC Security Architecture: Multi-layer Protection', fontsize=16, fontweight='bold', pad=15)
+
+# Packet structure with security layers
+y_base = 6
+
+# Outer packet (UDP Datagram)
+rect_udp = mpatches.FancyBboxPatch((0.5, y_base - 0.3), 15, 3.5, boxstyle="round,pad=0.15",
+                                     facecolor='#ecf0f1', edgecolor='#95a5a6', linewidth=2)
+ax.add_patch(rect_udp)
+ax.text(8, y_base + 3.5, 'UDP Datagram (Plaintext)', ha='center', fontsize=10, color='#7f8c8d')
+
+# QUIC Header (Header Protected)
+rect_header = mpatches.FancyBboxPatch((1, y_base), 4, 2.5, boxstyle="round,pad=0.1",
+                                       facecolor='#f39c12', alpha=0.3, edgecolor='#f39c12', linewidth=2)
+ax.add_patch(rect_header)
+ax.text(3, y_base + 1.8, '🛡️ QUIC Header', ha='center', fontsize=11, fontweight='bold', color='#e67e22')
+ax.text(3, y_base + 1.2, 'Header Protection', ha='center', fontsize=9, color='#e67e22')
+ax.text(3, y_base + 0.5, 'Packet Number\nencrypted (AES-ECB)', ha='center', fontsize=8)
+
+# QUIC Payload (AEAD Encrypted)
+rect_payload = mpatches.FancyBboxPatch((5.5, y_base), 9.5, 2.5, boxstyle="round,pad=0.1",
+                                        facecolor='#27ae60', alpha=0.2, edgecolor='#27ae60', linewidth=2)
+ax.add_patch(rect_payload)
+ax.text(10.25, y_base + 1.8, '🔒 QUIC Payload (Frames)', ha='center', fontsize=11, fontweight='bold', color='#27ae60')
+ax.text(10.25, y_base + 1.2, 'AEAD Encryption (AES-128-GCM / ChaCha20-Poly1305)', ha='center', fontsize=9, color='#27ae60')
+ax.text(10.25, y_base + 0.4, 'STREAM | ACK | CRYPTO | MAX_DATA | ...', ha='center', fontsize=9)
+
+# Security features comparison
+features = [
+    ('✅ Always Encrypted', 'Mọi QUIC packet đều được mã hóa (trừ Initial)', '#27ae60', 4.5),
+    ('✅ Header Protection', 'Packet Number được encrypt → chống traffic analysis', '#f39c12', 3.3),
+    ('✅ Forward Secrecy', 'Key cũ không giải mã được data mới (TLS 1.3 ECDHE)', '#3498db', 2.1),
+    ('✅ 0-RTT Replay Protection', 'Server có thể reject 0-RTT bị replay', '#9b59b6', 0.9),
+]
+
+for label, desc, color, y in features:
+    rect = mpatches.FancyBboxPatch((1, y), 14, 0.9, boxstyle="round,pad=0.05",
+                                    facecolor=color, alpha=0.1, edgecolor=color, linewidth=1.5)
+    ax.add_patch(rect)
+    ax.text(2, y + 0.45, label, ha='left', fontsize=11, fontweight='bold', color=color)
+    ax.text(8, y + 0.45, desc, ha='left', fontsize=10)
+
+plt.tight_layout()
+plt.savefig('a9_security_layers.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
 ---
 
 ## A10. HTTP/3 over QUIC
@@ -1113,6 +2013,76 @@ Client (new IP)                           Server
 ### 📋 Deliverables A10:
 - [ ] HTTP/3 overview document (TV1)
 - [ ] HTTP/2 vs HTTP/3 comparison (TV1)
+
+### 📊 Code Jupyter — Biểu đồ minh họa A10
+
+#### 🔹 A10.2 & A10.5: HTTP/2 vs HTTP/3 Stream Mapping
+
+```python
+# === [A10.2-A10.5] HTTP/2 vs HTTP/3 Stream Mapping Comparison (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 9))
+
+# === HTTP/2 over TCP ===
+ax1.set_xlim(0, 12)
+ax1.set_ylim(0, 10)
+ax1.axis('off')
+ax1.set_title('📦 HTTP/2 over TCP\n(Single TCP Connection)', fontsize=14, fontweight='bold', color='#e74c3c')
+
+# Single TCP connection pipe
+rect_tcp = mpatches.FancyBboxPatch((1, 1), 10, 7.5, boxstyle="round,pad=0.15",
+                                    facecolor='#fadbd8', edgecolor='#e74c3c', linewidth=2)
+ax1.add_patch(rect_tcp)
+ax1.text(6, 8.8, 'TCP Byte Stream (single ordered pipe)', ha='center', fontsize=10, color='#c0392b')
+
+# Multiplexed streams (but sharing single TCP)
+for i, (name, color, y) in enumerate([
+    ('GET /index.html', '#3498db', 6.5),
+    ('GET /style.css', '#27ae60', 4.5),
+    ('GET /app.js', '#e67e22', 2.5),
+]):
+    rect = mpatches.FancyBboxPatch((2, y), 8, 1.5, boxstyle="round,pad=0.05",
+                                    facecolor=color, alpha=0.3, edgecolor=color, linewidth=1.5)
+    ax1.add_patch(rect)
+    ax1.text(6, y + 0.75, f'Stream {i*2}: {name}', ha='center', fontsize=10, fontweight='bold')
+
+ax1.text(6, 0.5, '⚠️ Tất cả streams chia sẻ 1 TCP connection\n→ HOL Blocking khi mất packet!',
+         ha='center', fontsize=10, color='#e74c3c', style='italic')
+
+# === HTTP/3 over QUIC ===
+ax2.set_xlim(0, 12)
+ax2.set_ylim(0, 10)
+ax2.axis('off')
+ax2.set_title('🚀 HTTP/3 over QUIC\n(Independent QUIC Streams)', fontsize=14, fontweight='bold', color='#27ae60')
+
+# Independent streams
+for i, (name, color, y, stream_id) in enumerate([
+    ('GET /index.html', '#3498db', 7, 'Stream 0 (Client Bidi)'),
+    ('GET /style.css', '#27ae60', 5, 'Stream 4 (Client Bidi)'),
+    ('GET /app.js', '#e67e22', 3, 'Stream 8 (Client Bidi)'),
+    ('Control Stream', '#9b59b6', 1, 'Stream 2 (Client Unidi)'),
+]):
+    rect = mpatches.FancyBboxPatch((1, y), 10, 1.5, boxstyle="round,pad=0.1",
+                                    facecolor=color, alpha=0.2, edgecolor=color, linewidth=2)
+    ax2.add_patch(rect)
+    ax2.text(3.5, y + 0.75, f'{name}', ha='center', fontsize=10, fontweight='bold', color=color)
+    ax2.text(8.5, y + 0.75, stream_id, ha='center', fontsize=9, color=color)
+
+# Dividers between streams
+for y in [2.5, 4.5, 6.5]:
+    ax2.annotate('', xy=(0.5, y), xytext=(11.5, y),
+                 arrowprops=dict(arrowstyle='-', color='white', lw=3))
+
+ax2.text(6, 9.3, '✅ Mỗi stream độc lập, không ảnh hưởng nhau!', ha='center',
+         fontsize=11, fontweight='bold', color='#27ae60',
+         bbox=dict(boxstyle='round', facecolor='#d5f5e3'))
+
+plt.tight_layout()
+plt.savefig('a10_http3_vs_http2.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 ---
 
@@ -1151,6 +2121,136 @@ Client (new IP)                           Server
 - [ ] Infographic (TV2)
 - [ ] 📊 **Performance comparison bar chart (TV1)**
 - [ ] 📊 **Feature radar chart (TV2)**
+
+### 📊 Code Jupyter — Biểu đồ minh họa A11
+
+#### 🔹 A11.10: Radar Chart — Feature Comparison QUIC vs TCP+TLS
+
+```python
+# === [A11.10] Feature Comparison Radar Chart (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8),
+                                subplot_kw=dict(projection='polar'))
+
+# --- Radar Chart ---
+categories = ['Handshake\nLatency', 'HOL Blocking\nResistance', 'Connection\nMigration',
+              'Built-in\nSecurity', 'Multiplexing\n(Native)', 'Loss\nRecovery',
+              'Deployment\nFlexibility', 'User-space\nImpl.']
+N = len(categories)
+
+tcp_tls12 = [1, 2, 1, 2, 2, 2, 4, 1]  # Score 1-5
+tcp_tls13 = [2, 2, 1, 3, 3, 3, 4, 1]
+quic_scores = [5, 5, 5, 5, 5, 4, 3, 5]
+
+# Compute angles
+angles = [n / float(N) * 2 * np.pi for n in range(N)]
+angles += angles[:1]
+
+for scores in [tcp_tls12, tcp_tls13, quic_scores]:
+    scores += scores[:1]
+
+# Plot 1: TCP+TLS 1.2 vs QUIC
+ax1.plot(angles, tcp_tls12, 'o-', linewidth=2, label='TCP + TLS 1.2', color='#e74c3c', markersize=7)
+ax1.fill(angles, tcp_tls12, alpha=0.15, color='#e74c3c')
+ax1.plot(angles, quic_scores, 'o-', linewidth=2.5, label='QUIC', color='#3498db', markersize=7)
+ax1.fill(angles, quic_scores, alpha=0.15, color='#3498db')
+
+ax1.set_xticks(angles[:-1])
+ax1.set_xticklabels(categories, fontsize=8)
+ax1.set_ylim(0, 5)
+ax1.set_yticks([1, 2, 3, 4, 5])
+ax1.set_yticklabels(['1', '2', '3', '4', '5'], fontsize=8)
+ax1.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15), fontsize=10)
+ax1.set_title('QUIC vs TCP+TLS 1.2', fontsize=13, fontweight='bold', pad=20)
+
+# Plot 2: TCP+TLS 1.3 vs QUIC
+ax2.plot(angles, tcp_tls13, 'o-', linewidth=2, label='TCP + TLS 1.3', color='#e67e22', markersize=7)
+ax2.fill(angles, tcp_tls13, alpha=0.15, color='#e67e22')
+ax2.plot(angles, quic_scores, 'o-', linewidth=2.5, label='QUIC', color='#3498db', markersize=7)
+ax2.fill(angles, quic_scores, alpha=0.15, color='#3498db')
+
+ax2.set_xticks(angles[:-1])
+ax2.set_xticklabels(categories, fontsize=8)
+ax2.set_ylim(0, 5)
+ax2.set_yticks([1, 2, 3, 4, 5])
+ax2.set_yticklabels(['1', '2', '3', '4', '5'], fontsize=8)
+ax2.legend(loc='upper right', bbox_to_anchor=(1.3, 1.15), fontsize=10)
+ax2.set_title('QUIC vs TCP+TLS 1.3', fontsize=13, fontweight='bold', pad=20)
+
+plt.suptitle('🌟 Feature Comparison: QUIC vs TCP+TLS (Score 1-5, higher = better)',
+             fontsize=15, fontweight='bold', y=1.02)
+plt.tight_layout()
+plt.savefig('a11_feature_radar.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
+
+#### 🔹 A11.9: Performance Bar Chart — Tổng hợp so sánh
+
+```python
+# === [A11.9] Performance Comparison Bar Chart (Jupyter Notebook) ===
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 7))
+
+protocols = ['TCP+TLS 1.2', 'TCP+TLS 1.3', 'QUIC']
+colors = ['#e74c3c', '#e67e22', '#3498db']
+
+# --- 1. Handshake RTT ---
+ax1 = axes[0]
+new_conn = [3, 2, 1]
+resume = [2, 1, 0]
+x = np.arange(len(protocols))
+w = 0.35
+bars1 = ax1.bar(x - w/2, new_conn, w, label='New Connection', color=colors, alpha=0.7, edgecolor='white', linewidth=2)
+bars2 = ax1.bar(x + w/2, resume, w, label='Resumed', color=colors, edgecolor='white', linewidth=2)
+for b, v in zip(bars1, new_conn):
+    ax1.text(b.get_x() + b.get_width()/2, v + 0.1, f'{v}', ha='center', fontweight='bold')
+for b, v in zip(bars2, resume):
+    ax1.text(b.get_x() + b.get_width()/2, v + 0.1, f'{v}', ha='center', fontweight='bold')
+ax1.set_ylabel('RTT')
+ax1.set_title('⏱️ Handshake Latency (RTT)', fontweight='bold')
+ax1.set_xticks(x)
+ax1.set_xticklabels(protocols, fontsize=9)
+ax1.legend(fontsize=9)
+ax1.set_ylim(0, 4)
+ax1.grid(axis='y', alpha=0.3)
+
+# --- 2. Download Time with 5% Loss ---
+ax2 = axes[1]
+download_no_loss = [5.2, 5.0, 4.8]
+download_5_loss = [8.5, 7.8, 5.5]
+bars1 = ax2.bar(x - w/2, download_no_loss, w, label='0% Loss', color=colors, alpha=0.5, edgecolor='white', linewidth=2)
+bars2 = ax2.bar(x + w/2, download_5_loss, w, label='5% Loss', color=colors, edgecolor='white', linewidth=2)
+for b, v in zip(bars1, download_no_loss):
+    ax2.text(b.get_x() + b.get_width()/2, v + 0.1, f'{v}s', ha='center', fontsize=8)
+for b, v in zip(bars2, download_5_loss):
+    ax2.text(b.get_x() + b.get_width()/2, v + 0.1, f'{v}s', ha='center', fontsize=8)
+ax2.set_ylabel('Download Time (s)')
+ax2.set_title('📥 10MB Download Time', fontweight='bold')
+ax2.set_xticks(x)
+ax2.set_xticklabels(protocols, fontsize=9)
+ax2.legend(fontsize=9)
+ax2.grid(axis='y', alpha=0.3)
+
+# --- 3. Feature Score ---
+ax3 = axes[2]
+feature_scores = [12, 16, 28]  # sum of radar scores
+bars = ax3.bar(protocols, feature_scores, color=colors, edgecolor='white', linewidth=2)
+for b, v in zip(bars, feature_scores):
+    ax3.text(b.get_x() + b.get_width()/2, v + 0.3, f'{v}/40', ha='center', fontweight='bold', fontsize=11)
+ax3.set_ylabel('Total Feature Score')
+ax3.set_title('⭐ Overall Feature Score', fontweight='bold')
+ax3.set_ylim(0, 35)
+ax3.grid(axis='y', alpha=0.3)
+
+plt.suptitle('📊 Tổng hợp Performance: QUIC vs TCP+TLS', fontsize=16, fontweight='bold', y=1.02)
+plt.tight_layout()
+plt.savefig('a11_performance_comparison.png', dpi=300, bbox_inches='tight', facecolor='white')
+plt.show()
+```
 
 ---
 
